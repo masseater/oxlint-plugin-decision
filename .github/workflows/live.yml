@@ -19,6 +19,6 @@ jobs:
           cache: true
           run-install: |
             - args: ['--frozen-lockfile']
-      - run: vp run --filter oxlint-plugin-decision test:live
+      - run: vp run --filter @r_masseater/oxlint-plugin-decision test:live
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}

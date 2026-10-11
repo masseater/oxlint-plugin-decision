@@ -9,23 +9,23 @@ A rule is a question, such as "Does this call write personal data to a log?". Th
 
 ## Packages
 
-| Package                                                                 | Use it when                                                                                                                     |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| [`oxlint-plugin-decision-presets`](libs/oxlint-plugin-decision-presets) | You want to start linting right away. It ships ready-made rules for logs, secrets, prompt injection and more, in three presets. |
-| [`oxlint-plugin-decision`](libs/oxlint-plugin-decision)                 | You want to write your own rules. It is the plugin itself: the rule format, answer kinds, context, models and providers.        |
+| Package                                                                              | Use it when                                                                                                                     |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| [`@r_masseater/oxlint-plugin-decision-presets`](libs/oxlint-plugin-decision-presets) | You want to start linting right away. It ships ready-made rules for logs, secrets, prompt injection and more, in three presets. |
+| [`@r_masseater/oxlint-plugin-decision`](libs/oxlint-plugin-decision)                 | You want to write your own rules. It is the plugin itself: the rule format, answer kinds, context, models and providers.        |
 
-The presets package runs on top of `oxlint-plugin-decision`, so you can start with a preset and add your own rules to it later.
+The presets package runs on top of `@r_masseater/oxlint-plugin-decision`, so you can start with a preset and add your own rules to it later.
 
 ## Quick start with a preset
 
 ```sh
-npm i -D oxlint oxlint-plugin-decision oxlint-plugin-decision-presets
+npm i -D oxlint @r_masseater/oxlint-plugin-decision @r_masseater/oxlint-plugin-decision-presets
 export OPENROUTER_API_KEY="..."   # https://openrouter.ai/settings/keys
 ```
 
 ```json
 {
-  "jsPlugins": ["oxlint-plugin-decision-presets/recommended"],
+  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
   "rules": {
     "decision/ask": ["error", { "ci": "fail" }]
   }
@@ -37,13 +37,13 @@ See the [presets README](libs/oxlint-plugin-decision-presets/README.md) for the 
 ## Quick start with your own rules
 
 ```sh
-npm i -D oxlint oxlint-plugin-decision
+npm i -D oxlint @r_masseater/oxlint-plugin-decision
 export OPENROUTER_API_KEY="..."
 ```
 
 ```json
 {
-  "jsPlugins": ["oxlint-plugin-decision"],
+  "jsPlugins": ["@r_masseater/oxlint-plugin-decision"],
   "rules": {
     "decision/ask": [
       "error",

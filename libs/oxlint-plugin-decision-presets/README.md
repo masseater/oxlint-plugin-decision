@@ -1,16 +1,16 @@
-# oxlint-plugin-decision-presets
+# @r_masseater/oxlint-plugin-decision-presets
 
 > [!WARNING]
 > This package is experimental. Use at your own risk.
 
-Ready-made [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) rules for [oxlint-plugin-decision](https://www.npmjs.com/package/oxlint-plugin-decision), answered by decision models on [OpenRouter](https://openrouter.ai).
+Ready-made [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) rules for [@r_masseater/oxlint-plugin-decision](https://www.npmjs.com/package/@r_masseater/oxlint-plugin-decision), answered by decision models on [OpenRouter](https://openrouter.ai).
 
 Each preset is a list of plain-English questions about your code. The plugin asks a decision model each question for every match and reports an error when the answer clears the rule's cutoff. Pick a preset to start linting without writing any rules, and add your own rules when you need them.
 
 ## Install
 
 ```sh
-npm i -D oxlint oxlint-plugin-decision oxlint-plugin-decision-presets
+npm i -D oxlint @r_masseater/oxlint-plugin-decision @r_masseater/oxlint-plugin-decision-presets
 export OPENROUTER_API_KEY="..."   # https://openrouter.ai/settings/keys
 ```
 
@@ -18,24 +18,24 @@ The plugin reads the key from the `OPENROUTER_API_KEY` environment variable. Wit
 
 ## Use a preset
 
-Point `jsPlugins` at a preset and turn on `decision/ask`. The options take the same settings as `oxlint-plugin-decision` (`model`, `ci`, `timeoutMs`, ...), and any `rules` you list are added to the preset's rules.
+Point `jsPlugins` at a preset and turn on `decision/ask`. The options take the same settings as `@r_masseater/oxlint-plugin-decision` (`model`, `ci`, `timeoutMs`, ...), and any `rules` you list are added to the preset's rules.
 
 ```json
 {
-  "jsPlugins": ["oxlint-plugin-decision-presets/recommended"],
+  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
   "rules": {
     "decision/ask": ["error", { "ci": "fail" }]
   }
 }
 ```
 
-| Import path                                  | Rules                                                                                     |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `oxlint-plugin-decision-presets/recommended` | `no-pii-in-logs`, `no-prompt-injection`, `no-hardcoded-secrets`                           |
-| `oxlint-plugin-decision-presets/strict`      | `recommended` plus `name-matches-behavior`, `no-swallowed-errors`, `untrusted-input-risk` |
-| `oxlint-plugin-decision-presets/review-only` | `name-matches-behavior`, `stale-comment`                                                  |
+| Import path                                               | Rules                                                                                     |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `@r_masseater/oxlint-plugin-decision-presets/recommended` | `no-pii-in-logs`, `no-prompt-injection`, `no-hardcoded-secrets`                           |
+| `@r_masseater/oxlint-plugin-decision-presets/strict`      | `recommended` plus `name-matches-behavior`, `no-swallowed-errors`, `untrusted-input-risk` |
+| `@r_masseater/oxlint-plugin-decision-presets/review-only` | `name-matches-behavior`, `stale-comment`                                                  |
 
-The package root (`oxlint-plugin-decision-presets`) is the `recommended` preset.
+The package root (`@r_masseater/oxlint-plugin-decision-presets`) is the `recommended` preset.
 
 `review-only` holds judgment calls that are worth a look in review but too subjective to fail a build. Run it as `"warn"`.
 
@@ -59,7 +59,7 @@ Respan models, such as the free `openrouter/respan/span-01-lite`, answer only ye
 
 ```json
 {
-  "jsPlugins": ["oxlint-plugin-decision-presets/recommended"],
+  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
   "rules": {
     "decision/ask": ["error", { "model": "openrouter/respan/span-01-lite" }]
   }
@@ -70,12 +70,12 @@ Every match is a paid request unless its answer is cached. See [Cost and caching
 
 ## Mix presets with your own rules
 
-Every preset and rule is exported, so you can build your own plugin with `createDecisionPlugin` from `oxlint-plugin-decision`.
+Every preset and rule is exported, so you can build your own plugin with `createDecisionPlugin` from `@r_masseater/oxlint-plugin-decision`.
 
 ```js
 // decision.mjs
-import { createDecisionPlugin, defineDecisionRule } from "oxlint-plugin-decision";
-import { recommended, staleComment } from "oxlint-plugin-decision-presets";
+import { createDecisionPlugin, defineDecisionRule } from "@r_masseater/oxlint-plugin-decision";
+import { recommended, staleComment } from "@r_masseater/oxlint-plugin-decision-presets";
 
 export default createDecisionPlugin({
   name: "team",

@@ -1,7 +1,7 @@
 {
-  "name": "oxlint-plugin-decision-presets",
+  "name": "@r_masseater/oxlint-plugin-decision-presets",
   "version": "0.0.1",
-  "description": "Ready-made plain-English rule presets for oxlint-plugin-decision.",
+  "description": "Ready-made plain-English rule presets for @r_masseater/oxlint-plugin-decision.",
   "keywords": [
     "decision-model",
     "lint",
@@ -60,16 +60,16 @@
   "devDependencies": {
     "@effect/platform-node": "catalog:",
     "@effect/vitest": "catalog:",
+    "@r_masseater/oxlint-plugin-decision": "workspace:*",
     "@types/node": "catalog:",
     "effect": "catalog:stack",
     "oxlint": "catalog:",
-    "oxlint-plugin-decision": "workspace:*",
     "typescript": "catalog:stack",
     "vite-plus": "catalog:stack"
   },
   "peerDependencies": {
-    "oxlint": ">=1.87.0",
-    "oxlint-plugin-decision": "workspace:^"
+    "@r_masseater/oxlint-plugin-decision": "workspace:^",
+    "oxlint": ">=1.87.0"
   },
   "engines": {
     "node": ">=20"

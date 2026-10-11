@@ -1,4 +1,4 @@
-# oxlint-plugin-decision
+# @r_masseater/oxlint-plugin-decision
 
 > [!WARNING]
 > This package is experimental. Use at your own risk.
@@ -9,14 +9,14 @@ A rule is a question about a function, a call, a JSX element, or a whole file. E
 
 Decision models do not write text. They return a probability for a yes/no question, or pick one of the options you list. That makes them fast and cheap enough to run over a codebase, and it is why every rule here is a question with a fixed set of answers.
 
-For ready-made rules, see [`oxlint-plugin-decision-presets`](https://www.npmjs.com/package/oxlint-plugin-decision-presets).
+For ready-made rules, see [`@r_masseater/oxlint-plugin-decision-presets`](https://www.npmjs.com/package/@r_masseater/oxlint-plugin-decision-presets).
 
 This is a fork of [oxlint-plugin-jev](https://github.com/wobsoriano/oxlint-plugin-jev) by [Robert Soriano](https://github.com/wobsoriano), rebuilt on the OpenRouter Decisions API.
 
 ## Install
 
 ```sh
-npm i -D oxlint oxlint-plugin-decision
+npm i -D oxlint @r_masseater/oxlint-plugin-decision
 export OPENROUTER_API_KEY="..."   # https://openrouter.ai/settings/keys
 ```
 
@@ -30,7 +30,7 @@ Add the plugin and its one rule, `decision/ask`, to `.oxlintrc.json`. Your Engli
 
 ```json
 {
-  "jsPlugins": ["oxlint-plugin-decision"],
+  "jsPlugins": ["@r_masseater/oxlint-plugin-decision"],
   "rules": {
     "decision/ask": [
       "error",
@@ -192,7 +192,11 @@ The violation and location have separate cutoffs. An uncertain or invalid locati
 
 ```js
 // decision-plugin.mjs
-import { createDecisionPlugin, defineDecisionRule, defineProvider } from "oxlint-plugin-decision";
+import {
+  createDecisionPlugin,
+  defineDecisionRule,
+  defineProvider,
+} from "@r_masseater/oxlint-plugin-decision";
 
 export default createDecisionPlugin({
   name: "team",
