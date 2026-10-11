@@ -50,7 +50,7 @@ const ARGS = [
   "--disable-nested-config",
   "--format=json",
   "-c",
-  ".oxlintrc.json",
+  "oxlint.config.ts",
   "source.ts",
 ];
 

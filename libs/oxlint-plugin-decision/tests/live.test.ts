@@ -5,7 +5,14 @@ import { Array as Arr, Config, Effect, FileSystem, Option, Order, Path, Redacted
 import type { Scope } from "effect";
 
 import { TIMEOUT, outputOf } from "./fixtures.ts";
-import { decisionLines, packageRoot, pluginPath, runOxlint, writeProject } from "./oxlint.ts";
+import {
+  configSource,
+  decisionLines,
+  packageRoot,
+  pluginPath,
+  runOxlint,
+  writeProject,
+} from "./oxlint.ts";
 import type { Services } from "./oxlint.ts";
 
 const LIVE_MODEL = "openrouter/respan/span-01-lite";
@@ -63,7 +70,7 @@ const exampleProject = ({
     const root = yield* packageRoot;
     return yield* writeProject({
       "plugin.mjs": livePlugin(path.join(root, "example", "plugin.mjs"), yield* pluginPath, cutoff),
-      ".oxlintrc.json": JSON.stringify({
+      "oxlint.config.ts": configSource({
         jsPlugins: ["./plugin.mjs"],
         rules,
       }),
@@ -85,7 +92,7 @@ const lintLive = (live: LiveRun): Effect.Effect<readonly string[], unknown, Serv
       const cwd = yield* exampleProject(live);
       const run = yield* runOxlint({
         cwd,
-        args: ["--format", "unix", "-c", ".oxlintrc.json", "fail.js", "pass.js"],
+        args: ["--format", "unix", "-c", "oxlint.config.ts", "fail.js", "pass.js"],
         env: { OPENROUTER_API_KEY: Redacted.value(key) },
       });
       const lines = decisionLines(run);

@@ -31,7 +31,7 @@ const lintExample = (
     const cwd = yield* packageRoot;
     return yield* runOxlint({
       cwd,
-      args: ["--format", format, "-c", "example/.oxlintrc.json", "example/"],
+      args: ["--format", format, "-c", "example/oxlint.config.ts", "example/"],
       env,
     });
   });
@@ -57,7 +57,7 @@ const lintProject = ({
       const cwd = yield* writeProject({ ...files, ...project });
       return yield* runOxlint({
         cwd,
-        args: ["--format", format, "-c", ".oxlintrc.json", ...Object.keys(files)],
+        args: ["--format", format, "-c", "oxlint.config.ts", ...Object.keys(files)],
         env,
       });
     }),

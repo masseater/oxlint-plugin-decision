@@ -6,7 +6,7 @@ import { Effect } from "effect";
 import type { DecisionPluginSetup, DecisionRule } from "#src/types.ts";
 
 import { PASSED, TIMEOUT, lintProject, outputOf } from "./fixtures.ts";
-import { pluginPath, runOxlint, writeProject } from "./oxlint.ts";
+import { configSource, pluginPath, runOxlint, writeProject } from "./oxlint.ts";
 import type { Services } from "./oxlint.ts";
 
 const customPlugin = (
@@ -39,13 +39,13 @@ const customProvider = Effect.scoped(
     const cwd = yield* writeProject({
       "plugin.mjs": customPlugin(yield* pluginPath),
       "log.js": "console.log(user.email);\n",
-      ".oxlintrc.json": JSON.stringify({
+      "oxlint.config.ts": configSource({
         jsPlugins: ["./plugin.mjs"],
         settings: { custom: { model: "fake/any", ci: "fail" } },
         rules: { "custom/code-rule": "error" },
       }),
     });
-    const args = ["--format", "unix", "-c", ".oxlintrc.json", "log.js"];
+    const args = ["--format", "unix", "-c", "oxlint.config.ts", "log.js"];
     const without = yield* runOxlint({ cwd, args, env: {} });
     strictEqual(without.status, PASSED, outputOf(without));
     assertInclude(without.stderr, "FAKE_KEY is not set, skipping fake models");

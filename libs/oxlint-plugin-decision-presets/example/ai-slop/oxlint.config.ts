@@ -1,6 +1,9 @@
-{
-  "jsPlugins": ["../../dist/ai-slop.mjs"],
-  "rules": {
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["../../dist/ai-slop.mjs"],
+  ignorePatterns: ["oxlint.config.ts"],
+  rules: {
     "decision-ai-slop/redundant-guard": "error",
     "decision-ai-slop/default-masks-missing-value": "error",
     "decision-ai-slop/pass-through-wrapper": "error",
@@ -10,11 +13,11 @@
     "decision-ai-slop/doc-restates-signature": "error",
     "decision-ai-slop/cast-instead-of-narrowing": "error",
     "decision-ai-slop/suppression-instead-of-fix": "error",
-    "decision-ai-slop/reinvents-builtin": "error"
+    "decision-ai-slop/reinvents-builtin": "error",
   },
-  "settings": {
+  settings: {
     "decision-ai-slop": {
-      "maxMatchesPerFile": 100
-    }
-  }
-}
+      maxMatchesPerFile: 100,
+    },
+  },
+});

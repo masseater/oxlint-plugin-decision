@@ -9,6 +9,7 @@ import {
   EXAMPLE_FILES,
   PLUGIN_NAME,
   TIMEOUT,
+  configSource,
   enabled,
   exampleFiles,
   fromRoot,
@@ -84,7 +85,7 @@ const presetLive = (preset: PresetEntry): Effect.Effect<void, unknown, Services>
       const plugin = yield* fromRoot("dist", `${preset}.mjs`);
       const cwd = yield* tempProject({
         ...(yield* exampleFiles),
-        ".oxlintrc.json": JSON.stringify({
+        "oxlint.config.ts": configSource({
           jsPlugins: [plugin],
           settings: { [PLUGIN_NAME]: { model: LIVE_MODEL, ci: "fail" } },
           rules: enabled(PLUGIN_NAME, PRESET_RULES[preset]),
@@ -92,7 +93,7 @@ const presetLive = (preset: PresetEntry): Effect.Effect<void, unknown, Services>
       });
       const run = yield* oxlint(
         cwd,
-        ["--format", "unix", "-c", ".oxlintrc.json", ...EXAMPLE_FILES],
+        ["--format", "unix", "-c", "oxlint.config.ts", ...EXAMPLE_FILES],
         {
           ...(yield* proxyEnv),
           OPENROUTER_API_KEY: Redacted.value(key),
