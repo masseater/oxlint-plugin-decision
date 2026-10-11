@@ -7,9 +7,10 @@ import { runAsWorker } from "synckit";
 import { parseVerdicts } from "./request.ts";
 import { messageOf } from "./runtime.ts";
 import type { DecideInput, DecideResult, DecisionRequest } from "./types.ts";
-import { wireStateFor } from "./wire.ts";
+import { mergeResponses, wireRequestsFor } from "./wire.ts";
+import type { WireRequest } from "./wire.ts";
 
-const CACHE_VERSION = 5;
+const CACHE_VERSION = 6;
 const HEX_RADIX = 16;
 const HEX_BYTE_WIDTH = 2;
 const RETRY_INITIAL_MS = 10;
@@ -72,19 +73,17 @@ const writeCache = Effect.fn("writeCache")(function* writeCache(file: string, js
   yield* fs.rename(temp, file);
 });
 
-const ask = Effect.fn("ask")(function* ask(endpoint: string, { request, timeoutMs }: DecideInput) {
+const send = Effect.fn("send")(function* send(
+  endpoint: string,
+  decisionsRequest: WireRequest,
+  timeoutMs: number,
+) {
   const apiKey = yield* Config.Redacted("OPENROUTER_API_KEY");
   const client = new OpenRouter({ apiKey: Redacted.value(apiKey) });
   const response: unknown = yield* Effect.tryPromise({
     try: (signal) =>
       client.alpha.decisions.create(
-        {
-          decisionsRequest: {
-            ...request,
-            state: wireStateFor(request.model, request.state),
-            questions: { ...request.questions },
-          },
-        },
+        { decisionsRequest: { ...decisionsRequest, questions: { ...decisionsRequest.questions } } },
         {
           serverURL: endpoint,
           retries: {
@@ -102,13 +101,22 @@ const ask = Effect.fn("ask")(function* ask(endpoint: string, { request, timeoutM
         },
       ),
     catch: reasonFor,
-  }).pipe(
+  });
+  return response;
+});
+
+const ask = Effect.fn("ask")(function* ask(endpoint: string, { request, timeoutMs }: DecideInput) {
+  const responses = yield* Effect.forEach(
+    wireRequestsFor(request),
+    (wire) => send(endpoint, wire, timeoutMs),
+    { concurrency: "unbounded" },
+  ).pipe(
     Effect.timeoutOrElse({
       duration: timeoutMs,
       orElse: () => Effect.fail("timeout"),
     }),
   );
-  return response;
+  return mergeResponses(responses);
 });
 
 const askAndStore = Effect.fn("askAndStore")(function* askAndStore(

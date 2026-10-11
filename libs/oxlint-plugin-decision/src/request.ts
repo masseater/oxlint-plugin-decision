@@ -24,6 +24,12 @@ const refAt = (index: number): string => `s${String(index)}`;
 
 const locationRefOf = (ref: string): string => `${ref}${LOCATION_SUFFIX}`;
 
+const snippetRefOf = (questionId: string): string =>
+  Bool.match(questionId.endsWith(LOCATION_SUFFIX), {
+    onTrue: () => questionId.slice(Num.decrement(FIRST_LINE), -LOCATION_SUFFIX.length),
+    onFalse: () => questionId,
+  });
+
 const truncateSnippet = (text: string, maxChars: number): string =>
   Bool.match(text.length <= maxChars, {
     onTrue: () => text,
@@ -260,6 +266,7 @@ export {
   parseVerdicts,
   refAt,
   selectedLocation,
+  snippetRefOf,
   sourceLines,
   truncateSnippet,
 };
