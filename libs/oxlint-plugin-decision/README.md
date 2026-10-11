@@ -9,6 +9,8 @@ A rule is a question about a function, a call, a JSX element, or a whole file. E
 
 Decision models do not write text. They return a probability for a yes/no question, or pick one of the options you list. That makes them fast and cheap enough to run over a codebase, and it is why every rule here is a question with a fixed set of answers.
 
+For ready-made rules, see [`oxlint-plugin-decision-presets`](https://www.npmjs.com/package/oxlint-plugin-decision-presets).
+
 This is a fork of [oxlint-plugin-jev](https://github.com/wobsoriano/oxlint-plugin-jev) by [Robert Soriano](https://github.com/wobsoriano), rebuilt on the OpenRouter Decisions API.
 
 ## Install
@@ -143,7 +145,7 @@ A model id is `<provider>/<model>`. The built-in provider is `openrouter`, so `o
 { "model": ["openrouter/~typesafe/jev-latest", "openrouter/respan/span-01-lite"] }
 ```
 
-Respan models, such as `openrouter/respan/span-01-lite`, are asked about one match per request, so they send more requests than other models on files with many matches.
+Respan models, such as `openrouter/respan/span-01-lite`, answer only yes/no questions: use them with `boolean` rules, not `classify`, `severity` or file-rule `location`. They are also asked about one match per request, so they send more requests than other models on files with many matches. The default `openrouter/~typesafe/jev-latest` supports every answer kind.
 
 Probabilities are not calibrated the same way across models, so a cutoff tuned for one model does not carry over to another. Pin a versioned id once your cutoffs are tuned. Each diagnostic names the model that answered.
 
