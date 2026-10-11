@@ -1,3 +1,5 @@
+import { pathToFileURL } from "node:url";
+
 import { NodeServices } from "@effect/platform-node";
 import { layer } from "@effect/vitest";
 import { deepStrictEqual, strictEqual } from "@effect/vitest/utils";
@@ -12,6 +14,8 @@ import {
   Redacted,
   Schema,
 } from "effect";
+
+import type { DecisionRule } from "#src/types.ts";
 
 import { TIMEOUT, lintProject, outputOf } from "./fixtures.ts";
 import { decisionLines, packageRoot } from "./oxlint.ts";
@@ -33,23 +37,23 @@ const EXPECTED_REPORTS = Arr.sort(
   Order.String,
 );
 
-const RuleEntry = Schema.Tuple([Schema.String, Schema.Record(Schema.String, Schema.Unknown)]);
+const ExamplePlugin = Schema.Struct({
+  rules: Schema.Array(Schema.Record(Schema.String, Schema.Unknown)),
+});
 
-const ExampleConfig = Schema.fromJsonString(
-  Schema.Struct({ rules: Schema.Struct({ "decision/ask": RuleEntry }) }),
-);
-
-const exampleOptions = Effect.gen(function* read() {
+const exampleProject = Effect.gen(function* read() {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const root = yield* packageRoot;
-  const raw = yield* fs.readFileString(path.join(root, "example", ".oxlintrc.json"));
-  const [, options] = (yield* Schema.decodeUnknownEffect(ExampleConfig)(raw)).rules["decision/ask"];
+  const plugin: unknown = yield* Effect.promise(
+    () => import(pathToFileURL(path.join(root, "example", "plugin.mjs")).href),
+  );
+  const { rules } = yield* Schema.decodeUnknownEffect(ExamplePlugin)(plugin);
   const files = {
     "fail.js": yield* fs.readFileString(path.join(root, "example", "fail.js")),
     "pass.js": yield* fs.readFileString(path.join(root, "example", "pass.js")),
   };
-  return { files, options };
+  return { files, rules };
 });
 
 const reportOf = (line: string): Option.Option<string> =>
@@ -59,14 +63,14 @@ const reportOf = (line: string): Option.Option<string> =>
   );
 
 const lintLive = (
-  options: Readonly<Record<string, unknown>>,
+  rules: readonly Readonly<Record<string, unknown>>[],
 ): Effect.Effect<readonly string[], unknown, Services> =>
   Effect.gen(function* lint() {
     const key = yield* Config.Redacted("OPENROUTER_API_KEY");
-    const { files } = yield* exampleOptions;
+    const { files } = yield* exampleProject;
     const run = yield* lintProject({
       files,
-      options: { ...options, model: LIVE_MODEL },
+      options: { rules: rules as readonly DecisionRule[], model: LIVE_MODEL },
       env: { OPENROUTER_API_KEY: Redacted.value(key) },
     });
     const lines = decisionLines(run);
@@ -76,8 +80,8 @@ const lintLive = (
   });
 
 const answersLive = Effect.gen(function* test() {
-  const { options } = yield* exampleOptions;
-  const lines = yield* lintLive(options);
+  const { rules } = yield* exampleProject;
+  const lines = yield* lintLive(rules);
   deepStrictEqual(
     Arr.sort(
       lines.flatMap((line) => Option.toArray(reportOf(line))),
@@ -87,17 +91,11 @@ const answersLive = Effect.gen(function* test() {
   );
 });
 
-const Rules = Schema.Array(Schema.Record(Schema.String, Schema.Unknown));
-
 const probabilitiesLive = Effect.gen(function* test() {
-  const { options } = yield* exampleOptions;
-  const rules = yield* Schema.decodeUnknownEffect(Rules)(options["rules"]);
-  const lines = yield* lintLive({
-    ...options,
-    rules: rules.map((rule) =>
-      Object.fromEntries([...Object.entries(rule), ["cutoff", EVERY_ANSWER]]),
-    ),
-  });
+  const { rules } = yield* exampleProject;
+  const lines = yield* lintLive(
+    rules.map((rule) => Object.fromEntries([...Object.entries(rule), ["cutoff", EVERY_ANSWER]])),
+  );
   strictEqual(lines.length, EXAMPLE_MATCHES);
 });
 

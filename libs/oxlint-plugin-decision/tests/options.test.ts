@@ -7,7 +7,6 @@ import {
   DEFAULTS,
   NAMED_PARENTS,
   REPORT_LOC,
-  SCHEMA,
   resolveOptions,
   snippetNodeFor,
 } from "#src/options.ts";
@@ -25,8 +24,10 @@ const START = 0;
 const rule: DecisionRule = { id: "a", target: "call", question: "Is it bad?", cutoff: 0.8 };
 const providers = { openrouter: openRouter };
 
+const noSettings = { options: {}, settings: undefined };
+
 const resolvesDefaults = Effect.sync(() => {
-  const { rules } = resolveOptions({ rules: [rule] }, [], providers);
+  const { rules } = resolveOptions(noSettings, [rule], providers);
   deepStrictEqual(
     rules.map(({ models, answer }) => ({
       models: models.map(({ id, model }) => ({ id, model })),
@@ -41,39 +42,34 @@ const resolvesDefaults = Effect.sync(() => {
   );
 });
 
-const mergesCodeRules = Effect.sync(() => {
-  const resolved = resolveOptions({ rules: [rule] }, [{ ...rule, id: "code" }], providers);
+const settingsOverrideCode = Effect.sync(() => {
+  const resolved = resolveOptions(
+    { options: { model: "openrouter/code", timeoutMs: 5 }, settings: { model: "openrouter/config" } },
+    [rule],
+    providers,
+  );
   deepStrictEqual(
-    resolved.rules.map(({ id }) => id),
-    ["code", "a"],
+    [resolved.timeoutMs, resolved.rules.flatMap(({ models }) => models.map(({ model }) => model))],
+    [5, ["config"]],
   );
 });
 
 const refusesEmpty = Effect.sync(() => {
   throws(() => {
-    resolveOptions({}, [], providers);
+    resolveOptions(noSettings, [], providers);
   });
 });
 
 const dedupesModels = Effect.sync(() => {
   const resolved = resolveOptions(
-    { model: ["openrouter/x", "openrouter/x", "openrouter/y"], rules: [rule] },
-    [],
+    { options: { model: ["openrouter/x", "openrouter/x", "openrouter/y"] }, settings: undefined },
+    [rule],
     providers,
   );
   deepStrictEqual(
     resolved.rules.flatMap(({ models }) => models.map(({ model }) => model)),
     ["x", "y"],
   );
-});
-
-const schemaMatchesDefaults = Effect.sync(() => {
-  deepStrictEqual(
-    Object.keys(DEFAULTS).filter((field) => !Object.hasOwn(SCHEMA.properties, field)),
-    [],
-  );
-  strictEqual(Object.hasOwn(SCHEMA, "required"), false);
-  deepStrictEqual(SCHEMA.properties.rules.items.required, ["id", "target", "question", "cutoff"]);
 });
 
 const node = (type: string): AstNode => ({
@@ -120,13 +116,9 @@ const reportLocations = Effect.sync(() => {
 
 layer(Layer.empty)("resolving options", (it) => {
   it.effect("fills the default model and a boolean answer", () => resolvesDefaults);
-  it.effect("puts code rules before config rules", () => mergesCodeRules);
-  it.effect("refuses options with no rules", () => refusesEmpty);
+  it.effect("lets oxlint settings override the plugin's own options", () => settingsOverrideCode);
+  it.effect("refuses a plugin with no rules", () => refusesEmpty);
   it.effect("asks each listed model once", () => dedupesModels);
-  it.effect(
-    "offers every default in the schema and leaves rules optional",
-    () => schemaMatchesDefaults,
-  );
   it.effect(
     "sends the binding for an anonymous function stored under a name",
     () => namesAnonymousFunctions,

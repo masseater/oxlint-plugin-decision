@@ -64,9 +64,15 @@ const tempProject = (files: Env): Effect.Effect<string, PlatformError, Services 
   });
 
 const reportedLines = (run: Run, plugin: string): readonly string[] =>
-  run.stdout.split("\n").filter((line) => line.includes(`${plugin}(ask)`));
+  run.stdout.split("\n").filter((line) => line.includes(`/${plugin}(`));
+
+const enabled = (
+  plugin: string,
+  rules: readonly { readonly id: string }[],
+): Readonly<Record<string, string>> =>
+  Object.fromEntries(rules.map(({ id }) => [`${plugin}/${id}`, "error"]));
 
 const outputOf = (run: Run): string => `${run.stdout}${run.stderr}`;
 
-export { FAILED, PASSED, TIMEOUT, fromRoot, outputOf, oxlint, reportedLines, tempProject };
+export { FAILED, PASSED, TIMEOUT, enabled, fromRoot, outputOf, oxlint, reportedLines, tempProject };
 export type { Env, Run, Services };

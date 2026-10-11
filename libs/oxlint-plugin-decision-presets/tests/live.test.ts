@@ -3,7 +3,10 @@ import { layer } from "@effect/vitest";
 import { deepStrictEqual } from "@effect/vitest/utils";
 import { Array as Arr, Config, Effect, FileSystem, Option, Redacted } from "effect";
 
-import { TIMEOUT, fromRoot, outputOf, oxlint, reportedLines, tempProject } from "./oxlint.ts";
+import { PLUGIN_NAME } from "#src/plugin.ts";
+import { recommended } from "#src/presets.ts";
+
+import { TIMEOUT, enabled, fromRoot, outputOf, oxlint, reportedLines, tempProject } from "./oxlint.ts";
 
 const LIVE_MODEL = "openrouter/respan/span-01-lite";
 
@@ -49,7 +52,8 @@ const recommendedLive = Effect.scoped(
       "pass.js": yield* fs.readFileString(yield* fromRoot("example", "pass.js")),
       ".oxlintrc.json": JSON.stringify({
         jsPlugins: [plugin],
-        rules: { "decision/ask": ["error", { model: LIVE_MODEL, ci: "fail" }] },
+        settings: { [PLUGIN_NAME]: { model: LIVE_MODEL, ci: "fail" } },
+        rules: enabled(PLUGIN_NAME, recommended),
       }),
     });
     const run = yield* oxlint(
@@ -62,7 +66,7 @@ const recommendedLive = Effect.scoped(
     );
     yield* Effect.log(outputOf(run));
     deepStrictEqual(
-      reportedLines(run, "decision").map((line) => headOf(line)),
+      reportedLines(run, PLUGIN_NAME).map((line) => headOf(line)),
       [...EXPECTED],
     );
   }),

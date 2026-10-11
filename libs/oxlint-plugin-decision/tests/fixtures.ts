@@ -1,11 +1,11 @@
 import { Effect } from "effect";
 import type { PlatformError } from "effect/PlatformError";
 
-import type { DecisionOptions, DecisionRule } from "#src/types.ts";
+import type { DecisionPluginSetup, DecisionRule } from "#src/types.ts";
 
 import { MockOpenRouterLayer } from "./mock-openrouter.ts";
 import type { LoggedRequest, MockOpenRouter } from "./mock-openrouter.ts";
-import { configFor, packageRoot, runOxlint, writeProject } from "./oxlint.ts";
+import { packageRoot, projectFilesFor, runOxlint, writeProject } from "./oxlint.ts";
 import type { OxlintRun, Services } from "./oxlint.ts";
 
 type Env = Readonly<Record<string, string>>;
@@ -38,7 +38,7 @@ const lintExample = (
 
 interface ProjectRun {
   readonly files: Env;
-  readonly options: DecisionOptions;
+  readonly options: DecisionPluginSetup;
   readonly env: Env;
   readonly format?: string;
 }
@@ -51,8 +51,8 @@ const lintProject = ({
 }: ProjectRun): Effect.Effect<OxlintRun, PlatformError, Services> =>
   Effect.scoped(
     Effect.gen(function* lint() {
-      const config = yield* configFor(options);
-      const cwd = yield* writeProject({ ...files, ".oxlintrc.json": config });
+      const project = yield* projectFilesFor(options);
+      const cwd = yield* writeProject({ ...files, ...project });
       return yield* runOxlint({
         cwd,
         args: ["--format", format, "-c", ".oxlintrc.json", ...Object.keys(files)],

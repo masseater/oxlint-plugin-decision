@@ -47,7 +47,6 @@ interface DecisionOptions {
   readonly maxMatchesPerFile?: number;
   readonly maxSnippetChars?: number;
   readonly model?: ModelSpec;
-  readonly rules?: readonly DecisionRule[];
 }
 
 interface NoulQuestion {
@@ -87,15 +86,15 @@ interface DecisionProvider {
   readonly decide: (input: DecideInput) => DecideResult;
 }
 
-interface DecisionPluginSetup {
+interface DecisionPluginSetup extends DecisionOptions {
   readonly name?: string;
-  readonly rules?: readonly DecisionRule[];
+  readonly rules: readonly DecisionRule[];
   readonly providers?: readonly DecisionProvider[];
 }
 
 interface DecisionPlugin {
   readonly meta: { readonly name: string };
-  readonly rules: { readonly ask: object };
+  readonly rules: Readonly<Record<string, object>>;
 }
 
 interface ModelRef {

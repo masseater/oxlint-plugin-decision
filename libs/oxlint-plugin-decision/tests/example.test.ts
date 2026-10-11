@@ -23,7 +23,7 @@ const RULE_IDS = ["no-pii-in-logs", "name-matches-behavior", "no-prompt-injectio
 const SIGNATURE = "async function getUser(id) {";
 const PII_CALL = 'console.log("loaded", user.email, user.phone)';
 const PII_LINE =
-  "example/fail.js:5:3: [no-pii-in-logs] openrouter/mock-decider answered yes (0.95 >= 0.80): Does this call write personal data, such as an email or phone number, to a log or console? [Error/decision(ask)]";
+  "example/fail.js:5:3: [no-pii-in-logs] openrouter/mock-decider answered yes (0.95 >= 0.80): Does this call write personal data, such as an email or phone number, to a log or console? [Error/team(no-pii-in-logs)]";
 
 const firstRun = Effect.gen(function* run() {
   const root = yield* packageRoot;

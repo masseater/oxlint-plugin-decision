@@ -4,12 +4,14 @@ import { assertInclude, deepStrictEqual, strictEqual } from "@effect/vitest/util
 import { Effect, FileSystem } from "effect";
 import type { PlatformError } from "effect/PlatformError";
 
-import type { presets } from "#src/presets.ts";
+import { PLUGIN_NAME } from "#src/plugin.ts";
+import { presets } from "#src/presets.ts";
 
 import {
   FAILED,
   PASSED,
   TIMEOUT,
+  enabled,
   fromRoot,
   outputOf,
   oxlint,
@@ -82,7 +84,8 @@ const lintWithFake = (preset: PresetName): Effect.Effect<Run, PlatformError, Ser
         "pass.js": yield* fs.readFileString(yield* fromRoot("example", "pass.js")),
         ".oxlintrc.json": JSON.stringify({
           jsPlugins: ["./plugin.mjs"],
-          rules: { "decision/ask": ["error", { model: "fake/any", ci: "fail" }] },
+          settings: { decision: { model: "fake/any", ci: "fail" } },
+          rules: enabled("decision", presets[preset]),
         }),
       });
       return yield* oxlint(
@@ -134,7 +137,8 @@ const loadsEntry = (entry: (typeof ENTRIES)[number]): Check =>
         "a.js": "console.log(1);\n",
         ".oxlintrc.json": JSON.stringify({
           jsPlugins: [plugin],
-          rules: { "decision/ask": ["error", { ci: "fail" }] },
+          settings: { [PLUGIN_NAME]: { ci: "fail" } },
+          rules: enabled(PLUGIN_NAME, entry === "review-only" ? presets.reviewOnly : presets.recommended),
         }),
       });
       const run = yield* oxlint(cwd, ["-c", ".oxlintrc.json", "a.js"], { CI: "1" });

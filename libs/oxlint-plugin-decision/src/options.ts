@@ -1,5 +1,5 @@
-import type { Location, RuleOptionsSchema } from "@oxlint/plugins";
-import { Array as Arr, Option, Predicate, Result, String as Str } from "effect";
+import type { Location } from "@oxlint/plugins";
+import { Array as Arr, Option, Predicate, Result, Schema, String as Str } from "effect";
 
 import { BOOLEAN_ANSWER, decodeRuleAnswer } from "./answer.ts";
 import type {
@@ -64,109 +64,62 @@ const DEFAULTS = {
   maxMatchesPerFile: 25,
   maxSnippetChars: 4000,
   model: "openrouter/~typesafe/jev-latest",
-} as const satisfies Required<Omit<DecisionOptions, "rules">>;
+} as const satisfies Required<DecisionOptions>;
 
-const MODEL_SCHEMA = {
-  oneOf: [
-    { type: "string", minLength: 1 },
-    { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
-  ],
-} satisfies RuleOptionsSchema;
+const RULE_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 
-const LINE_COUNT = { type: "integer", minimum: 0 } satisfies RuleOptionsSchema;
+const ModelSpecSchema = Schema.Union([
+  Schema.NonEmptyString,
+  Schema.NonEmptyArray(Schema.NonEmptyString),
+]);
 
-const CONTEXT_SCHEMA = {
-  oneOf: [
-    {
-      type: "object",
-      additionalProperties: false,
-      required: ["scope"],
-      properties: { scope: { enum: ["node", "file"] } },
-    },
-    {
-      type: "object",
-      additionalProperties: false,
-      required: ["scope"],
-      properties: { scope: { enum: ["lines"] }, before: LINE_COUNT, after: LINE_COUNT },
-    },
-    {
-      type: "object",
-      additionalProperties: false,
-      required: ["scope", "kind"],
-      properties: {
-        scope: { enum: ["enclosing"] },
-        kind: { enum: ["function", "class", "block"] },
-      },
-    },
-  ],
-} satisfies RuleOptionsSchema;
+const Count = (minimum: number) => Schema.Int.check(Schema.isGreaterThanOrEqualTo(minimum));
 
-const LABEL = { type: "string", minLength: 1 } satisfies RuleOptionsSchema;
+const RuleContextSchema = Schema.Union([
+  Schema.Struct({ scope: Schema.Literals(["node", "file"]) }),
+  Schema.Struct({
+    scope: Schema.Literal("lines"),
+    before: Schema.optionalKey(Count(0)),
+    after: Schema.optionalKey(Count(0)),
+  }),
+  Schema.Struct({
+    scope: Schema.Literal("enclosing"),
+    kind: Schema.Literals(["function", "class", "block"]),
+  }),
+]);
 
-const ANSWER_SCHEMA = {
-  oneOf: [
-    {
-      type: "object",
-      additionalProperties: false,
-      required: ["kind"],
-      properties: { kind: { enum: ["boolean"] } },
-    },
-    {
-      type: "object",
-      additionalProperties: false,
-      required: ["kind", "labels", "report"],
-      properties: {
-        kind: { enum: ["classify"] },
-        labels: { type: "object", minProperties: 2, additionalProperties: { type: "string" } },
-        report: { type: "array", minItems: 1, items: LABEL },
-      },
-    },
-    {
-      type: "object",
-      additionalProperties: false,
-      required: ["kind"],
-      properties: { kind: { enum: ["severity"] }, minimum: { enum: ["info", "warn", "error"] } },
-    },
-  ],
-} satisfies RuleOptionsSchema;
+const OptionsSchema = Schema.Struct({
+  ci: Schema.optionalKey(Schema.Literals(["skip", "fail"])),
+  timeoutMs: Schema.optionalKey(Count(1)),
+  maxMatchesPerFile: Schema.optionalKey(Count(1)),
+  maxSnippetChars: Schema.optionalKey(Count(1)),
+  model: Schema.optionalKey(ModelSpecSchema),
+});
 
-const SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    ci: { enum: ["skip", "fail"] },
-    timeoutMs: { type: "integer", minimum: 1 },
-    maxMatchesPerFile: { type: "integer", minimum: 1 },
-    maxSnippetChars: { type: "integer", minimum: 1 },
-    model: MODEL_SCHEMA,
-    rules: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["id", "target", "question", "cutoff"],
-        properties: {
-          id: { type: "string", minLength: 1 },
-          target: { enum: Object.keys(TARGET_NODE_TYPES) },
-          question: { type: "string", minLength: 1 },
-          location: {
-            type: "object",
-            additionalProperties: false,
-            required: ["question", "cutoff"],
-            properties: {
-              question: { type: "string", minLength: 1 },
-              cutoff: { type: "number", minimum: 0.5, exclusiveMinimum: true, maximum: 1 },
-            },
-          },
-          cutoff: { type: "number", minimum: 0, maximum: 1 },
-          model: MODEL_SCHEMA,
-          context: CONTEXT_SCHEMA,
-          answer: ANSWER_SCHEMA,
-        },
-      },
-    },
-  },
-} satisfies RuleOptionsSchema;
+const RuleSchema = Schema.Struct({
+  id: Schema.NonEmptyString.check(
+    Schema.isPattern(RULE_ID, { message: "id must be lowercase words joined by hyphens" }),
+  ),
+  target: Schema.Literals(["function", "call", "jsx", "file"]),
+  question: Schema.NonEmptyString,
+  cutoff: Schema.Number.check(Schema.isBetween({ minimum: 0, maximum: 1 })),
+  location: Schema.optionalKey(
+    Schema.Struct({
+      question: Schema.NonEmptyString,
+      cutoff: Schema.Number.check(
+        Schema.isBetween({ minimum: 0.5, maximum: 1, exclusiveMinimum: true }),
+      ),
+    }),
+  ),
+  model: Schema.optionalKey(ModelSpecSchema),
+  context: Schema.optionalKey(RuleContextSchema),
+  answer: Schema.optionalKey(Schema.Unknown),
+});
+
+const STRICT = { onExcessProperty: "error" } as const;
+
+const decodeOptions = Schema.decodeUnknownResult(OptionsSchema, STRICT);
+const decodeRule = Schema.decodeUnknownResult(RuleSchema, STRICT);
 
 class OptionsError extends Error {
   public constructor(message: string) {
@@ -221,38 +174,58 @@ const answerOf = (rule: DecisionRule): RuleAnswer => {
   );
 };
 
-const resolveRule =
-  (fallback: ModelSpec, providers: Readonly<Record<string, DecisionProvider>>) =>
-  (rule: DecisionRule): ResolvedRule => {
-    if (Predicate.isNotUndefined(rule.location) && rule.target !== "file") {
-      throw new OptionsError("location is supported only for file rules");
-    }
-    return {
-      ...rule,
-      answer: answerOf(rule),
-      models: modelIdsOf(rule.model ?? fallback).map((id) => resolveModel(id, providers)),
-    };
-  };
+const checked = <Value>(decoded: Result.Result<Value, Schema.SchemaError>, what: string): Value =>
+  Result.getOrThrowWith(decoded, (error) => new OptionsError(`invalid ${what}: ${error.message}`));
 
-const resolveOptions = (
-  options: DecisionOptions,
-  codeRules: readonly DecisionRule[],
-  providers: Readonly<Record<string, DecisionProvider>>,
-): ResolvedOptions => {
-  const rules = [...codeRules, ...(options.rules ?? [])];
+const checkRule = (rule: DecisionRule): DecisionRule => {
+  const id = Predicate.isString(rule.id) ? `rule "${rule.id}"` : "rule";
+  checked(decodeRule(rule), id);
+  if (Predicate.isNotUndefined(rule.location) && rule.target !== "file") {
+    throw new OptionsError("location is supported only for file rules");
+  }
+  answerOf(rule);
+  return rule;
+};
+
+const checkRules = (rules: readonly DecisionRule[]): readonly DecisionRule[] => {
   if (!Arr.isReadonlyArrayNonEmpty(rules)) {
-    throw new OptionsError("options.rules must list at least one rule");
+    throw new OptionsError("rules must list at least one rule");
   }
   Option.map(duplicateIdOf(rules), (duplicate) => {
     throw new OptionsError(`rule id "${duplicate}" is used more than once`);
   });
-  const { model, ...settings } = { ...DEFAULTS, ...options };
+  return rules.map((rule) => checkRule(rule));
+};
+
+const resolveRule =
+  (fallback: ModelSpec, providers: Readonly<Record<string, DecisionProvider>>) =>
+  (rule: DecisionRule): ResolvedRule => ({
+    ...rule,
+    answer: answerOf(rule),
+    models: modelIdsOf(rule.model ?? fallback).map((id) => resolveModel(id, providers)),
+  });
+
+interface Sources {
+  readonly options: DecisionOptions;
+  readonly settings: unknown;
+}
+
+const resolveOptions = (
+  { options, settings }: Sources,
+  rules: readonly DecisionRule[],
+  providers: Readonly<Record<string, DecisionProvider>>,
+): ResolvedOptions => {
+  const fromCode = checked(decodeOptions(options), "createDecisionPlugin options");
+  const fromConfig = Predicate.isUndefined(settings)
+    ? {}
+    : checked(decodeOptions(settings), "settings");
+  const { model, ...merged } = { ...DEFAULTS, ...fromCode, ...fromConfig };
   return {
-    ci: settings.ci,
-    timeoutMs: settings.timeoutMs,
-    maxMatchesPerFile: settings.maxMatchesPerFile,
-    maxSnippetChars: settings.maxSnippetChars,
-    rules: rules.map((rule) => resolveRule(model, providers)(rule)),
+    ci: merged.ci,
+    timeoutMs: merged.timeoutMs,
+    maxMatchesPerFile: merged.maxMatchesPerFile,
+    maxSnippetChars: merged.maxSnippetChars,
+    rules: checkRules(rules).map((rule) => resolveRule(model, providers)(rule)),
   };
 };
 
@@ -272,11 +245,11 @@ const REPORT_LOC = {
 
 export {
   DEFAULTS,
+  checkRules,
   NAMED_PARENTS,
   OptionsError,
   PREFIX,
   REPORT_LOC,
-  SCHEMA,
   TARGET_NODE_TYPES,
   resolveOptions,
   snippetNodeFor,

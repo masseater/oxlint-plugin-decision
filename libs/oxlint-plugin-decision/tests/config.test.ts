@@ -3,7 +3,7 @@ import { layer } from "@effect/vitest";
 import { assertInclude, deepStrictEqual, strictEqual } from "@effect/vitest/utils";
 import { Effect } from "effect";
 
-import type { DecisionOptions, DecisionRule } from "#src/types.ts";
+import type { DecisionPluginSetup, DecisionRule } from "#src/types.ts";
 
 import { PASSED, TIMEOUT, lintProject, outputOf } from "./fixtures.ts";
 import { pluginPath, runOxlint, writeProject } from "./oxlint.ts";
@@ -23,13 +23,16 @@ const yes = ({ request }) => ({
 
 export default createDecisionPlugin({
   name: "custom",
-  rules: [defineDecisionRule({ id: "code-rule", target: "call", question: "Is this a call?", cutoff: 0.5 })],
+  rules: [
+    defineDecisionRule({ id: "code-rule", target: "call", question: "Is this a call?", cutoff: 0.5 }),
+    defineDecisionRule({ id: "off-rule", target: "file", question: "Is this a file?", cutoff: 0.5 }),
+  ],
   providers: [defineProvider({ name: "fake", requiredEnv: ["FAKE_KEY"], decide: yes })],
 });
 `;
 
 const CUSTOM_LINE =
-  "log.js:1:1: [code-rule] fake/fake-1 answered yes (0.90 >= 0.50): Is this a call? [Error/custom(ask)]";
+  "log.js:1:1: [code-rule] fake/fake-1 answered yes (0.90 >= 0.50): Is this a call? [Error/custom(code-rule)]";
 
 const customProvider = Effect.scoped(
   Effect.gen(function* test() {
@@ -38,7 +41,8 @@ const customProvider = Effect.scoped(
       "log.js": "console.log(user.email);\n",
       ".oxlintrc.json": JSON.stringify({
         jsPlugins: ["./plugin.mjs"],
-        rules: { "custom/ask": ["error", { model: "fake/any", ci: "fail" }] },
+        settings: { custom: { model: "fake/any", ci: "fail" } },
+        rules: { "custom/code-rule": "error" },
       }),
     });
     const args = ["--format", "unix", "-c", ".oxlintrc.json", "log.js"];
@@ -47,7 +51,7 @@ const customProvider = Effect.scoped(
     assertInclude(without.stderr, "FAKE_KEY is not set, skipping fake models");
     const withKey = yield* runOxlint({ cwd, args, env: { FAKE_KEY: "1" } });
     deepStrictEqual(
-      withKey.stdout.split("\n").filter((line) => line.includes("custom(ask)")),
+      withKey.stdout.split("\n").filter((line) => line.includes("custom(")),
       [CUSTOM_LINE],
     );
   }),
@@ -64,7 +68,7 @@ const fileRuleAt = (cutoff: number): DecisionRule => ({
   location: { question: "Where?", cutoff },
 });
 
-const badConfigs: readonly (readonly [string, DecisionOptions, string])[] = [
+const badConfigs: readonly (readonly [string, DecisionPluginSetup, string])[] = [
   [
     "location is configured for a non-file rule",
     { rules: [{ ...goodRule, location: { question: "Where?", cutoff: 0.75 } }] },
@@ -75,7 +79,7 @@ const badConfigs: readonly (readonly [string, DecisionOptions, string])[] = [
   [
     "a plugin-level field is unknown",
     { rules: [goodRule], ...JSON.parse('{"foo":1}') },
-    'Unexpected property "foo"',
+    'invalid createDecisionPlugin options: Expected no excess property',
   ],
   [
     "two rules share an id",
@@ -111,7 +115,7 @@ const badConfigs: readonly (readonly [string, DecisionOptions, string])[] = [
   ],
 ];
 
-const refuses = ([, options, expected]: readonly [string, DecisionOptions, string]): Effect.Effect<
+const refuses = ([, options, expected]: readonly [string, DecisionPluginSetup, string]): Effect.Effect<
   void,
   unknown,
   Services
@@ -129,7 +133,7 @@ const refuses = ([, options, expected]: readonly [string, DecisionOptions, strin
 
 layer(NodeServices.layer, { excludeTestServices: true })("plugin configuration", (it) => {
   it.effect(
-    "loads a custom plugin and asks only for the keys its providers need",
+    "registers each rule under its own id and asks only for the enabled ones",
     () => customProvider,
     TIMEOUT,
   );

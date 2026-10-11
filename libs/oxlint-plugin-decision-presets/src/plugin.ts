@@ -3,6 +3,9 @@ import type { DecisionPlugin } from "oxlint-plugin-decision";
 
 import type { Preset } from "./presets.ts";
 
-const presetPlugin = (rules: Preset): DecisionPlugin => createDecisionPlugin({ rules });
+const PLUGIN_NAME = "decision-presets";
 
-export { presetPlugin };
+const presetPlugin = (rules: Preset): DecisionPlugin =>
+  createDecisionPlugin({ name: PLUGIN_NAME, rules });
+
+export { PLUGIN_NAME, presetPlugin };

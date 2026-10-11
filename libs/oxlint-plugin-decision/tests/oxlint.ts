@@ -4,7 +4,7 @@ import type { PlatformError } from "effect/PlatformError";
 import { ChildProcess } from "effect/process";
 import type { ChildProcessSpawner } from "effect/process";
 
-import type { DecisionOptions } from "#src/types.ts";
+import type { DecisionPluginSetup } from "#src/types.ts";
 
 import { MockOpenRouter } from "./mock-openrouter.ts";
 
@@ -33,6 +33,8 @@ const PASSED_ENV = [
   "NODE_USE_ENV_PROXY",
   "SSL_CERT_FILE",
 ] as const;
+
+const DECISION_PLUGINS = ["decision", "team"] as const;
 
 const CACHE_SEGMENTS = ["node_modules", ".cache", "oxlint-plugin-decision"] as const;
 
@@ -102,11 +104,17 @@ const writeProject = (
     return dir;
   });
 
-const configFor = (options: DecisionOptions): Effect.Effect<string, never, Path.Path> =>
+const projectFilesFor = (
+  setup: DecisionPluginSetup,
+): Effect.Effect<Readonly<Record<string, string>>, never, Path.Path> =>
   pluginPath.pipe(
-    Effect.map((plugin) =>
-      JSON.stringify({ jsPlugins: [plugin], rules: { "decision/ask": ["error", options] } }),
-    ),
+    Effect.map((plugin) => ({
+      "plugin.mjs": `import { createDecisionPlugin } from ${JSON.stringify(plugin)};\n\nexport default createDecisionPlugin(${JSON.stringify(setup)});\n`,
+      ".oxlintrc.json": JSON.stringify({
+        jsPlugins: ["./plugin.mjs"],
+        rules: Object.fromEntries(setup.rules.map(({ id }) => [`decision/${id}`, "error"])),
+      }),
+    })),
   );
 
 const mockEnv = (
@@ -117,7 +125,7 @@ const mockEnv = (
   );
 
 const decisionLines = (run: OxlintRun): readonly string[] =>
-  run.stdout.split("\n").filter((line) => line.includes("decision(ask)"));
+  run.stdout.split("\n").filter((line) => DECISION_PLUGINS.some((name) => line.includes(`/${name}(`)));
 
 const Span = Schema.Struct({
   offset: Schema.Number,
@@ -142,7 +150,9 @@ const diagnosticsOf = (
 ): Effect.Effect<readonly OxlintDiagnostic[], Schema.SchemaError> =>
   Schema.decodeUnknownEffect(Report)(run.stdout).pipe(
     Effect.map(({ diagnostics }) =>
-      diagnostics.filter((diagnostic) => diagnostic.code === "decision(ask)"),
+      diagnostics.filter((diagnostic) =>
+        DECISION_PLUGINS.some((name) => diagnostic.code.startsWith(`${name}(`)),
+      ),
     ),
   );
 
@@ -151,13 +161,13 @@ const firstSpan = (diagnostic: OxlintDiagnostic): OxlintSpan =>
 
 export {
   cacheDirOf,
-  configFor,
   decisionLines,
   diagnosticsOf,
   firstSpan,
   mockEnv,
   packageRoot,
   pluginPath,
+  projectFilesFor,
   removeCache,
   runOxlint,
   writeProject,
