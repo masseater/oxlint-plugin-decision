@@ -136,4 +136,4 @@ const isReported = (
   verdict: Verdict,
 ): boolean => verdict.probability >= rule.cutoff && answerMatches(rule.answer, verdict.answer);
 
-export { BOOLEAN_ANSWER, decodeRuleAnswer, isReported, questionFor, verdictOf };
+export { BOOLEAN_ANSWER, SEVERITY_ORDER, decodeRuleAnswer, isReported, questionFor, verdictOf };

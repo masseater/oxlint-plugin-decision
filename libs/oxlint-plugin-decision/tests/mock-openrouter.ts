@@ -2,7 +2,7 @@ import { NodeHttpServer } from "@effect/platform-node";
 import { Array as Arr, Boolean as Bool, Context, Effect, Layer, Option, Ref, Schema } from "effect";
 import { HttpRouter, HttpServer, HttpServerRequest, HttpServerResponse } from "effect/http";
 
-import { LOCATION_SUFFIX, RawBodySchema, badState, normalized, rejectsState } from "./mock-body.ts";
+import { LOCATION_SUFFIX, RawBodySchema, normalized, rejectionOf } from "./mock-body.ts";
 import type { Body, Question, RawBody } from "./mock-body.ts";
 
 const PII_MARKER = "user.email, user.phone";
@@ -23,6 +23,15 @@ const SECOND_HIT = 2;
 const UNAUTHORIZED = 401;
 const TOO_MANY_REQUESTS = 429;
 const UNKNOWN_CHOICE = "unknown";
+const OPTION_SEPARATOR = "__";
+
+const YES_BY_FLAGGED_OPTION: Readonly<Record<string, number>> = {
+  leaks: 0.9,
+  safe: 0.3,
+  info: 0.97,
+  warn: 0.93,
+  error: 0.85,
+};
 const LOCATED_LINE = /^L(?<line>\d+)\|/u;
 const RANGE_KEY = /^L(?<start>\d+)(?:-L(?<end>\d+))?$/u;
 
@@ -101,6 +110,17 @@ const choiceAnswer = (body: Body, ref: string, token: string): unknown => {
   return { type: "choice", choice, probabilities: { [choice]: probability } };
 };
 
+const optionOf = (ref: string): Option.Option<readonly [string, string]> => {
+  const [snippetRef = "", option] = ref.split(OPTION_SEPARATOR);
+  return Option.map(Option.fromUndefinedOr(option), (label) => [snippetRef, label] as const);
+};
+
+const optionScore = (flagged: boolean, label: string): number =>
+  Bool.match(flagged, {
+    onTrue: () => Option.getOrElse(lookup(YES_BY_FLAGGED_OPTION, label), () => NO),
+    onFalse: () => NO,
+  });
+
 const noulScore = (body: Body, ref: string, token: string): number => {
   if (token === "location-always-positive") {
     return SURE;
@@ -111,7 +131,11 @@ const noulScore = (body: Body, ref: string, token: string): number => {
   const instructions = lookup(body.questions, ref).pipe(
     Option.match({ onNone: () => "", onSome: (question) => question.instructions }),
   );
-  return scoreFor(instructions, snippetOf(body, ref));
+  return Option.match(optionOf(ref), {
+    onNone: () => scoreFor(instructions, snippetOf(body, ref)),
+    onSome: ([snippetRef, label]) =>
+      optionScore(scoreFor(instructions, snippetOf(body, snippetRef)) === YES, label),
+  });
 };
 
 const skipsChoice = (body: Body, token: string, hits: number): boolean =>
@@ -208,10 +232,10 @@ const handler = (
     const token = authorization.replace("Bearer ", "");
     const body = normalized(raw);
     yield* Ref.update(state.log, (log) => [...log, { authorization, body, sentState: raw.state }]);
-    if (rejectsState(raw)) {
-      return badState;
-    }
-    return yield* replyFor(body, token, yield* countHit(state, token));
+    return yield* Option.match(rejectionOf(raw), {
+      onSome: Effect.succeed,
+      onNone: () => Effect.flatMap(countHit(state, token), (hits) => replyFor(body, token, hits)),
+    });
   });
 
 const MockLive = Layer.effect(

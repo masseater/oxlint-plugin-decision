@@ -39,10 +39,29 @@ const TEXT_STATE_PREFIX = "respan/";
 const rejectsState = ({ model, state }: RawBody): boolean =>
   model.startsWith(TEXT_STATE_PREFIX) && typeof state !== "string";
 
+const rejectsChoice = ({ model, questions }: RawBody): boolean =>
+  model.startsWith(TEXT_STATE_PREFIX) &&
+  Object.values(questions).some((question) => question.type !== "noul");
+
 const badState = HttpServerResponse.jsonUnsafe(
   { error: { message: "Respan state must be a string" } },
   { status: BAD_REQUEST },
 );
+
+const badChoice = HttpServerResponse.jsonUnsafe(
+  { error: { message: "Respan only accepts noul questions" } },
+  { status: BAD_REQUEST },
+);
+
+const rejectionOf = (raw: RawBody): Option.Option<HttpServerResponse.HttpServerResponse> => {
+  if (rejectsState(raw)) {
+    return Option.some(badState);
+  }
+  if (rejectsChoice(raw)) {
+    return Option.some(badChoice);
+  }
+  return Option.none();
+};
 
 const SECTION = /^state\.(?<kind>snippets|contexts)\.(?<ref>[^:\n]+):\n(?<text>[\s\S]*)$/u;
 
@@ -72,5 +91,5 @@ const normalized = (raw: RawBody): Body => {
 
 type Question = typeof QuestionSchema.Type;
 
-export { LOCATION_SUFFIX, RawBodySchema, badState, normalized, rejectsState };
+export { LOCATION_SUFFIX, RawBodySchema, normalized, rejectionOf };
 export type { Body, Question, RawBody };

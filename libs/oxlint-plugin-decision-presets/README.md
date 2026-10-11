@@ -41,21 +41,21 @@ The package root (`@r_masseater/oxlint-plugin-decision-presets`) is the `recomme
 
 ## Rules
 
-| Id                      | Target     | Asks                                                                                         |
-| ----------------------- | ---------- | -------------------------------------------------------------------------------------------- |
-| `no-pii-in-logs`        | `call`     | Does this call write personal data to a log or console?                                      |
-| `no-prompt-injection`   | `function` | Does this function concatenate untrusted user input into a language model prompt?            |
-| `no-hardcoded-secrets`  | `file`     | Does this file contain a hard-coded secret as a literal value?                               |
-| `name-matches-behavior` | `function` | Does a read-only name (get, find, load, fetch) hide a body that also writes, logs, or sends? |
-| `no-swallowed-errors`   | `function` | Does this function catch an error and drop it?                                               |
-| `untrusted-input-risk`  | `function` | How severe is the way this function handles untrusted input? Reports `warn` and above.       |
-| `stale-comment`         | `function` | Does the comment above the function describe behavior the code no longer has?                |
+| Id                      | Target     | Asks                                                                                                       |
+| ----------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| `no-pii-in-logs`        | `call`     | Does this call write personal data to a log or console?                                                    |
+| `no-prompt-injection`   | `function` | Does this function concatenate untrusted user input into a language model prompt?                          |
+| `no-hardcoded-secrets`  | `file`     | Does this file contain a hard-coded secret as a literal value?                                             |
+| `name-matches-behavior` | `function` | Does a read-only name (get, find, load, fetch) hide a body that also writes, logs, or sends?               |
+| `no-swallowed-errors`   | `function` | Does this function catch an error and drop it?                                                             |
+| `untrusted-input-risk`  | `function` | How severe is splicing untrusted input into a query, command, markup, or prompt? Reports `warn` and above. |
+| `stale-comment`         | `function` | Does the comment above the function claim something the code does not do?                                  |
 
 ## Models
 
 The presets use the plugin's default model, `openrouter/~typesafe/jev-latest`, which supports every preset. Set `model` in the options to use another one.
 
-Respan models, such as the free `openrouter/respan/span-01-lite`, answer only yes/no questions. `untrusted-input-risk` (a `severity` rule) and `stale-comment` (a `classify` rule) need a model that answers choice questions, so with Respan models only `recommended` works; `strict` and `review-only` do not.
+Respan models, such as the free `openrouter/respan/span-01-lite`, answer only yes/no questions. The plugin asks them `untrusted-input-risk` (a `severity` rule) and `stale-comment` (a `classify` rule) as one yes/no question per level or label, so every preset works with them.
 
 ```json
 {
