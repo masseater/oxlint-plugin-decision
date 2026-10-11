@@ -3,6 +3,19 @@ import { defineConfig } from "vite-plus";
 
 type Rules = Readonly<Record<string, "error">>;
 
+const decisionModel = "openrouter/respan/span-01-lite";
+
+const presetsDist = "./libs/oxlint-plugin-decision-presets/dist";
+
+const decisionRules = (plugin: string, ids: readonly string[]): Rules =>
+  Object.fromEntries(ids.map((id) => [`${plugin}/${id}`, "error"] as const));
+
+const decisionPresetRules: Rules = decisionRules("decision-presets", [
+  "no-pii-in-logs",
+  "no-prompt-injection",
+  "no-hardcoded-secrets",
+]);
+
 const effectRules: Rules = Object.fromEntries(
   Object.values(effectPresets).flatMap((preset) =>
     Object.keys(preset.rules ?? {}).map((name) => [name, "error"] as const),
@@ -42,11 +55,13 @@ export default defineConfig({
     jsPlugins: [
       { name: "vite-plus", specifier: "vite-plus/oxlint-plugin" },
       { name: "no-comments", specifier: "eslint-plugin-no-comments" },
+      { name: "decision-presets", specifier: `${presetsDist}/recommended.mjs` },
     ],
     rules: {
       "vite-plus/prefer-vite-plus-imports": "error",
       "no-comments/disallowComments": ["error", { allow: ["oxlint-disable", "eslint-disable"] }],
       ...effectRules,
+      ...decisionPresetRules,
       "eslint/sort-imports": "off",
       "eslint/sort-keys": "off",
       "import/no-named-export": "off",
@@ -89,7 +104,14 @@ export default defineConfig({
         ],
         rules: { "import/no-default-export": "off" },
       },
+      {
+        files: ["libs/*/tests/**"],
+        rules: Object.fromEntries(Object.keys(decisionPresetRules).map((name) => [name, "off"])),
+      },
     ],
+    settings: {
+      "decision-presets": { model: decisionModel },
+    },
     options: {
       typeAware: true,
       typeCheck: true,
