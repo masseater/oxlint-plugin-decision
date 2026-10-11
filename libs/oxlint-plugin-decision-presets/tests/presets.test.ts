@@ -1,17 +1,19 @@
 import { NodeServices } from "@effect/platform-node";
 import { layer } from "@effect/vitest";
 import { assertInclude, deepStrictEqual, strictEqual } from "@effect/vitest/utils";
-import { Effect, FileSystem } from "effect";
+import { Effect } from "effect";
 import type { PlatformError } from "effect/PlatformError";
 
 import { presets } from "#src/presets.ts";
 
 import {
+  EXAMPLE_FILES,
   FAILED,
   PASSED,
   PLUGIN_NAME,
   TIMEOUT,
   enabled,
+  exampleFiles,
   fromRoot,
   outputOf,
   oxlint,
@@ -34,6 +36,8 @@ const MARKERS = {
   "only reading or fetching": '"loaded"',
   "drop it": "catch {}",
   "untrusted input": "complete(`",
+  "mechanism word": "processData",
+  "hand-written chain": "typeof body.id",
 } as const;
 
 const fakePlugin = (core: string, presetsEntry: string, preset: string): string => `
@@ -75,7 +79,6 @@ export default createDecisionPlugin({
 const lintWithFake = (preset: PresetName): Effect.Effect<Run, PlatformError, Services> =>
   Effect.scoped(
     Effect.gen(function* lint() {
-      const fs = yield* FileSystem.FileSystem;
       const core = yield* fromRoot(
         "node_modules",
         "@r_masseater",
@@ -86,19 +89,14 @@ const lintWithFake = (preset: PresetName): Effect.Effect<Run, PlatformError, Ser
       const entry = yield* fromRoot("dist", "index.mjs");
       const cwd = yield* tempProject({
         "plugin.mjs": fakePlugin(core, entry, preset),
-        "fail.js": yield* fs.readFileString(yield* fromRoot("example", "fail.js")),
-        "pass.js": yield* fs.readFileString(yield* fromRoot("example", "pass.js")),
+        ...(yield* exampleFiles),
         ".oxlintrc.json": JSON.stringify({
           jsPlugins: ["./plugin.mjs"],
           settings: { decision: { model: "fake/any", ci: "fail" } },
           rules: enabled("decision", presets[preset]),
         }),
       });
-      return yield* oxlint(
-        cwd,
-        ["--format", "unix", "-c", ".oxlintrc.json", "fail.js", "pass.js"],
-        {},
-      );
+      return yield* oxlint(cwd, ["--format", "unix", "-c", ".oxlintrc.json", ...EXAMPLE_FILES], {});
     }),
   );
 
@@ -115,7 +113,7 @@ const EXPECTED = {
     "untrusted-input-risk",
     "no-swallowed-errors",
   ],
-  reviewOnly: ["name-matches-behavior"],
+  reviewOnly: ["name-matches-behavior", "domain-naming", "prefer-schema-validation"],
 } as const satisfies Readonly<Record<PresetName, readonly string[]>>;
 
 const reportsOnlyFail = (preset: PresetName): Check =>
@@ -124,7 +122,7 @@ const reportsOnlyFail = (preset: PresetName): Check =>
     const lines = reportedLines(run, "decision");
     strictEqual(run.status, FAILED, outputOf(run));
     deepStrictEqual(
-      lines.filter((line) => !line.startsWith("fail.js")),
+      lines.filter((line) => !line.startsWith("fail.")),
       [],
     );
     deepStrictEqual(

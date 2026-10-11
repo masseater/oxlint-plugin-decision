@@ -1,4 +1,4 @@
-import { db, mailer, llm, logger } from "./deps.js";
+import { db, mailer, llm, logger, OrderSchema } from "./deps.js";
 
 export async function getUser(id) {
   return db.users.find(id);
@@ -25,4 +25,13 @@ export async function chargeCustomer(id, amount) {
     logger.error("charge failed", { id, error });
     throw error;
   }
+}
+
+export function invoiceTotals(invoice) {
+  const subtotal = invoice.lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
+  return { invoiceId: invoice.id, subtotal, tax: subtotal * 0.1, total: subtotal * 1.1 };
+}
+
+export function parseOrder(body) {
+  return OrderSchema.parse(body);
 }
