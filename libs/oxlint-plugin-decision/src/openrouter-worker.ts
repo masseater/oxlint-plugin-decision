@@ -10,7 +10,7 @@ import type { DecideInput, DecideResult, DecisionRequest } from "./types.ts";
 import { mergeResponses, wireRequestsFor } from "./wire.ts";
 import type { WireRequest } from "./wire.ts";
 
-const CACHE_VERSION = 6;
+const CACHE_VERSION = 7;
 const HEX_RADIX = 16;
 const HEX_BYTE_WIDTH = 2;
 const RETRY_INITIAL_MS = 10;
@@ -116,7 +116,7 @@ const ask = Effect.fn("ask")(function* ask(endpoint: string, { request, timeoutM
       orElse: () => Effect.fail("timeout"),
     }),
   );
-  return mergeResponses(responses);
+  return mergeResponses(request, responses);
 });
 
 const askAndStore = Effect.fn("askAndStore")(function* askAndStore(

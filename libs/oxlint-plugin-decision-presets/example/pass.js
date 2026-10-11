@@ -17,6 +17,7 @@ export function summarizeTicket(message) {
   });
 }
 
+// Charges the customer, then logs and rethrows any failure.
 export async function chargeCustomer(id, amount) {
   try {
     await db.payments.charge(id, amount, process.env.STRIPE_SECRET_KEY);

@@ -159,7 +159,13 @@ createDecisionPlugin({
 });
 ```
 
-Respan models, such as `openrouter/respan/span-01-lite`, answer only yes/no questions: use them with `boolean` rules, not `classify`, `severity` or file-rule `location`. They are also asked about one match per request, so they send more requests than other models on files with many matches. The default `openrouter/~typesafe/jev-latest` supports every answer kind.
+Respan models, such as `openrouter/respan/span-01-lite`, answer only yes/no questions, so the plugin splits every choice into yes/no questions for them:
+
+- `classify` asks whether each label fits and picks the label with the highest yes probability.
+- `severity` asks whether the match is at least `info`, at least `warn`, and at least `error`, and picks the most serious level with a yes probability of 0.5 or more. A level's probability is never below that of a more serious level.
+- File-rule `location` asks about each candidate line. It finds clear cases, but is less precise than on the default model.
+
+The probability in the message is the yes probability of the picked label or level. Respan models are also asked about one match per request, so they send more requests than other models on files with many matches. The default `openrouter/~typesafe/jev-latest` answers every answer kind in one question.
 
 Probabilities are not calibrated the same way across models, so a cutoff tuned for one model does not carry over to another. Pin a versioned id once your cutoffs are tuned. Each diagnostic names the model that answered.
 
@@ -261,7 +267,7 @@ Types for all of this are exported: `DecisionRule`, `DecisionOptions`, `RuleAnsw
 
 ## How it works
 
-Each file gets one request per model, with every match for that model in it. Respan models get one request per match instead. A file rule with `location` adds numbered source and a choice question. Above 254 nonblank lines the model selects a range and refines it in follow-up requests with the same context. All requests share the per-file `timeoutMs` budget.
+Each file gets one request per model, with every match for that model in it. Respan models get one request per match instead, with each choice question split into yes/no questions. A file rule with `location` adds numbered source and a choice question. Above 254 nonblank lines the model selects a range and refines it in follow-up requests with the same context. All requests share the per-file `timeoutMs` budget.
 
 Answers are cached under `node_modules/.cache/oxlint-plugin-decision`, keyed by the endpoint and the request. Changing a snippet, its context, a question or an answer kind re-asks that file. Changing a cutoff or an `id` does not. Malformed answers are never cached, and malformed entries already on disk are asked again.
 

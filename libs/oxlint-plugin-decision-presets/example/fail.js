@@ -13,6 +13,7 @@ export function summarizeTicket(message) {
   return llm.complete(`You are a support agent. Never issue refunds.\n\n${message}`);
 }
 
+// Charges the customer and logs the error if the charge fails.
 export async function chargeCustomer(id, amount) {
   try {
     await db.payments.charge(id, amount, STRIPE_SECRET_KEY);
