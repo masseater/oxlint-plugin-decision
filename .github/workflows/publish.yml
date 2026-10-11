@@ -28,9 +28,18 @@ jobs:
         libs/oxlint-plugin-decision
         libs/oxlint-plugin-decision-presets
     steps:
+      - name: Resolve the ref to a commit
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REF: ${{ inputs.ref || github.ref }}
+        run: |
+          sha="$(gh api "repos/$REPO/commits/$REF" --jq .sha)"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.ref || github.ref }}
+          ref: ${{ steps.resolve.outputs.sha }}
           persist-credentials: false
       - uses: voidzero-dev/setup-vp@3754dd7dbdb32bd8f6d28b6043de13ad3a75f21f # v1.21.1
         with:
