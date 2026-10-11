@@ -1,6 +1,7 @@
 import type { Context, Location } from "@oxlint/plugins";
 import { Option } from "effect";
 
+import { isReported } from "./answer.ts";
 import { fetchVerdicts, locateMatch } from "./locate.ts";
 import type { Asking, Located } from "./locate.ts";
 import { OptionsError } from "./options.ts";
@@ -29,7 +30,6 @@ interface Answered {
 }
 
 const DECIMALS = 2;
-const NO_SCORE = 0;
 
 const degrade = (pass: ModelPass, reason: string): void => {
   if (failsInCi(pass.options)) {
@@ -65,8 +65,8 @@ const reportMatches = (pass: ModelPass, answered: Answered): Option.Option<Failu
   let failure: Option.Option<Failure> = Option.none();
   for (const [index, match] of pass.matches.entries()) {
     const ref = refAt(index);
-    const score = answered.verdicts.scores[ref] ?? NO_SCORE;
-    if (score >= match.rule.cutoff) {
+    const verdict = Option.fromUndefinedOr(answered.verdicts.results[ref]);
+    if (Option.isSome(verdict) && isReported(match.rule, verdict.value)) {
       const located = locate(answered, match, { ref, failed: Option.isSome(failure) });
       failure = Option.orElse(failure, () =>
         located.failure.pipe(
@@ -79,7 +79,8 @@ const reportMatches = (pass: ModelPass, answered: Answered): Option.Option<Failu
         data: {
           id: match.rule.id,
           model: `${pass.model.provider.name}/${answered.verdicts.model}`,
-          score: score.toFixed(DECIMALS),
+          answer: verdict.value.answer,
+          score: verdict.value.probability.toFixed(DECIMALS),
           cutoff: match.rule.cutoff.toFixed(DECIMALS),
           question: match.rule.question,
         },

@@ -1,6 +1,7 @@
 import type { Location, RuleOptionsSchema } from "@oxlint/plugins";
-import { Array as Arr, Option, Predicate, String as Str } from "effect";
+import { Array as Arr, Option, Predicate, Result, String as Str } from "effect";
 
+import { BOOLEAN_ANSWER, decodeRuleAnswer } from "./answer.ts";
 import type {
   AstNode,
   DecisionOptions,
@@ -10,6 +11,7 @@ import type {
   ModelSpec,
   ResolvedOptions,
   ResolvedRule,
+  RuleAnswer,
   Target,
 } from "./types.ts";
 
@@ -91,7 +93,39 @@ const CONTEXT_SCHEMA = {
       type: "object",
       additionalProperties: false,
       required: ["scope", "kind"],
-      properties: { scope: { enum: ["enclosing"] }, kind: { enum: ["function", "class", "block"] } },
+      properties: {
+        scope: { enum: ["enclosing"] },
+        kind: { enum: ["function", "class", "block"] },
+      },
+    },
+  ],
+} satisfies RuleOptionsSchema;
+
+const LABEL = { type: "string", minLength: 1 } satisfies RuleOptionsSchema;
+
+const ANSWER_SCHEMA = {
+  oneOf: [
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["kind"],
+      properties: { kind: { enum: ["boolean"] } },
+    },
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["kind", "labels", "report"],
+      properties: {
+        kind: { enum: ["classify"] },
+        labels: { type: "object", minProperties: 2, additionalProperties: { type: "string" } },
+        report: { type: "array", minItems: 1, items: LABEL },
+      },
+    },
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["kind"],
+      properties: { kind: { enum: ["severity"] }, minimum: { enum: ["info", "warn", "error"] } },
     },
   ],
 } satisfies RuleOptionsSchema;
@@ -127,6 +161,7 @@ const SCHEMA = {
           cutoff: { type: "number", minimum: 0, maximum: 1 },
           model: MODEL_SCHEMA,
           context: CONTEXT_SCHEMA,
+          answer: ANSWER_SCHEMA,
         },
       },
     },
@@ -176,6 +211,16 @@ const duplicateIdOf = (rules: readonly DecisionRule[]): Option.Option<string> =>
   return Arr.findFirst(ids, (id, index) => ids.indexOf(id) !== index);
 };
 
+const answerOf = (rule: DecisionRule): RuleAnswer => {
+  if (Predicate.isUndefined(rule.answer)) {
+    return BOOLEAN_ANSWER;
+  }
+  return Result.getOrThrowWith(
+    decodeRuleAnswer(rule.answer),
+    (issue) => new OptionsError(`rule "${rule.id}" has an invalid answer: ${issue}`),
+  );
+};
+
 const resolveRule =
   (fallback: ModelSpec, providers: Readonly<Record<string, DecisionProvider>>) =>
   (rule: DecisionRule): ResolvedRule => {
@@ -184,6 +229,7 @@ const resolveRule =
     }
     return {
       ...rule,
+      answer: answerOf(rule),
       models: modelIdsOf(rule.model ?? fallback).map((id) => resolveModel(id, providers)),
     };
   };
@@ -218,7 +264,8 @@ const REPORT_LOC = {
   function: (node: AstNode, text: string): Location =>
     headOf(text, node.loc.start.line, node.loc.start.column),
   call: (node: AstNode): Location => node.loc,
-  jsx: (node: AstNode): Location => Option.getOrElse(Option.fromNullishOr(node.openingElement), () => node).loc,
+  jsx: (node: AstNode): Location =>
+    Option.getOrElse(Option.fromNullishOr(node.openingElement), () => node).loc,
   file: (_node: AstNode, text: string): Location => headOf(text, FIRST_LINE, FIRST_COLUMN),
 } as const satisfies Readonly<Record<Target, (node: AstNode, text: string) => Location>>;
 

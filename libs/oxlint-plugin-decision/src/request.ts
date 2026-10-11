@@ -1,6 +1,7 @@
 import type { Location } from "@oxlint/plugins";
 import { Array as Arr, Boolean as Bool, Number as Num, Option, Predicate, Schema } from "effect";
 
+import { questionFor, verdictOf } from "./answer.ts";
 import type {
   ChoiceQuestion,
   DecisionRequest,
@@ -8,6 +9,7 @@ import type {
   Question,
   RequestMatch,
   RuleLocation,
+  Verdict,
   Verdicts,
 } from "./types.ts";
 
@@ -106,15 +108,12 @@ const ChoiceAnswer = Schema.Struct({
   probabilities: Schema.Record(Schema.String, Probability),
 });
 
-const NoulAnswer = Schema.Struct({ noul: Probability });
-
 const Response = Schema.Struct({
   model: Schema.NonEmptyString,
   answers: Schema.Record(Schema.String, Schema.Unknown),
 });
 
 const decodeChoice = Schema.decodeUnknownOption(ChoiceAnswer);
-const decodeNoul = Schema.decodeUnknownOption(NoulAnswer);
 const decodeResponse = Schema.decodeUnknownOption(Response);
 
 type ChoiceCriteria = ChoiceQuestion["criteria"];
@@ -141,10 +140,7 @@ const selectedLocation = (
   );
 
 const locationOfLine = (snippet: string, line: number): Location => {
-  const text = Option.getOrElse(
-    Arr.get(sourceLines(snippet), Num.decrement(line)),
-    () => "",
-  );
+  const text = Option.getOrElse(Arr.get(sourceLines(snippet), Num.decrement(line)), () => "");
   return {
     start: { line, column: Math.max(Num.decrement(FIRST_LINE), text.search(/\S/u)) },
     end: { line, column: text.trimEnd().length },
@@ -163,12 +159,12 @@ const contextNote = (match: RequestMatch, ref: string): string => {
   return ` state.contexts.${ref} shows the source around it; use it only to understand the snippet.`;
 };
 
-const noulFor = (match: RequestMatch, ref: string): readonly [string, Question] => [
+const mainQuestionFor = (match: RequestMatch, ref: string): readonly [string, Question] => [
   ref,
-  {
-    type: "noul",
-    instructions: `Consider only snippet "${ref}" in state.snippets.${contextNote(match, ref)} ${match.rule.question}`,
-  },
+  questionFor(
+    match.rule.answer,
+    `Consider only snippet "${ref}" in state.snippets.${contextNote(match, ref)} ${match.rule.question}`,
+  ),
 ];
 
 const questionsFor = (
@@ -176,10 +172,10 @@ const questionsFor = (
   ref: string,
 ): readonly (readonly [string, Question])[] => {
   if (!locates(match)) {
-    return [noulFor(match, ref)];
+    return [mainQuestionFor(match, ref)];
   }
   return [
-    noulFor(match, ref),
+    mainQuestionFor(match, ref),
     [locationRefOf(ref), locationQuestion(match, ref, locationCandidates(match.snippet))],
   ];
 };
@@ -208,9 +204,7 @@ const contextsOf = (
 const buildRequest = (model: string, matches: readonly RequestMatch[]): DecisionRequest => ({
   model,
   state: {
-    snippets: Object.fromEntries(
-      matches.map((match, index) => [refAt(index), snippetFor(match)]),
-    ),
+    snippets: Object.fromEntries(matches.map((match, index) => [refAt(index), snippetFor(match)])),
     ...contextsOf(matches),
   },
   questions: Object.fromEntries(
@@ -228,29 +222,32 @@ const choiceQuestionsOf = (
     return [];
   });
 
-const noulRefsOf = (request: DecisionRequest): readonly string[] =>
-  Object.entries(request.questions)
-    .filter(([, question]) => question.type === "noul")
-    .map(([id]) => id);
+const mainQuestionsOf = (request: DecisionRequest): readonly (readonly [string, Question])[] =>
+  Object.entries(request.questions).filter(([id]) => !id.endsWith(LOCATION_SUFFIX));
 
-const scoreOf = (answers: Readonly<Record<string, unknown>>, ref: string): number =>
+const resultOf = (
+  answers: Readonly<Record<string, unknown>>,
+  [ref, question]: readonly [string, Question],
+): readonly [string, Verdict] => [
+  ref,
   Option.getOrThrowWith(
-    Option.map(decodeNoul(answers[ref]), ({ noul }) => noul),
-    () => new Error(`response has no probability in [0, 1] for "${ref}"`),
-  );
+    verdictOf(question, answers[ref]),
+    () => new Error(`response has no valid answer for "${ref}"`),
+  ),
+];
 
 const parseVerdicts = (json: unknown, request: DecisionRequest): Verdicts => {
   const { model, answers } = Option.getOrThrowWith(
     decodeResponse(json),
     () => new Error("response has no model id or answers object"),
   );
-  const scores = Object.fromEntries(
-    noulRefsOf(request).map((ref) => [ref, scoreOf(answers, ref)]),
+  const results = Object.fromEntries(
+    mainQuestionsOf(request).map((entry) => resultOf(answers, entry)),
   );
   const complete = choiceQuestionsOf(request).every(([id, criteria]) =>
     validChoice(answers[id], criteria),
   );
-  return { model, scores, answers, complete };
+  return { model, results, answers, complete };
 };
 
 export {

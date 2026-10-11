@@ -8,7 +8,7 @@ import { parseVerdicts } from "./request.ts";
 import { messageOf } from "./runtime.ts";
 import type { DecideInput, DecideResult, DecisionRequest } from "./types.ts";
 
-const CACHE_VERSION = 4;
+const CACHE_VERSION = 5;
 const HEX_RADIX = 16;
 const HEX_BYTE_WIDTH = 2;
 const RETRY_INITIAL_MS = 10;

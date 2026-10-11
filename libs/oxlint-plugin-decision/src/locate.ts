@@ -49,9 +49,10 @@ const fetchVerdicts = (asking: Asking, request: DecisionRequest): VerdictResult 
     return result;
   }
   return runOrElse(
-    Effect.sync(
-      (): VerdictResult => ({ ok: true, verdicts: parseVerdicts(result.response, request) }),
-    ),
+    Effect.sync((): VerdictResult => ({
+      ok: true,
+      verdicts: parseVerdicts(result.response, request),
+    })),
     (cause) => ({ ok: false, reason: messageOf(cause) }),
   );
 };

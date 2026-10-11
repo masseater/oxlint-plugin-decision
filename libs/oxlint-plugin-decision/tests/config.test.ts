@@ -93,6 +93,18 @@ const badConfigs: readonly (readonly [string, DecisionOptions, string])[] = [
     'model "jev-latest" must be "<provider>/<model>"',
   ],
   [
+    "a classify rule reports a label it does not list",
+    {
+      rules: [
+        {
+          ...goodRule,
+          answer: { kind: "classify", labels: { ok: "Fine", bad: "Not fine" }, report: ["worse"] },
+        },
+      ],
+    },
+    "every label in report must be one of labels",
+  ],
+  [
     "a context scope is unknown",
     { rules: [{ ...goodRule, ...JSON.parse('{"context":{"scope":"repo"}}') }] },
     "context",

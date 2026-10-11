@@ -14,11 +14,15 @@ const ENCLOSING_TYPES: Readonly<Record<EnclosingKind, readonly string[]>> = {
 
 const ancestorsOf = (node: AstNode): readonly AstNode[] =>
   Arr.unfold(Option.fromNullishOr(node.parent), (current) =>
-    current.pipe(Option.map((ancestor) => [ancestor, Option.fromNullishOr(ancestor.parent)] as const)),
+    current.pipe(
+      Option.map((ancestor) => [ancestor, Option.fromNullishOr(ancestor.parent)] as const),
+    ),
   );
 
 const enclosingText = (context: Context, node: AstNode, kind: EnclosingKind): string =>
-  Arr.findFirst(ancestorsOf(node), (ancestor) => ENCLOSING_TYPES[kind].includes(ancestor.type)).pipe(
+  Arr.findFirst(ancestorsOf(node), (ancestor) =>
+    ENCLOSING_TYPES[kind].includes(ancestor.type),
+  ).pipe(
     Option.match({
       onNone: () => context.sourceCode.text,
       onSome: (ancestor) => context.sourceCode.getText(ancestor),
@@ -39,11 +43,7 @@ const linesAround = (
     .join("\n");
 };
 
-const contextOf = (
-  context: Context,
-  node: AstNode,
-  rule: RuleContext,
-): Option.Option<string> => {
+const contextOf = (context: Context, node: AstNode, rule: RuleContext): Option.Option<string> => {
   switch (rule.scope) {
     case "node": {
       return Option.none();

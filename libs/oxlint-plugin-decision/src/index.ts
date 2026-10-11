@@ -22,7 +22,9 @@ export type {
   ModelSpec,
   NoulQuestion,
   Question,
+  RuleAnswer,
   RuleContext,
   RuleLocation,
+  Severity,
   Target,
 } from "./types.ts";

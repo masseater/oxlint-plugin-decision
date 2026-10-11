@@ -19,6 +19,17 @@ type RuleContext =
   | { readonly scope: "enclosing"; readonly kind: EnclosingKind }
   | { readonly scope: "file" };
 
+type Severity = "info" | "warn" | "error";
+
+type RuleAnswer =
+  | { readonly kind: "boolean" }
+  | {
+      readonly kind: "classify";
+      readonly labels: Readonly<Record<string, string>>;
+      readonly report: readonly [string, ...string[]];
+    }
+  | { readonly kind: "severity"; readonly minimum?: Severity };
+
 interface DecisionRule {
   readonly id: string;
   readonly target: Target;
@@ -27,6 +38,7 @@ interface DecisionRule {
   readonly location?: RuleLocation;
   readonly model?: ModelSpec;
   readonly context?: RuleContext;
+  readonly answer?: RuleAnswer;
 }
 
 interface DecisionOptions {
@@ -94,6 +106,7 @@ interface ModelRef {
 
 interface ResolvedRule extends DecisionRule {
   readonly models: readonly ModelRef[];
+  readonly answer: RuleAnswer;
 }
 
 interface ResolvedOptions {
@@ -105,7 +118,7 @@ interface ResolvedOptions {
 }
 
 interface RequestMatch {
-  readonly rule: Pick<DecisionRule, "question" | "location">;
+  readonly rule: Pick<ResolvedRule, "question" | "location" | "answer">;
   readonly snippet: string;
   readonly truncated: boolean;
   readonly context?: string;
@@ -116,9 +129,14 @@ interface Match extends RequestMatch {
   readonly loc: Location;
 }
 
+interface Verdict {
+  readonly answer: string;
+  readonly probability: number;
+}
+
 interface Verdicts {
   readonly model: string;
-  readonly scores: Readonly<Record<string, number>>;
+  readonly results: Readonly<Record<string, Verdict>>;
   readonly answers: Readonly<Record<string, unknown>>;
   readonly complete: boolean;
 }
@@ -160,8 +178,11 @@ export type {
   RequestMatch,
   ResolvedOptions,
   ResolvedRule,
+  RuleAnswer,
   RuleContext,
   RuleLocation,
+  Severity,
   Target,
+  Verdict,
   Verdicts,
 };

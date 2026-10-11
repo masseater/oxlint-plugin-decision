@@ -1,5 +1,5 @@
 import { NodeHttpServer } from "@effect/platform-node";
-import { Array as Arr, Context, Effect, Layer, Option, Ref, Schema } from "effect";
+import { Array as Arr, Boolean as Bool, Context, Effect, Layer, Option, Ref, Schema } from "effect";
 import { HttpRouter, HttpServer, HttpServerRequest, HttpServerResponse } from "effect/http";
 
 const PII_MARKER = "user.email, user.phone";
@@ -38,6 +38,7 @@ const BodySchema = Schema.Struct({
 });
 
 type Body = typeof BodySchema.Type;
+type Question = typeof QuestionSchema.Type;
 
 interface LoggedRequest {
   readonly authorization: string;
@@ -69,8 +70,10 @@ const scoreFor = (question: string, snippet: string): number =>
     Option.match({ onNone: () => NO, onSome: () => YES }),
   );
 
+const LOCATION_SUFFIX = "_location";
+
 const isRefinement = (body: Body): boolean =>
-  Object.values(body.questions).every((question) => question.type === "choice");
+  Object.keys(body.questions).every((ref) => ref.endsWith(LOCATION_SUFFIX));
 
 const markedLine = (snippet: string): number =>
   Arr.findFirst(snippet.split("\n"), (text) => text.includes(PII_MARKER)).pipe(
@@ -94,7 +97,7 @@ const selectedChoice = (body: Body, ref: string, token: string): string => {
   if (token === "location-unknown") {
     return UNKNOWN_CHOICE;
   }
-  const line = markedLine(snippetOf(body, ref.replace(/_location$/u, "")));
+  const line = markedLine(snippetOf(body, ref.replace(LOCATION_SUFFIX, "")));
   return lookup(body.questions, ref).pipe(
     Option.flatMap((question) => Option.fromUndefinedOr(question.criteria)),
     Option.flatMap((criteria) =>
@@ -130,11 +133,26 @@ const skipsChoice = (body: Body, token: string, hits: number): boolean =>
   (token === "location-missing-once" && hits === FIRST_HIT) ||
   (token === "refinement-missing-once" && isRefinement(body) && hits === SECOND_HIT);
 
+const labelAnswer = (body: Body, ref: string, question: Question): unknown => {
+  const labels = Object.keys(
+    Option.getOrElse(Option.fromUndefinedOr(question.criteria), () => ({})),
+  );
+  const flagged = scoreFor(question.instructions, snippetOf(body, ref)) === YES;
+  const choice = Option.getOrElse(
+    Bool.match(flagged, { onTrue: () => Arr.last(labels), onFalse: () => Arr.head(labels) }),
+    () => UNKNOWN_CHOICE,
+  );
+  return { type: "choice", choice, probabilities: { [choice]: SURE } };
+};
+
 const answerOf =
   (body: Body, token: string, hits: number) =>
   ([ref, question]: readonly [string, Body["questions"][string]]): readonly [string, unknown][] => {
     if (question.type !== "choice") {
       return [[ref, { type: "noul", noul: noulScore(body, ref, token) }]];
+    }
+    if (!ref.endsWith(LOCATION_SUFFIX)) {
+      return [[ref, labelAnswer(body, ref, question)]];
     }
     if (skipsChoice(body, token, hits)) {
       return [];

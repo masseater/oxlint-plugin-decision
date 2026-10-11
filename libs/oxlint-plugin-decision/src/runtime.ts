@@ -13,10 +13,7 @@ const runOrElse = <Value>(
   });
 
 const envOf = (name: string): Option.Option<string> =>
-  runOrElse(
-    Config.option(Config.NonEmptyString(name)),
-    () => Option.none(),
-  ).pipe(
+  runOrElse(Config.option(Config.NonEmptyString(name)), () => Option.none()).pipe(
     Option.map((value) => value.trim()),
     Option.filter(Str.isNonEmpty),
   );

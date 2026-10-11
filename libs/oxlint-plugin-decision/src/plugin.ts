@@ -16,12 +16,12 @@ const META = {
   type: "problem",
   docs: {
     description:
-      "Ask decision models a plain-English yes/no question about matched code and report when the yes-probability clears the rule's cutoff.",
+      "Ask decision models a plain-English question about matched code and report when the answer the rule cares about clears its cutoff.",
   },
   schema: [SCHEMA],
   defaultOptions: [DEFAULTS],
   messages: {
-    yes: "[{{id}}] {{model}} answered yes ({{score}} >= {{cutoff}}): {{question}}",
+    yes: "[{{id}}] {{model}} answered {{answer}} ({{score}} >= {{cutoff}}): {{question}}",
     unlocated: `${PREFIX}: {{reason}} while refining the location of [{{id}}]; the finding is reported at the file level`,
   },
 } satisfies RuleMeta;
