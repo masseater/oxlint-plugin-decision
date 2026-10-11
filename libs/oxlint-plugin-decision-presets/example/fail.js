@@ -19,3 +19,22 @@ export async function chargeCustomer(id, amount) {
     await db.payments.charge(id, amount, STRIPE_SECRET_KEY);
   } catch {}
 }
+
+export function processData(data) {
+  const subtotal = data.lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
+  return { invoiceId: data.id, subtotal, tax: subtotal * 0.1, total: subtotal * 1.1 };
+}
+
+export function parseOrder(body) {
+  if (
+    typeof body !== "object" ||
+    body === null ||
+    typeof body.id !== "string" ||
+    !Array.isArray(body.items) ||
+    body.items.some((item) => typeof item.sku !== "string" || typeof item.quantity !== "number") ||
+    (body.coupon !== undefined && typeof body.coupon !== "string")
+  ) {
+    throw new TypeError("invalid order");
+  }
+  return body;
+}

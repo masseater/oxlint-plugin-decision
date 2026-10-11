@@ -67,12 +67,30 @@ const staleComment = defineDecisionRule({
   },
 });
 
+const domainNaming = defineDecisionRule({
+  id: "domain-naming",
+  target: "function",
+  question:
+    "Is this function named after a mechanism word such as Manager, Processor, Handler, Helper, Data, Info, handle, process, or do, while its body works on one specific business concept, such as an invoice, an order, or a refund, that the name should call by its domain name instead? Code whose subject is a generic mechanism, such as HTTP, files, the command line, or framework glue, does not count.",
+  cutoff: 0.6,
+});
+
+const preferSchemaValidation = defineDecisionRule({
+  id: "prefer-schema-validation",
+  target: "function",
+  question:
+    "Does this function check the shape or values of untyped data, such as parsed JSON, a request body, config, or an API response, with a long hand-written chain of typeof, instanceof, in, or field checks joined by && or ||, where a schema from a validation library would state the same rules more simply? A single simple check does not count.",
+  cutoff: 0.6,
+});
+
 export {
+  domainNaming,
   nameMatchesBehavior,
   noHardcodedSecrets,
   noPiiInLogs,
   noPromptInjection,
   noSwallowedErrors,
+  preferSchemaValidation,
   staleComment,
   untrustedInputRisk,
 };

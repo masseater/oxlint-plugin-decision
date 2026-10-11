@@ -1,14 +1,16 @@
 import { NodeServices } from "@effect/platform-node";
 import { layer } from "@effect/vitest";
 import { deepStrictEqual } from "@effect/vitest/utils";
-import { Array as Arr, Config, Effect, FileSystem, Option, Redacted } from "effect";
+import { Array as Arr, Config, Effect, Option, Redacted } from "effect";
 
 import { presets } from "#src/presets.ts";
 
 import {
+  EXAMPLE_FILES,
   PLUGIN_NAME,
   TIMEOUT,
   enabled,
+  exampleFiles,
   fromRoot,
   outputOf,
   oxlint,
@@ -43,7 +45,12 @@ const EXPECTED = {
     "fail.js:12:8: [untrusted-input-risk]",
     "fail.js:17:8: [no-swallowed-errors]",
   ],
-  "review-only": ["fail.js:5:8: [name-matches-behavior]", "fail.js:17:8: [stale-comment]"],
+  "review-only": [
+    "fail.js:5:8: [name-matches-behavior]",
+    "fail.js:17:8: [stale-comment]",
+    "fail.js:23:8: [domain-naming]",
+    "fail.js:28:8: [prefer-schema-validation]",
+  ],
 } as const;
 
 type PresetEntry = keyof typeof EXPECTED;
@@ -73,12 +80,10 @@ const headOf = (line: string): string =>
 const presetLive = (preset: PresetEntry): Effect.Effect<void, unknown, Services> =>
   Effect.scoped(
     Effect.gen(function* test() {
-      const fs = yield* FileSystem.FileSystem;
       const key = yield* Config.Redacted("OPENROUTER_API_KEY");
       const plugin = yield* fromRoot("dist", `${preset}.mjs`);
       const cwd = yield* tempProject({
-        "fail.js": yield* fs.readFileString(yield* fromRoot("example", "fail.js")),
-        "pass.js": yield* fs.readFileString(yield* fromRoot("example", "pass.js")),
+        ...(yield* exampleFiles),
         ".oxlintrc.json": JSON.stringify({
           jsPlugins: [plugin],
           settings: { [PLUGIN_NAME]: { model: LIVE_MODEL, ci: "fail" } },
@@ -87,7 +92,7 @@ const presetLive = (preset: PresetEntry): Effect.Effect<void, unknown, Services>
       });
       const run = yield* oxlint(
         cwd,
-        ["--format", "unix", "-c", ".oxlintrc.json", "fail.js", "pass.js"],
+        ["--format", "unix", "-c", ".oxlintrc.json", ...EXAMPLE_FILES],
         {
           ...(yield* proxyEnv),
           OPENROUTER_API_KEY: Redacted.value(key),
@@ -95,8 +100,10 @@ const presetLive = (preset: PresetEntry): Effect.Effect<void, unknown, Services>
       );
       yield* Effect.log(outputOf(run));
       deepStrictEqual(
-        reportedLines(run, PLUGIN_NAME).map((line) => headOf(line)),
-        [...EXPECTED[preset]],
+        reportedLines(run, PLUGIN_NAME)
+          .map((line) => headOf(line))
+          .toSorted((left, right) => left.localeCompare(right)),
+        [...EXPECTED[preset]].toSorted((left, right) => left.localeCompare(right)),
       );
     }),
   );

@@ -37,7 +37,7 @@ A preset decides which rules the plugin registers. A rule turns on only when you
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | `@r_masseater/oxlint-plugin-decision-presets/recommended` | `no-pii-in-logs`, `no-prompt-injection`, `no-hardcoded-secrets`                           |
 | `@r_masseater/oxlint-plugin-decision-presets/strict`      | `recommended` plus `name-matches-behavior`, `no-swallowed-errors`, `untrusted-input-risk` |
-| `@r_masseater/oxlint-plugin-decision-presets/review-only` | `name-matches-behavior`, `stale-comment`                                                  |
+| `@r_masseater/oxlint-plugin-decision-presets/review-only` | `name-matches-behavior`, `stale-comment`, `domain-naming`, `prefer-schema-validation`     |
 
 The package root (`@r_masseater/oxlint-plugin-decision-presets`) is the `recommended` preset.
 
@@ -45,15 +45,17 @@ The package root (`@r_masseater/oxlint-plugin-decision-presets`) is the `recomme
 
 ## Rules
 
-| Id                      | Target     | Asks                                                                                                       |
-| ----------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
-| `no-pii-in-logs`        | `call`     | Does this call write personal data to a log or console?                                                    |
-| `no-prompt-injection`   | `function` | Does this function concatenate untrusted user input into a language model prompt?                          |
-| `no-hardcoded-secrets`  | `file`     | Does this file contain a hard-coded secret as a literal value?                                             |
-| `name-matches-behavior` | `function` | Does a read-only name (get, find, load, fetch) hide a body that also writes, logs, or sends?               |
-| `no-swallowed-errors`   | `function` | Does this function catch an error and drop it?                                                             |
-| `untrusted-input-risk`  | `function` | How severe is splicing untrusted input into a query, command, markup, or prompt? Reports `warn` and above. |
-| `stale-comment`         | `function` | Does the comment above the function claim something the code does not do?                                  |
+| Id                         | Target     | Asks                                                                                                       |
+| -------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| `no-pii-in-logs`           | `call`     | Does this call write personal data to a log or console?                                                    |
+| `no-prompt-injection`      | `function` | Does this function concatenate untrusted user input into a language model prompt?                          |
+| `no-hardcoded-secrets`     | `file`     | Does this file contain a hard-coded secret as a literal value?                                             |
+| `name-matches-behavior`    | `function` | Does a read-only name (get, find, load, fetch) hide a body that also writes, logs, or sends?               |
+| `no-swallowed-errors`      | `function` | Does this function catch an error and drop it?                                                             |
+| `untrusted-input-risk`     | `function` | How severe is splicing untrusted input into a query, command, markup, or prompt? Reports `warn` and above. |
+| `stale-comment`            | `function` | Does the comment above the function claim something the code does not do?                                  |
+| `domain-naming`            | `function` | Is a function about one business concept named after a mechanism word (Manager, Processor, Data, handle)?  |
+| `prefer-schema-validation` | `function` | Does a long hand-written chain of typeof and field checks validate data a schema would describe?           |
 
 ## Models
 
