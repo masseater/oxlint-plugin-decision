@@ -1,13 +1,17 @@
 import { NodeServices } from "@effect/platform-node";
 import { layer } from "@effect/vitest";
 import { deepStrictEqual, strictEqual } from "@effect/vitest/utils";
-import { Array as Arr, Effect, FileSystem, Option, Schema } from "effect";
+import { Array as Arr, Effect, FileSystem, Option } from "effect";
+
+import strictConfig from "#example/claims/oxlint.config.ts";
+import reviewOnlyConfig from "#example/claims/review-only.config.ts";
 
 import {
   FAILED,
   PASSED,
   PLUGIN_NAME,
   TIMEOUT,
+  configSource,
   fromRoot,
   outputOf,
   oxlint,
@@ -60,7 +64,7 @@ const LOGS = ["cart.js:30", "cart.js:45", "cart.js:47"];
 
 const EXAMPLES = {
   strict: {
-    config: ".oxlintrc.json",
+    config: strictConfig,
     status: FAILED,
     asked: {
       "catch-hides-failure": FUNCTIONS,
@@ -72,7 +76,7 @@ const EXAMPLES = {
     },
   },
   reviewOnly: {
-    config: "review-only.oxlintrc.json",
+    config: reviewOnlyConfig,
     status: PASSED,
     asked: {
       "comment-describes-block": FUNCTIONS,
@@ -116,13 +120,6 @@ const exampleFile = (
     return yield* fs.readFileString(yield* fromRoot("example", "claims", name));
   });
 
-const ExampleConfig = Schema.Struct({
-  rules: Schema.Record(Schema.String, Schema.Unknown),
-  overrides: Schema.Array(Schema.Unknown),
-});
-
-const decodeConfig = Schema.decodeUnknownEffect(Schema.fromJsonString(ExampleConfig));
-
 const askedWhere = (preset: Preset): Effect.Effect<void, unknown, Services> =>
   Effect.scoped(
     Effect.gen(function* test() {
@@ -134,20 +131,19 @@ const askedWhere = (preset: Preset): Effect.Effect<void, unknown, Services> =>
         "index.mjs",
       );
       const entry = yield* fromRoot("dist", "index.mjs");
-      const config = yield* decodeConfig(yield* exampleFile(EXAMPLES[preset].config));
       const cwd = yield* tempProject({
         "plugin.mjs": alwaysYes(core, entry, preset),
         "cart.js": yield* exampleFile("cart.js"),
         "cart.test.js": yield* exampleFile("cart.test.js"),
-        ".oxlintrc.json": JSON.stringify({
-          ...config,
+        "oxlint.config.ts": configSource({
+          ...EXAMPLES[preset].config,
           jsPlugins: ["./plugin.mjs"],
           settings: { [PLUGIN_NAME]: { model: "fake/any", maxMatchesPerFile: 100 } },
         }),
       });
       const run = yield* oxlint(
         cwd,
-        ["--format", "unix", "-c", ".oxlintrc.json", "cart.js", "cart.test.js"],
+        ["--format", "unix", "-c", "oxlint.config.ts", "cart.js", "cart.test.js"],
         {},
       );
       strictEqual(run.status, EXAMPLES[preset].status, outputOf(run));

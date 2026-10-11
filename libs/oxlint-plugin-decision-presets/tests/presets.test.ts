@@ -12,6 +12,7 @@ import {
   PASSED,
   PLUGIN_NAME,
   TIMEOUT,
+  configSource,
   enabled,
   exampleFiles,
   fromRoot,
@@ -92,13 +93,17 @@ const lintWithFake = (preset: PresetName): Effect.Effect<Run, PlatformError, Ser
       const cwd = yield* tempProject({
         "plugin.mjs": fakePlugin(core, entry, preset),
         ...(yield* exampleFiles),
-        ".oxlintrc.json": JSON.stringify({
+        "oxlint.config.ts": configSource({
           jsPlugins: ["./plugin.mjs"],
           settings: { decision: { model: "fake/any", ci: "fail", maxMatchesPerFile: 100 } },
           rules: enabled("decision", presets[preset]),
         }),
       });
-      return yield* oxlint(cwd, ["--format", "unix", "-c", ".oxlintrc.json", ...EXAMPLE_FILES], {});
+      return yield* oxlint(
+        cwd,
+        ["--format", "unix", "-c", "oxlint.config.ts", ...EXAMPLE_FILES],
+        {},
+      );
     }),
   );
 
@@ -153,13 +158,13 @@ const loadsEntry = (entry: (typeof ENTRIES)[number]): Check =>
       const plugin = yield* fromRoot("dist", `${entry}.mjs`);
       const cwd = yield* tempProject({
         "a.js": "console.log(1);\n",
-        ".oxlintrc.json": JSON.stringify({
+        "oxlint.config.ts": configSource({
           jsPlugins: [plugin],
           settings: { [PLUGIN_NAME]: { ci: "fail" } },
           rules: enabled(PLUGIN_NAME, ENTRY_RULES[entry]),
         }),
       });
-      const run = yield* oxlint(cwd, ["-c", ".oxlintrc.json", "a.js"], { CI: "1" });
+      const run = yield* oxlint(cwd, ["-c", "oxlint.config.ts", "a.js"], { CI: "1" });
       strictEqual(run.status === PASSED, false);
       assertInclude(outputOf(run), "OPENROUTER_API_KEY is not set");
     }),
@@ -167,7 +172,7 @@ const loadsEntry = (entry: (typeof ENTRIES)[number]): Check =>
 
 const customExample = Effect.gen(function* test() {
   const cwd = yield* fromRoot("example", "custom");
-  const run = yield* oxlint(cwd, ["--format", "unix", "-c", ".oxlintrc.json", "handler.js"], {});
+  const run = yield* oxlint(cwd, ["--format", "unix", "-c", "oxlint.config.ts", "handler.js"], {});
   strictEqual(run.status, PASSED, outputOf(run));
   assertInclude(run.stderr, "OPENROUTER_API_KEY is not set, skipping openrouter models");
 });

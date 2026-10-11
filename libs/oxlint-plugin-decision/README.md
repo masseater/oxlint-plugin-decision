@@ -26,7 +26,7 @@ In CI (when the `CI` environment variable is set), a run that could not reach a 
 
 ## Write your rules
 
-The plugin ships no rules of its own. You write each rule with `defineDecisionRule` in a plugin file of your own, pass them to `createDecisionPlugin`, and load that file from `.oxlintrc.json`. For ready-made rules, use [`@r_masseater/oxlint-plugin-decision-presets`](https://www.npmjs.com/package/@r_masseater/oxlint-plugin-decision-presets).
+The plugin ships no rules of its own. You write each rule with `defineDecisionRule` in a plugin file of your own, pass them to `createDecisionPlugin`, and load that file from `oxlint.config.ts`. For ready-made rules, use [`@r_masseater/oxlint-plugin-decision-presets`](https://www.npmjs.com/package/@r_masseater/oxlint-plugin-decision-presets).
 
 ```js
 // decision-plugin.mjs
@@ -56,14 +56,17 @@ export default createDecisionPlugin({
 
 Each rule becomes an oxlint rule named `<plugin name>/<rule id>`, so you turn rules on and set their severity one by one, like any other oxlint rule. The plugin name defaults to `decision`.
 
-```json
-{
-  "jsPlugins": ["./decision-plugin.mjs"],
-  "rules": {
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["./decision-plugin.mjs"],
+  rules: {
     "team/no-pii-in-logs": "error",
-    "team/name-matches-behavior": "warn"
-  }
-}
+    "team/name-matches-behavior": "warn",
+  },
+});
 ```
 
 The rules you turn on share one request per file and model, so turning on more rules does not add requests.
@@ -234,18 +237,27 @@ The violation and location have separate cutoffs. An uncertain or invalid locati
 
 ### Settings
 
-Settings apply to the whole plugin, not to one rule. Pass them to `createDecisionPlugin`, or put them under `settings.<plugin name>` in `.oxlintrc.json`. Values in `.oxlintrc.json` win, so one plugin file can run with different settings in different configs.
+Settings apply to the whole plugin, not to one rule. Pass them to `createDecisionPlugin`, or put them under `settings.<plugin name>` in `oxlint.config.ts`. Values in the config file win, so one plugin file can run with different settings in different configs.
 
 ```js
 createDecisionPlugin({ name: "team", timeoutMs: 20_000, rules: [ ... ] });
 ```
 
-```json
-{
-  "jsPlugins": ["./decision-plugin.mjs"],
-  "settings": { "team": { "model": "openrouter/respan/span-01-lite" } },
-  "rules": { "team/no-pii-in-logs": "error" }
-}
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["./decision-plugin.mjs"],
+  settings: {
+    team: {
+      model: "openrouter/respan/span-01-lite",
+    },
+  },
+  rules: {
+    "team/no-pii-in-logs": "error",
+  },
+});
 ```
 
 | Setting             | Default                             | Meaning                                                                                                                                                |
@@ -291,24 +303,36 @@ Explain mode only prints. It does not change what is asked, what is cached, or w
 
 ### Rule options
 
-Each rule also takes options in `.oxlintrc.json`, next to its severity. They change only that rule, so one config can run different rules on different models.
+Each rule also takes options in `oxlint.config.ts`, next to its severity. They change only that rule, so one config can run different rules on different models.
 
-```json
-{
-  "jsPlugins": ["./decision-plugin.mjs"],
-  "settings": { "team": { "model": "openrouter/respan/span-01-lite" } },
-  "rules": {
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["./decision-plugin.mjs"],
+  settings: {
+    team: {
+      model: "openrouter/respan/span-01-lite",
+    },
+  },
+  rules: {
     "team/no-pii-in-logs": "error",
-    "team/name-matches-behavior": ["warn", { "model": "openrouter/~typesafe/jev-latest" }]
-  }
-}
+    "team/name-matches-behavior": [
+      "warn",
+      {
+        model: "openrouter/~typesafe/jev-latest",
+      },
+    ],
+  },
+});
 ```
 
 | Option  | Meaning                                  |
 | ------- | ---------------------------------------- |
 | `model` | A model id or list of ids for this rule. |
 
-A rule's model comes from the first of these that sets one: the rule's options in `.oxlintrc.json`, the rule's own `model`, `settings.<plugin name>.model`, the `model` passed to `createDecisionPlugin`, and the default.
+A rule's model comes from the first of these that sets one: the rule's options in `oxlint.config.ts`, the rule's own `model`, `settings.<plugin name>.model`, the `model` passed to `createDecisionPlugin`, and the default.
 
 Rules on different models are asked separately, one request per file and model, so a Respan model and `~typesafe/jev-latest` can share a config: each model gets only the matches of the rules that use it. Answers are cached by the request each model receives, so rules never share or overwrite each other's cached answers.
 
@@ -348,12 +372,21 @@ export default createDecisionPlugin({
 });
 ```
 
-```json
-{
-  "jsPlugins": ["./decision-plugin.mjs"],
-  "settings": { "team": { "model": "internal/v2" } },
-  "rules": { "team/no-swallowed-catch": "error" }
-}
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["./decision-plugin.mjs"],
+  settings: {
+    team: {
+      model: "internal/v2",
+    },
+  },
+  rules: {
+    "team/no-swallowed-catch": "error",
+  },
+});
 ```
 
 `createDecisionPlugin` checks every rule and setting when the plugin loads, so a typo in a rule fails the oxlint run instead of being ignored.
@@ -391,19 +424,24 @@ The oxlint VS Code extension lints as you type, and every keystroke inside a mat
 
 Keep your decision rules off in the config your editor reads, and turn them on in an overlay for CI and pre-push. Leave `jsPlugins` in the base config, since the overlay inherits it.
 
-```json
-{
-  "extends": [".oxlintrc.json"],
-  "rules": {
+```ts
+// oxlint.ci.config.ts
+import { defineConfig } from "oxlint";
+
+import base from "./oxlint.config.ts";
+
+export default defineConfig({
+  extends: [base],
+  rules: {
     "team/no-pii-in-logs": "error",
-    "team/name-matches-behavior": "error"
-  }
-}
+    "team/name-matches-behavior": "error",
+  },
+});
 ```
 
 ```sh
-oxlint                        # editor and local runs, no models
-oxlint -c .oxlintrc.ci.json   # CI and pre-push, models included
+oxlint                          # editor and local runs, no models
+oxlint -c oxlint.ci.config.ts   # CI and pre-push, models included
 ```
 
 ## Example

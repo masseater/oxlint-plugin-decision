@@ -20,15 +20,18 @@ The plugin reads the key from the `OPENROUTER_API_KEY` environment variable; set
 
 Point `jsPlugins` at a preset and turn on its rules. Each rule is its own oxlint rule, named `decision-presets/<id>`, so you choose which ones run and at what severity. Settings such as `model`, `ci` and `timeoutMs` go under `settings["decision-presets"]` and apply to every rule of the preset.
 
-```json
-{
-  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
-  "rules": {
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
+  rules: {
     "decision-presets/no-pii-in-logs": "error",
     "decision-presets/no-prompt-injection": "error",
-    "decision-presets/no-hardcoded-secrets": "error"
-  }
-}
+    "decision-presets/no-hardcoded-secrets": "error",
+  },
+});
 ```
 
 A preset decides which rules the plugin registers. A rule turns on only when you list it under `rules`.
@@ -45,20 +48,23 @@ The package root (`@r_masseater/oxlint-plugin-decision-presets`) is the `recomme
 
 To run `strict` and `review-only` together, load `review-only` under another name. Its rules are then `<name>/<id>`, and both read their settings from `settings["decision-presets"]`.
 
-```json
-{
-  "jsPlugins": [
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: [
     "@r_masseater/oxlint-plugin-decision-presets/strict",
     {
-      "name": "decision-review",
-      "specifier": "@r_masseater/oxlint-plugin-decision-presets/review-only"
-    }
+      name: "decision-review",
+      specifier: "@r_masseater/oxlint-plugin-decision-presets/review-only",
+    },
   ],
-  "rules": {
+  rules: {
     "decision-presets/catch-hides-failure": "error",
-    "decision-review/comment-describes-declaration": "warn"
-  }
-}
+    "decision-review/comment-describes-declaration": "warn",
+  },
+});
 ```
 
 ## Rules
@@ -92,26 +98,29 @@ To run `strict` and `review-only` together, load `review-only` under another nam
 
 Turn the code rules on for your sources and the test rules for your tests, so the code rules do not ask about every test callback:
 
-```json
-{
-  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/strict"],
-  "settings": { "decision-presets": { "maxMatchesPerFile": 100 } },
-  "rules": {
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["@r_masseater/oxlint-plugin-decision-presets/strict"],
+  settings: { "decision-presets": { maxMatchesPerFile: 100 } },
+  rules: {
     "decision-presets/name-matches-behavior": "error",
-    "decision-presets/catch-hides-failure": "error"
+    "decision-presets/catch-hides-failure": "error",
   },
-  "overrides": [
+  overrides: [
     {
-      "files": ["**/*.test.*"],
-      "rules": {
+      files: ["**/*.test.*"],
+      rules: {
         "decision-presets/name-matches-behavior": "off",
         "decision-presets/catch-hides-failure": "off",
         "decision-presets/test-name-verifies-claim": "error",
-        "decision-presets/test-mocks-subject": "error"
-      }
-    }
-  ]
-}
+        "decision-presets/test-mocks-subject": "error",
+      },
+    },
+  ],
+});
 ```
 
 Rules that ask about every function add up quickly, so a file can easily pass the default `maxMatchesPerFile` of 25. Raise it, or turn on only the rules you want.
@@ -122,32 +131,48 @@ The presets use the plugin's default model, `openrouter/~typesafe/jev-latest`, w
 
 Respan models, such as the free `openrouter/respan/span-01-lite`, answer only yes/no questions. The plugin asks them `untrusted-input-risk`, the one `severity` rule, as one yes/no question per level, so every preset works with them.
 
-```json
-{
-  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
-  "settings": { "decision-presets": { "model": "openrouter/respan/span-01-lite" } },
-  "rules": {
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
+  settings: {
+    "decision-presets": {
+      model: "openrouter/respan/span-01-lite",
+    },
+  },
+  rules: {
     "decision-presets/no-pii-in-logs": "error",
     "decision-presets/no-prompt-injection": "error",
-    "decision-presets/no-hardcoded-secrets": "error"
-  }
-}
+    "decision-presets/no-hardcoded-secrets": "error",
+  },
+});
 ```
 
 To run one rule on a different model, give that rule a `model` in its options. Options next to the severity override the preset's settings for that rule only.
 
-```json
-{
-  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/strict"],
-  "settings": { "decision-presets": { "model": "openrouter/respan/span-01-lite" } },
-  "rules": {
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["@r_masseater/oxlint-plugin-decision-presets/strict"],
+  settings: {
+    "decision-presets": {
+      model: "openrouter/respan/span-01-lite",
+    },
+  },
+  rules: {
     "decision-presets/no-pii-in-logs": "error",
     "decision-presets/untrusted-input-risk": [
       "error",
-      { "model": "openrouter/~typesafe/jev-latest" }
-    ]
-  }
-}
+      {
+        model: "openrouter/~typesafe/jev-latest",
+      },
+    ],
+  },
+});
 ```
 
 Each model is asked only about the rules that use it. See [Rule options](https://github.com/masseater/oxlint-plugin-decision/tree/main/libs/oxlint-plugin-decision#rule-options) in the plugin README.
@@ -160,11 +185,18 @@ Every match is a paid request unless its answer is cached. See [Cost and caching
 
 This entry is its own plugin, named `decision-ai-slop`, so its rules are `decision-ai-slop/<id>` and its settings go under `settings["decision-ai-slop"]`.
 
-```json
-{
-  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/ai-slop"],
-  "settings": { "decision-ai-slop": { "maxMatchesPerFile": 100 } },
-  "rules": {
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["@r_masseater/oxlint-plugin-decision-presets/ai-slop"],
+  settings: {
+    "decision-ai-slop": {
+      maxMatchesPerFile: 100,
+    },
+  },
+  rules: {
     "decision-ai-slop/redundant-guard": "warn",
     "decision-ai-slop/default-masks-missing-value": "warn",
     "decision-ai-slop/pass-through-wrapper": "warn",
@@ -174,9 +206,9 @@ This entry is its own plugin, named `decision-ai-slop`, so its rules are `decisi
     "decision-ai-slop/doc-restates-signature": "warn",
     "decision-ai-slop/cast-instead-of-narrowing": "warn",
     "decision-ai-slop/suppression-instead-of-fix": "warn",
-    "decision-ai-slop/reinvents-builtin": "warn"
-  }
-}
+    "decision-ai-slop/reinvents-builtin": "warn",
+  },
+});
 ```
 
 | Id                            | Asks about                                                               | Reports                                                                                  |
@@ -221,17 +253,20 @@ export default createDecisionPlugin({
 });
 ```
 
-```json
-{
-  "jsPlugins": ["./decision.mjs"],
-  "rules": {
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["./decision.mjs"],
+  rules: {
     "team/no-pii-in-logs": "error",
     "team/no-prompt-injection": "error",
     "team/no-hardcoded-secrets": "error",
     "team/comment-describes-declaration": "warn",
-    "team/no-direct-db-in-handlers": "error"
-  }
-}
+    "team/no-direct-db-in-handlers": "error",
+  },
+});
 ```
 
 ## Credits

@@ -3,9 +3,13 @@ import { layer } from "@effect/vitest";
 import { deepStrictEqual } from "@effect/vitest/utils";
 import { Array as Arr, Config, Effect, FileSystem, Option, Redacted } from "effect";
 
+import strictConfig from "#example/claims/oxlint.config.ts";
+import reviewOnlyConfig from "#example/claims/review-only.config.ts";
+
 import {
   PLUGIN_NAME,
   TIMEOUT,
+  configSource,
   fromRoot,
   outputOf,
   oxlint,
@@ -29,7 +33,7 @@ const FORWARDED = [
 
 const EXAMPLES = {
   strict: {
-    config: ".oxlintrc.json",
+    config: strictConfig,
     reported: [
       "cart.test.js:29:3: [test-mocks-subject]",
       "cart.js:28:8: [pure-name-is-pure]",
@@ -39,7 +43,7 @@ const EXAMPLES = {
     ],
   },
   "review-only": {
-    config: "review-only.oxlintrc.json",
+    config: reviewOnlyConfig,
     reported: [
       "cart.test.js:35:1: [describe-names-subject]",
       "cart.js:4:8: [comment-describes-declaration]",
@@ -75,20 +79,24 @@ const claimsLive = (entry: Entry): Effect.Effect<void, unknown, Services> =>
       const fs = yield* FileSystem.FileSystem;
       const key = yield* Config.Redacted("OPENROUTER_API_KEY");
       const example = yield* fromRoot("example", "claims");
-      const config = yield* fs.readFileString(`${example}/${EXAMPLES[entry].config}`);
       const cwd = yield* tempProject({
         "cart.js": yield* fs.readFileString(`${example}/cart.js`),
         "cart.test.js": yield* fs.readFileString(`${example}/cart.test.js`),
-        ".oxlintrc.json": config
-          .replace(`../../dist/${entry}.mjs`, yield* fromRoot("dist", `${entry}.mjs`))
-          .replace(
-            '"maxMatchesPerFile": 100',
-            `"maxMatchesPerFile": 100, "model": "${LIVE_MODEL}", "timeoutMs": ${String(LIVE_TIMEOUT_MS)}`,
-          ),
+        "oxlint.config.ts": configSource({
+          ...EXAMPLES[entry].config,
+          jsPlugins: [yield* fromRoot("dist", `${entry}.mjs`)],
+          settings: {
+            [PLUGIN_NAME]: {
+              maxMatchesPerFile: 100,
+              model: LIVE_MODEL,
+              timeoutMs: LIVE_TIMEOUT_MS,
+            },
+          },
+        }),
       });
       const run = yield* oxlint(
         cwd,
-        ["--format", "unix", "-c", ".oxlintrc.json", "cart.js", "cart.test.js"],
+        ["--format", "unix", "-c", "oxlint.config.ts", "cart.js", "cart.test.js"],
         { ...(yield* forwardedEnv), OPENROUTER_API_KEY: Redacted.value(key) },
       );
       yield* Effect.log(outputOf(run));

@@ -5,7 +5,16 @@ import { Array as Arr, Effect, FileSystem, Option, Order } from "effect";
 
 import { aiSlopRules } from "#src/ai-slop.ts";
 
-import { FAILED, TIMEOUT, enabled, fromRoot, outputOf, oxlint, tempProject } from "./oxlint.ts";
+import {
+  FAILED,
+  TIMEOUT,
+  configSource,
+  enabled,
+  fromRoot,
+  outputOf,
+  oxlint,
+  tempProject,
+} from "./oxlint.ts";
 import type { Services } from "./oxlint.ts";
 
 const AI_SLOP = "decision-ai-slop";
@@ -117,13 +126,13 @@ const askedWhere = Effect.scoped(
       "plugin.mjs": alwaysYes(core, entry),
       "fail.ts": yield* exampleFile("fail.ts"),
       "pass.ts": yield* exampleFile("pass.ts"),
-      ".oxlintrc.json": JSON.stringify({
+      "oxlint.config.ts": configSource({
         jsPlugins: ["./plugin.mjs"],
         rules: enabled(AI_SLOP, aiSlopRules),
         settings: { [AI_SLOP]: { model: "fake/any", maxMatchesPerFile: 100 } },
       }),
     });
-    const run = yield* oxlint(cwd, ["--format", "unix", "-c", ".oxlintrc.json", ...EXAMPLES], {});
+    const run = yield* oxlint(cwd, ["--format", "unix", "-c", "oxlint.config.ts", ...EXAMPLES], {});
     strictEqual(run.status, FAILED, outputOf(run));
     deepStrictEqual(sorted(byRule(run.stdout)), EXPECTED);
   }),
@@ -134,12 +143,12 @@ const loadsEntry = Effect.scoped(
     const plugin = yield* fromRoot("dist", "ai-slop.mjs");
     const cwd = yield* tempProject({
       "a.ts": "export function a(): void {}\n",
-      ".oxlintrc.json": JSON.stringify({
+      "oxlint.config.ts": configSource({
         jsPlugins: [plugin],
         rules: enabled(AI_SLOP, aiSlopRules),
       }),
     });
-    const run = yield* oxlint(cwd, ["-c", ".oxlintrc.json", "a.ts"], { CI: "1" });
+    const run = yield* oxlint(cwd, ["-c", "oxlint.config.ts", "a.ts"], { CI: "1" });
     strictEqual(run.status, FAILED, outputOf(run));
     assertInclude(outputOf(run), "OPENROUTER_API_KEY is not set");
   }),

@@ -23,15 +23,18 @@ npm i -D oxlint @r_masseater/oxlint-plugin-decision @r_masseater/oxlint-plugin-d
 export OPENROUTER_API_KEY="..."   # https://openrouter.ai/settings/keys
 ```
 
-```json
-{
-  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
-  "rules": {
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
+  rules: {
     "decision-presets/no-pii-in-logs": "error",
     "decision-presets/no-prompt-injection": "error",
-    "decision-presets/no-hardcoded-secrets": "error"
-  }
-}
+    "decision-presets/no-hardcoded-secrets": "error",
+  },
+});
 ```
 
 See the [presets README](libs/oxlint-plugin-decision-presets/README.md) for the presets and their rules.
@@ -65,11 +68,16 @@ export default createDecisionPlugin({
 
 Then load it and turn each rule on by its id:
 
-```json
-{
-  "jsPlugins": ["./decision-plugin.mjs"],
-  "rules": { "team/no-pii-in-logs": "error" }
-}
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["./decision-plugin.mjs"],
+  rules: {
+    "team/no-pii-in-logs": "error",
+  },
+});
 ```
 
 See the [plugin README](libs/oxlint-plugin-decision/README.md) for rule fields, answer kinds, context, models, settings, providers, and cost and caching.
@@ -80,7 +88,7 @@ The default model, `openrouter/~typesafe/jev-latest`, supports every rule and pr
 
 Respan models, such as the free `openrouter/respan/span-01-lite`, answer only yes/no questions. The plugin asks them `classify`, `severity` and file-rule `location` questions as one yes/no question per label, level or line, so every preset works with them. These rules cost more requests on Respan models, and `location` is less precise than on the default model.
 
-Each rule can use its own model: set `model` in the rule's options in `.oxlintrc.json`, for example `"team/no-pii-in-logs": ["error", { "model": "openrouter/respan/span-01-lite" }]`. See [Rule options](libs/oxlint-plugin-decision/README.md#rule-options).
+Each rule can use its own model: set `model` in the rule's options in `oxlint.config.ts`, for example `"team/no-pii-in-logs": ["error", { "model": "openrouter/respan/span-01-lite" }]`. See [Rule options](libs/oxlint-plugin-decision/README.md#rule-options).
 
 ## Contributing
 
