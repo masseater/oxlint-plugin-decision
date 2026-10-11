@@ -22,7 +22,7 @@ export OPENROUTER_API_KEY="..."   # https://openrouter.ai/settings/keys
 
 The plugin reads the key from the `OPENROUTER_API_KEY` environment variable. Without it, the plugin warns once and reports nothing. To read the key from a variable with another name, set `env` (see [Settings](#settings)). The key itself is never passed in code or config.
 
-In CI, set `ci: "fail"` so a run that could not reach a model fails instead of passing quietly.
+In CI (when the `CI` environment variable is set), a run that could not reach a model fails instead of passing quietly. Set `ci: "skip"` to only warn there too.
 
 ## Write your rules
 
@@ -196,20 +196,20 @@ The violation and location have separate cutoffs. An uncertain or invalid locati
 Settings apply to the whole plugin, not to one rule. Pass them to `createDecisionPlugin`, or put them under `settings.<plugin name>` in `.oxlintrc.json`. Values in `.oxlintrc.json` win, so one plugin file can run with different settings in different configs.
 
 ```js
-createDecisionPlugin({ name: "team", ci: "fail", timeoutMs: 20_000, rules: [ ... ] });
+createDecisionPlugin({ name: "team", timeoutMs: 20_000, rules: [ ... ] });
 ```
 
 ```json
 {
   "jsPlugins": ["./decision-plugin.mjs"],
-  "settings": { "team": { "ci": "fail", "model": "openrouter/respan/span-01-lite" } },
+  "settings": { "team": { "model": "openrouter/respan/span-01-lite" } },
   "rules": { "team/no-pii-in-logs": "error" }
 }
 ```
 
 | Setting             | Default                             | Meaning                                                                                                                                                |
 | ------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ci`                | `"skip"`                            | What happens when a model can't be asked and `CI` is set. `"skip"` warns once and reports nothing. `"fail"` fails the run. Outside CI it always skips. |
+| `ci`                | `"fail"`                            | What happens when a model can't be asked and `CI` is set. `"fail"` fails the run. `"skip"` warns once and reports nothing. Outside CI it always skips. |
 | `timeoutMs`         | `10000`                             | Per-file budget shared by every model's request, retries and location refinements.                                                                     |
 | `maxMatchesPerFile` | `25`                                | Matches sent per file across all rules. Extra matches are dropped in source order and the file is named on stderr.                                     |
 | `maxSnippetChars`   | `4000`                              | Longer snippets are cut and end with `/* ...truncated */`.                                                                                             |
@@ -329,9 +329,9 @@ Answers are cached under `node_modules/.cache/oxlint-plugin-decision`, keyed by 
 
 Requests go through the official [`@openrouter/sdk`](https://www.npmjs.com/package/@openrouter/sdk) client, which retries rate limits and server errors within `timeoutMs`.
 
-If a model can't be asked, because the key is missing, the request times out, or the API errors, the plugin prints one warning and reports nothing for that model on that file. Set `ci: "fail"` to fail the run instead.
+If a model can't be asked, because the key is missing, the request times out, or the API errors, the plugin prints one warning and reports nothing for that model on that file. Under CI the run fails instead, unless `ci` is `"skip"`.
 
-If only a location refinement fails, confirmed violations are still reported at the file level. Under CI with `ci: "fail"`, the refinement failure produces a separate diagnostic; otherwise it warns.
+If only a location refinement fails, confirmed violations are still reported at the file level. Under CI (unless `ci` is `"skip"`), the refinement failure produces a separate diagnostic; otherwise it warns.
 
 ## Cost and caching
 

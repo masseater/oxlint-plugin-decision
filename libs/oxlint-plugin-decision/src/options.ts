@@ -59,7 +59,7 @@ const snippetNodeFor = (node: AstNode): AstNode =>
   );
 
 const DEFAULTS = {
-  ci: "skip",
+  ci: "fail",
   timeoutMs: 10_000,
   maxMatchesPerFile: 25,
   maxSnippetChars: 4000,
