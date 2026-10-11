@@ -1,7 +1,8 @@
 import type { Context, VisitorWithHooks } from "@oxlint/plugins";
 import { Array as Arr, Option, Predicate } from "effect";
 
-import { contextOf } from "./context.ts";
+import { commentedSnippetOf, contextOf, lacksComment } from "./context.ts";
+import { isNamedMatch } from "./name.ts";
 import { OptionsError, REPORT_LOC, TARGET_NODE_TYPES, snippetNodeFor } from "./options.ts";
 import { reportModel } from "./report.ts";
 import { truncateSnippet } from "./request.ts";
@@ -98,7 +99,9 @@ const matchOf = (
   node: AstNode,
   { rule, options }: { readonly rule: ResolvedRule; readonly options: ResolvedOptions },
 ): Match => {
-  const text = namedSnippetOf(context, node);
+  const text = Option.getOrElse(commentedSnippetOf(context, node, rule), () =>
+    namedSnippetOf(context, node),
+  );
   const surrounding = contextOf(context, node, rule.context ?? { scope: "node" });
   return {
     ...Option.match(surrounding, { onNone: () => ({}), onSome: (value) => ({ context: value }) }),
@@ -200,6 +203,9 @@ const sharedFile = (optionsFor: OptionsFor, ruleFor: RuleFor): SharedFile => {
   };
 };
 
+const isSkipped = (context: Context, node: AstNode, rule: ResolvedRule): boolean =>
+  !isNamedMatch(context, node, rule) || lacksComment(context, node, rule);
+
 const visitorFor =
   (shared: SharedFile, { id, target }: { readonly id: string; readonly target: Target }) =>
   (context: Context): VisitorWithHooks => {
@@ -210,6 +216,9 @@ const visitorFor =
         return;
       }
       const { batch, rule } = file.value;
+      if (isSkipped(context, node, rule)) {
+        return;
+      }
       if (batch.matches.length >= batch.options.maxMatchesPerFile) {
         batch.dropped.push(rule.id);
       } else {

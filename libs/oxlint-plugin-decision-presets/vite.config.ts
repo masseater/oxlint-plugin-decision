@@ -2,7 +2,13 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   pack: {
-    entry: ["src/index.ts", "src/recommended.ts", "src/strict.ts", "src/review-only.ts"],
+    entry: [
+      "src/index.ts",
+      "src/recommended.ts",
+      "src/strict.ts",
+      "src/review-only.ts",
+      "src/jev.ts",
+    ],
     platform: "node",
     sourcemap: true,
     tsconfig: "tsconfig.build.json",
@@ -23,9 +29,16 @@ export default defineConfig({
     projects: [
       {
         extends: true,
-        test: { name: "mock", include: ["tests/**/*.test.ts"], exclude: ["tests/live.test.ts"] },
+        test: {
+          name: "mock",
+          include: ["tests/**/*.test.ts"],
+          exclude: ["tests/live.test.ts", "tests/jev-live.test.ts"],
+        },
       },
-      { extends: true, test: { name: "live", include: ["tests/live.test.ts"] } },
+      {
+        extends: true,
+        test: { name: "live", include: ["tests/live.test.ts", "tests/jev-live.test.ts"] },
+      },
     ],
   },
   run: {

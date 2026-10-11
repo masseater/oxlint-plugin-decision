@@ -100,7 +100,7 @@ const reportMatch = (
       answer: verdict.value.answer,
       score: verdict.value.probability.toFixed(DECIMALS),
       cutoff: match.rule.cutoff.toFixed(DECIMALS),
-      question: match.rule.question,
+      question: match.rule.message ?? match.rule.question,
     },
   });
   return located.failure;

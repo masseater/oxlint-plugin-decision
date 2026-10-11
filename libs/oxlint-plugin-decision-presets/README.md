@@ -93,6 +93,61 @@ Each model is asked only about the rules that use it. See [Rule options](https:/
 
 Every match is a paid request unless its answer is cached. See [Cost and caching](https://github.com/masseater/oxlint-plugin-decision/tree/main/libs/oxlint-plugin-decision#cost-and-caching) in the plugin README.
 
+## The jev rules
+
+`@r_masseater/oxlint-plugin-decision-presets/jev` brings the JavaScript and TypeScript rules of [jev-lint](https://github.com/mizchi/jev-lint) to oxlint. Each rule checks a claim the code makes about itself (a name, a comment, a log message, a test title) against what the code actually does. The questions and cutoffs come from jev-lint, which tuned them on the default model, `openrouter/~typesafe/jev-latest`.
+
+This entry is its own plugin, named `decision-jev`, so its rules are `decision-jev/<id>` and its settings go under `settings["decision-jev"]`. Turn the code rules on for your sources and the test rules for your tests:
+
+```json
+{
+  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/jev"],
+  "settings": { "decision-jev": { "maxMatchesPerFile": 100 } },
+  "rules": {
+    "decision-jev/fn-name-promises": "warn",
+    "decision-jev/catch-hides-failure": "warn",
+    "decision-jev/comment-describes-declaration": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.*"],
+      "rules": {
+        "decision-jev/fn-name-promises": "off",
+        "decision-jev/catch-hides-failure": "off",
+        "decision-jev/comment-describes-declaration": "off",
+        "decision-jev/test-name-verifies-claim": "warn"
+      }
+    }
+  ]
+}
+```
+
+Most code rules ask about every function, so a file can easily pass the default `maxMatchesPerFile` of 25. Raise it, or turn on only the rules you want.
+
+| Id                                | Asks about                                                                      | Claim checked                                                             |
+| --------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `fn-name-promises`                | Every function                                                                  | The body does what the name promises.                                     |
+| `pure-name-is-pure`               | Functions named `compute*`, `calculate*`, `derive*`, `format*`, `to*`, `parse*` | The body has no side effects or I/O.                                      |
+| `safe-name-is-safe`               | Functions named `safe*`, `try*`, `*OrNull`, `*OrDefault`, `*OrUndefined`        | No failure escapes as a throw or rejection.                               |
+| `idempotent-name`                 | Functions named `ensure*`, `upsert*`, `setup*`, `install*`, `register*`         | A second call leaves the same result as the first.                        |
+| `catch-hides-failure`             | Every function                                                                  | No catch block hides a failure the caller needed.                         |
+| `error-message-matches-condition` | Every function                                                                  | Each thrown error's message describes the condition that throws it.       |
+| `log-level-matches-event`         | Log calls (`console.*`, `logger.*` and the like)                                | The level fits what the code is handling.                                 |
+| `log-message-matches-event`       | Log calls                                                                       | The message says what happened at that point.                             |
+| `comment-describes-block`         | Every function                                                                  | Comments inside the body agree with the code beneath them.                |
+| `comment-describes-declaration`   | Functions with a comment directly above                                         | The comment is true of the function.                                      |
+| `doc-errors-match-body`           | Functions with a comment directly above                                         | The documented failures (throws, rejects, returns null) match the body.   |
+| `var-name-describes-value`        | Every function                                                                  | Each binding's name describes its value.                                  |
+| `describe-names-subject`          | `describe(...)` calls                                                           | The tests exercise what the title names.                                  |
+| `test-name-describes-code`        | `it(...)` and `test(...)` calls                                                 | The test exercises the operation, input and outcome its name names.       |
+| `test-name-verifies-claim`        | `it(...)` and `test(...)` calls                                                 | The test would fail if the named behaviour broke.                         |
+| `snapshot-only-behaviour-claim`   | `it(...)` and `test(...)` calls                                                 | A behaviour claim is checked by more than a whole-output snapshot.        |
+| `test-mocks-subject`              | `it(...)` and `test(...)` calls                                                 | The behaviour under test is not a mock reading back its own canned value. |
+
+The rules are also exported one by one, and as the lists `jev`, `jevCode` and `jevTests`, for your own plugin.
+
+jev-lint also has rules that look across files (module naming, failure paths no test reaches) and rules for types, classes, other languages, documents and commits. Those need more than one match at a time, so they are not here.
+
 ## Mix presets with your own rules
 
 Every preset and rule is exported, so you can build your own plugin with `createDecisionPlugin` from `@r_masseater/oxlint-plugin-decision`.
@@ -132,4 +187,4 @@ export default createDecisionPlugin({
 
 ## License
 
-AGPL-3.0-only. Portions from oxlint-plugin-jev stay under the MIT License; see NOTICE.
+AGPL-3.0-only. Portions from oxlint-plugin-jev and jev-lint stay under the MIT License; see NOTICE.

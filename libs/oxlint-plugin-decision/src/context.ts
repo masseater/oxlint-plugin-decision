@@ -1,11 +1,14 @@
 import type { Context } from "@oxlint/plugins";
-import { Array as Arr, Option } from "effect";
+import { Array as Arr, Option, Predicate, String as Str } from "effect";
 
+import { snippetNodeFor } from "./options.ts";
 import { sourceLines } from "./request.ts";
-import type { AstNode, EnclosingKind, RuleContext } from "./types.ts";
+import type { AstNode, EnclosingKind, ResolvedRule, RuleContext } from "./types.ts";
 
 const DEFAULT_LINES = 5;
 const FIRST_LINE = 1;
+const LAST = 1;
+const END = 1;
 
 const ENCLOSING_TYPES: Readonly<Record<EnclosingKind, readonly string[]>> = {
   function: ["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"],
@@ -47,6 +50,60 @@ const linesAround = (
     .join("\n");
 };
 
+const DECLARING_PARENTS: ReadonlySet<string> = new Set([
+  "VariableDeclaration",
+  "ExportNamedDeclaration",
+  "ExportDefaultDeclaration",
+]);
+
+const declarationOf = (node: AstNode): AstNode =>
+  Option.fromNullishOr(node.parent).pipe(
+    Option.filter((parent) => DECLARING_PARENTS.has(parent.type)),
+    Option.match({ onNone: () => node, onSome: declarationOf }),
+  );
+
+interface Span {
+  readonly start: number;
+  readonly end: number;
+}
+
+const leadingOf = (text: string, comments: readonly Span[], until: number): readonly Span[] =>
+  Option.match(Arr.last(comments), {
+    onNone: () => [],
+    onSome: (last) => {
+      if (Str.isNonEmpty(text.slice(last.end, until).trim())) {
+        return [];
+      }
+      return [...leadingOf(text, Arr.dropRight(comments, LAST), last.start), last];
+    },
+  });
+
+const commentedTextOf = (context: Context, node: AstNode): Option.Option<string> => {
+  const { text } = context.sourceCode;
+  const named = snippetNodeFor(node);
+  const [start] = declarationOf(named).range;
+  const before = context.sourceCode
+    .getAllComments()
+    .filter((comment) => comment.type !== "Shebang" && comment.end <= start);
+  return Arr.match(leadingOf(text, before, start), {
+    onEmpty: () => Option.none(),
+    onNonEmpty: ([first]) => Option.some(text.slice(first.start, named.range[END])),
+  });
+};
+
+const isCommented = ({ context: wanted }: ResolvedRule): boolean =>
+  Predicate.isNotUndefined(wanted) && wanted.scope === "comment";
+
+const commentedSnippetOf = (
+  context: Context,
+  node: AstNode,
+  rule: ResolvedRule,
+): Option.Option<string> =>
+  Option.flatMap(Option.liftPredicate(rule, isCommented), () => commentedTextOf(context, node));
+
+const lacksComment = (context: Context, node: AstNode, rule: ResolvedRule): boolean =>
+  isCommented(rule) && Option.isNone(commentedTextOf(context, node));
+
 const contextOf = (context: Context, node: AstNode, rule: RuleContext): Option.Option<string> => {
   if (rule.scope === "lines") {
     return Option.some(linesAround(context, node, rule));
@@ -57,4 +114,4 @@ const contextOf = (context: Context, node: AstNode, rule: RuleContext): Option.O
   return Option.liftPredicate(context.sourceCode.text, () => rule.scope === "file");
 };
 
-export { contextOf };
+export { commentedSnippetOf, contextOf, lacksComment };
