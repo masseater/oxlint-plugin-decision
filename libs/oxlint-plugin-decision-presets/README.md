@@ -150,6 +150,46 @@ The rules are also exported one by one, and as the lists `jev`, `jevCode` and `j
 
 jev-lint also has rules that look across files (module naming, failure paths no test reaches) and rules for types, classes, other languages, documents and commits. Those need more than one match at a time, so they are not here.
 
+## The ai-slop rules
+
+`@r_masseater/oxlint-plugin-decision-presets/ai-slop` catches the padding that coding agents tend to leave in JavaScript and TypeScript: guards that can never fire, made-up defaults, wrappers that add nothing, stand-in bodies, comments that repeat the code or narrate the change, and casts or lint suppressions in place of a fix.
+
+This entry is its own plugin, named `decision-ai-slop`, so its rules are `decision-ai-slop/<id>` and its settings go under `settings["decision-ai-slop"]`.
+
+```json
+{
+  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/ai-slop"],
+  "settings": { "decision-ai-slop": { "maxMatchesPerFile": 100 } },
+  "rules": {
+    "decision-ai-slop/redundant-guard": "warn",
+    "decision-ai-slop/default-masks-missing-value": "warn",
+    "decision-ai-slop/pass-through-wrapper": "warn",
+    "decision-ai-slop/placeholder-implementation": "error",
+    "decision-ai-slop/comment-restates-code": "warn",
+    "decision-ai-slop/comment-narrates-history": "warn",
+    "decision-ai-slop/doc-restates-signature": "warn",
+    "decision-ai-slop/cast-instead-of-narrowing": "warn",
+    "decision-ai-slop/suppression-instead-of-fix": "warn",
+    "decision-ai-slop/reinvents-builtin": "warn"
+  }
+}
+```
+
+| Id                            | Asks about                                                               | Reports                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `redundant-guard`             | Functions with an `if`, `?:`, `?.`, `typeof` or `try`                    | A parameter checked for a case its declared type already rules out.                      |
+| `default-masks-missing-value` | Functions with `??`, `??=`, `\|\|` with a literal, or default parameters | A made-up default standing in for a value that should always be there.                   |
+| `pass-through-wrapper`        | Functions whose body is one call                                         | A function that only forwards its arguments to another one.                              |
+| `placeholder-implementation`  | Functions with at most one statement                                     | A body that returns a fixed value or does nothing where the name promises real work.     |
+| `comment-restates-code`       | Functions with comments inside                                           | A comment that only says again what the next line does.                                  |
+| `comment-narrates-history`    | Functions with comments inside                                           | A comment about what was changed, a stopgap, or the conversation that produced the code. |
+| `doc-restates-signature`      | Functions with a comment directly above                                  | A doc comment that only rewords the name and parameters.                                 |
+| `cast-instead-of-narrowing`   | Functions with `as`, `<T>` or `!` (not `as const`)                       | A type assertion the code has not established.                                           |
+| `suppression-instead-of-fix`  | Functions with an `eslint-disable`, `oxlint-disable` or `@ts-*` comment  | A suppression with no reason, or one hiding a problem with a local fix.                  |
+| `reinvents-builtin`           | Every function that is not an inline callback                            | A hand-written loop that re-implements a standard built-in.                              |
+
+The cutoffs were tuned on Span-01 Lite (`openrouter/respan/span-01-lite`). The rules are also exported one by one, and as the list `aiSlopRules`, for your own plugin.
+
 ## Mix presets with your own rules
 
 Every preset and rule is exported, so you can build your own plugin with `createDecisionPlugin` from `@r_masseater/oxlint-plugin-decision`.

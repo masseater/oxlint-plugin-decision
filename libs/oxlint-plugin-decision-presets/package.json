@@ -49,6 +49,10 @@
       "types": "./dist/jev.d.mts",
       "default": "./dist/jev.mjs"
     },
+    "./ai-slop": {
+      "types": "./dist/ai-slop.d.mts",
+      "default": "./dist/ai-slop.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {

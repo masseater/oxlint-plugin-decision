@@ -8,6 +8,7 @@ export default defineConfig({
       "src/strict.ts",
       "src/review-only.ts",
       "src/jev.ts",
+      "src/ai-slop.ts",
     ],
     platform: "node",
     sourcemap: true,
@@ -32,12 +33,15 @@ export default defineConfig({
         test: {
           name: "mock",
           include: ["tests/**/*.test.ts"],
-          exclude: ["tests/live.test.ts", "tests/jev-live.test.ts"],
+          exclude: ["tests/live.test.ts", "tests/jev-live.test.ts", "tests/ai-slop-live.test.ts"],
         },
       },
       {
         extends: true,
-        test: { name: "live", include: ["tests/live.test.ts", "tests/jev-live.test.ts"] },
+        test: {
+          name: "live",
+          include: ["tests/live.test.ts", "tests/jev-live.test.ts", "tests/ai-slop-live.test.ts"],
+        },
       },
     ],
   },
