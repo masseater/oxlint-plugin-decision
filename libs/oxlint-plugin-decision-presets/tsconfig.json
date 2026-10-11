@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["src", "tests", "*.ts"],
+  "compilerOptions": {
+    "types": ["node"],
+    "declaration": true,
+    "paths": {
+      "oxlint-plugin-decision": ["../oxlint-plugin-decision/src/index.ts"]
+    }
+  }
+}

@@ -3,7 +3,7 @@
   "production": true,
   "typeAware": { "enabled": true, "require": "complete" },
   "failOnParseError": true,
-  "ignorePatterns": [".claude/**", "libs/oxlint-plugin-decision/example/**"],
+  "ignorePatterns": [".claude/**", "libs/*/example/**"],
   "dynamicallyLoaded": ["libs/oxlint-plugin-decision/src/openrouter-worker.ts"],
   "audit": { "gate": "all" },
   "security": {
