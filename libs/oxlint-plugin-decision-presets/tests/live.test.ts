@@ -1,9 +1,12 @@
 import { NodeServices } from "@effect/platform-node";
 import { layer } from "@effect/vitest";
 import { deepStrictEqual } from "@effect/vitest/utils";
+import type { DecisionRule } from "@r_masseater/oxlint-plugin-decision";
 import { Array as Arr, Config, Effect, Option, Redacted } from "effect";
 
+import { codeClaims } from "#src/code-claims.ts";
 import { presets } from "#src/presets.ts";
+import { testClaims } from "#src/test-claims.ts";
 
 import {
   EXAMPLE_FILES,
@@ -44,22 +47,21 @@ const EXPECTED = {
     "fail.js:7:3: [no-pii-in-logs]",
     "fail.js:12:8: [no-prompt-injection]",
     "fail.js:12:8: [untrusted-input-risk]",
-    "fail.js:17:8: [no-swallowed-errors]",
   ],
-  "review-only": [
-    "fail.js:5:8: [name-matches-behavior]",
-    "fail.js:17:8: [stale-comment]",
-    "fail.js:23:8: [domain-naming]",
-    "fail.js:28:8: [prefer-schema-validation]",
-  ],
+  "review-only": ["fail.js:23:8: [domain-naming]", "fail.js:28:8: [prefer-schema-validation]"],
 } as const;
 
 type PresetEntry = keyof typeof EXPECTED;
 
+const CLAIMS: ReadonlySet<DecisionRule> = new Set([...codeClaims, ...testClaims]);
+
+const withoutClaims = (rules: readonly DecisionRule[]): readonly DecisionRule[] =>
+  rules.filter((rule) => !CLAIMS.has(rule));
+
 const PRESET_RULES = {
-  recommended: presets.recommended,
-  strict: presets.strict,
-  "review-only": presets.reviewOnly,
+  recommended: withoutClaims(presets.recommended),
+  strict: withoutClaims(presets.strict),
+  "review-only": withoutClaims(presets.reviewOnly),
 } as const satisfies Readonly<Record<PresetEntry, unknown>>;
 
 const proxyEnv = Effect.map(
@@ -87,7 +89,7 @@ const presetLive = (preset: PresetEntry): Effect.Effect<void, unknown, Services>
         ...(yield* exampleFiles),
         "oxlint.config.ts": configSource({
           jsPlugins: [plugin],
-          settings: { [PLUGIN_NAME]: { model: LIVE_MODEL, ci: "fail" } },
+          settings: { [PLUGIN_NAME]: { model: LIVE_MODEL, ci: "fail", maxMatchesPerFile: 100 } },
           rules: enabled(PLUGIN_NAME, PRESET_RULES[preset]),
         }),
       });

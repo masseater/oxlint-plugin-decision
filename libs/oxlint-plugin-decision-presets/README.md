@@ -36,35 +36,100 @@ export default defineConfig({
 
 A preset decides which rules the plugin registers. A rule turns on only when you list it under `rules`.
 
-| Import path                                               | Rules                                                                                     |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `@r_masseater/oxlint-plugin-decision-presets/recommended` | `no-pii-in-logs`, `no-prompt-injection`, `no-hardcoded-secrets`                           |
-| `@r_masseater/oxlint-plugin-decision-presets/strict`      | `recommended` plus `name-matches-behavior`, `no-swallowed-errors`, `untrusted-input-risk` |
-| `@r_masseater/oxlint-plugin-decision-presets/review-only` | `name-matches-behavior`, `stale-comment`, `domain-naming`, `prefer-schema-validation`     |
+| Import path                                               | Rules                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `@r_masseater/oxlint-plugin-decision-presets/recommended` | `no-pii-in-logs`, `no-prompt-injection`, `no-hardcoded-secrets`                                                                                                                                                                                                                                                                                                    |
+| `@r_masseater/oxlint-plugin-decision-presets/strict`      | `recommended` plus `name-matches-behavior`, `untrusted-input-risk`, `pure-name-is-pure`, `safe-name-is-safe`, `idempotent-name`, `catch-hides-failure`, `test-name-verifies-claim`, `test-mocks-subject`                                                                                                                                                           |
+| `@r_masseater/oxlint-plugin-decision-presets/review-only` | `domain-naming`, `prefer-schema-validation`, `fn-name-promises`, `comment-describes-declaration`, `comment-describes-block`, `doc-errors-match-body`, `error-message-matches-condition`, `log-level-matches-event`, `log-message-matches-event`, `var-name-describes-value`, `describe-names-subject`, `test-name-describes-code`, `snapshot-only-behaviour-claim` |
 
 The package root (`@r_masseater/oxlint-plugin-decision-presets`) is the `recommended` preset.
 
-`review-only` holds judgment calls that are worth a look in review but too subjective to fail a build. Run it as `"warn"`.
+`strict` adds code that breaks a promise its name makes (a `get*` that writes, a `compute*` with side effects, a `safe*` that throws, an `ensure*` that is not safe to repeat), a catch that hides a failure from its caller, and tests that cannot fail. `review-only` holds judgment calls that are worth a look in review but too subjective to fail a build, mostly text that misdescribes the code next to it: names in general, comments, documented errors, error and log messages, variable names and test titles. Run it as `"warn"`.
+
+To run `strict` and `review-only` together, load `review-only` under another name. Its rules are then `<name>/<id>`, and both read their settings from `settings["decision-presets"]`.
+
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: [
+    "@r_masseater/oxlint-plugin-decision-presets/strict",
+    {
+      name: "decision-review",
+      specifier: "@r_masseater/oxlint-plugin-decision-presets/review-only",
+    },
+  ],
+  rules: {
+    "decision-presets/catch-hides-failure": "error",
+    "decision-review/comment-describes-declaration": "warn",
+  },
+});
+```
 
 ## Rules
 
-| Id                         | Target     | Asks                                                                                                       |
-| -------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
-| `no-pii-in-logs`           | `call`     | Does this call write personal data to a log or console?                                                    |
-| `no-prompt-injection`      | `function` | Does this function concatenate untrusted user input into a language model prompt?                          |
-| `no-hardcoded-secrets`     | `file`     | Does this file contain a hard-coded secret as a literal value?                                             |
-| `name-matches-behavior`    | `function` | Does a read-only name (get, find, load, fetch) hide a body that also writes, logs, or sends?               |
-| `no-swallowed-errors`      | `function` | Does this function catch an error and drop it?                                                             |
-| `untrusted-input-risk`     | `function` | How severe is splicing untrusted input into a query, command, markup, or prompt? Reports `warn` and above. |
-| `stale-comment`            | `function` | Does the comment above the function claim something the code does not do?                                  |
-| `domain-naming`            | `function` | Is a function about one business concept named after a mechanism word (Manager, Processor, Data, handle)?  |
-| `prefer-schema-validation` | `function` | Does a long hand-written chain of typeof and field checks validate data a schema would describe?           |
+| Id                                | Asks about                                                                      | Reports                                                                                                |
+| --------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `no-pii-in-logs`                  | Every call                                                                      | A call that writes personal data to a log or console.                                                  |
+| `no-prompt-injection`             | Every function                                                                  | Untrusted user input concatenated into a language model prompt.                                        |
+| `no-hardcoded-secrets`            | Every file                                                                      | A hard-coded secret as a literal value.                                                                |
+| `name-matches-behavior`           | Every function                                                                  | A read-only name (get, find, load, fetch) on a body that also writes, logs, or sends.                  |
+| `untrusted-input-risk`            | Every function                                                                  | Untrusted input spliced into a query, command, markup, or prompt, at `warn` severity and above.        |
+| `pure-name-is-pure`               | Functions named `compute*`, `calculate*`, `derive*`, `format*`, `to*`, `parse*` | A side effect or I/O in a function named as a computation.                                             |
+| `safe-name-is-safe`               | Functions named `safe*`, `try*`, `*OrNull`, `*OrDefault`, `*OrUndefined`        | A failure that escapes as a throw or rejection.                                                        |
+| `idempotent-name`                 | Functions named `ensure*`, `upsert*`, `setup*`, `install*`, `register*`         | A second call that leaves a different result from the first.                                           |
+| `catch-hides-failure`             | Every function                                                                  | A catch block that hides a failure the caller needed to know about.                                    |
+| `test-name-verifies-claim`        | `it(...)` and `test(...)` calls                                                 | A test that would still pass if the behaviour its name claims broke.                                   |
+| `test-mocks-subject`              | `it(...)` and `test(...)` calls                                                 | A test whose assertion reads back a mock's canned value instead of the code under test.                |
+| `domain-naming`                   | Every function                                                                  | A function about one business concept named after a mechanism word (Manager, Processor, Data, handle). |
+| `prefer-schema-validation`        | Every function                                                                  | A long hand-written chain of typeof and field checks that a schema would describe.                     |
+| `fn-name-promises`                | Every function                                                                  | A body that does something materially different from what the name promises.                           |
+| `comment-describes-declaration`   | Functions with a comment directly above                                         | A comment that claims something the function does not do.                                              |
+| `comment-describes-block`         | Every function                                                                  | A comment inside the body that the code beneath it contradicts.                                        |
+| `doc-errors-match-body`           | Functions with a comment directly above                                         | Documented failures (throws, rejects, returns null) that the body does not match.                      |
+| `error-message-matches-condition` | Every function                                                                  | A thrown error whose message describes a different condition from the one that throws it.              |
+| `log-level-matches-event`         | Log calls (`console.*`, `logger.*` and the like)                                | A log level that misstates the severity of what the code is handling.                                  |
+| `log-message-matches-event`       | Log calls                                                                       | A log message that misdescribes what happened at that point.                                           |
+| `var-name-describes-value`        | Every function                                                                  | A binding whose name misdescribes its value.                                                           |
+| `describe-names-subject`          | `describe(...)` calls                                                           | Tests that exercise something other than what the describe title names.                                |
+| `test-name-describes-code`        | `it(...)` and `test(...)` calls                                                 | A test that exercises another operation, input or outcome than its name names.                         |
+| `snapshot-only-behaviour-claim`   | `it(...)` and `test(...)` calls                                                 | A test that claims a specific behaviour but only compares a whole-output snapshot.                     |
+
+Turn the code rules on for your sources and the test rules for your tests, so the code rules do not ask about every test callback:
+
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["@r_masseater/oxlint-plugin-decision-presets/strict"],
+  settings: { "decision-presets": { maxMatchesPerFile: 100 } },
+  rules: {
+    "decision-presets/name-matches-behavior": "error",
+    "decision-presets/catch-hides-failure": "error",
+  },
+  overrides: [
+    {
+      files: ["**/*.test.*"],
+      rules: {
+        "decision-presets/name-matches-behavior": "off",
+        "decision-presets/catch-hides-failure": "off",
+        "decision-presets/test-name-verifies-claim": "error",
+        "decision-presets/test-mocks-subject": "error",
+      },
+    },
+  ],
+});
+```
+
+Rules that ask about every function add up quickly, so a file can easily pass the default `maxMatchesPerFile` of 25. Raise it, or turn on only the rules you want.
 
 ## Models
 
 The presets use the plugin's default model, `openrouter/~typesafe/jev-latest`, which supports every preset. Set `model` under `settings["decision-presets"]` to use another one.
 
-Respan models, such as the free `openrouter/respan/span-01-lite`, answer only yes/no questions. The plugin asks them `untrusted-input-risk` (a `severity` rule) and `stale-comment` (a `classify` rule) as one yes/no question per level or label, so every preset works with them.
+Respan models, such as the free `openrouter/respan/span-01-lite`, answer only yes/no questions. The plugin asks them `untrusted-input-risk`, the one `severity` rule, as one yes/no question per level, so every preset works with them.
 
 ```ts
 // oxlint.config.ts
@@ -113,61 +178,6 @@ export default defineConfig({
 Each model is asked only about the rules that use it. See [Rule options](https://github.com/masseater/oxlint-plugin-decision/tree/main/libs/oxlint-plugin-decision#rule-options) in the plugin README.
 
 Every match is a paid request unless its answer is cached. See [Cost and caching](https://github.com/masseater/oxlint-plugin-decision/tree/main/libs/oxlint-plugin-decision#cost-and-caching) in the plugin README.
-
-## The jev rules
-
-`@r_masseater/oxlint-plugin-decision-presets/jev` brings the JavaScript and TypeScript rules of [jev-lint](https://github.com/mizchi/jev-lint) to oxlint. Each rule checks a claim the code makes about itself (a name, a comment, a log message, a test title) against what the code actually does. The questions and cutoffs come from jev-lint, which tuned them on the default model, `openrouter/~typesafe/jev-latest`.
-
-This entry is its own plugin, named `decision-jev`, so its rules are `decision-jev/<id>` and its settings go under `settings["decision-jev"]`. Turn the code rules on for your sources and the test rules for your tests:
-
-```json
-{
-  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/jev"],
-  "settings": { "decision-jev": { "maxMatchesPerFile": 100 } },
-  "rules": {
-    "decision-jev/fn-name-promises": "warn",
-    "decision-jev/catch-hides-failure": "warn",
-    "decision-jev/comment-describes-declaration": "warn"
-  },
-  "overrides": [
-    {
-      "files": ["**/*.test.*"],
-      "rules": {
-        "decision-jev/fn-name-promises": "off",
-        "decision-jev/catch-hides-failure": "off",
-        "decision-jev/comment-describes-declaration": "off",
-        "decision-jev/test-name-verifies-claim": "warn"
-      }
-    }
-  ]
-}
-```
-
-Most code rules ask about every function, so a file can easily pass the default `maxMatchesPerFile` of 25. Raise it, or turn on only the rules you want.
-
-| Id                                | Asks about                                                                      | Claim checked                                                             |
-| --------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `fn-name-promises`                | Every function                                                                  | The body does what the name promises.                                     |
-| `pure-name-is-pure`               | Functions named `compute*`, `calculate*`, `derive*`, `format*`, `to*`, `parse*` | The body has no side effects or I/O.                                      |
-| `safe-name-is-safe`               | Functions named `safe*`, `try*`, `*OrNull`, `*OrDefault`, `*OrUndefined`        | No failure escapes as a throw or rejection.                               |
-| `idempotent-name`                 | Functions named `ensure*`, `upsert*`, `setup*`, `install*`, `register*`         | A second call leaves the same result as the first.                        |
-| `catch-hides-failure`             | Every function                                                                  | No catch block hides a failure the caller needed.                         |
-| `error-message-matches-condition` | Every function                                                                  | Each thrown error's message describes the condition that throws it.       |
-| `log-level-matches-event`         | Log calls (`console.*`, `logger.*` and the like)                                | The level fits what the code is handling.                                 |
-| `log-message-matches-event`       | Log calls                                                                       | The message says what happened at that point.                             |
-| `comment-describes-block`         | Every function                                                                  | Comments inside the body agree with the code beneath them.                |
-| `comment-describes-declaration`   | Functions with a comment directly above                                         | The comment is true of the function.                                      |
-| `doc-errors-match-body`           | Functions with a comment directly above                                         | The documented failures (throws, rejects, returns null) match the body.   |
-| `var-name-describes-value`        | Every function                                                                  | Each binding's name describes its value.                                  |
-| `describe-names-subject`          | `describe(...)` calls                                                           | The tests exercise what the title names.                                  |
-| `test-name-describes-code`        | `it(...)` and `test(...)` calls                                                 | The test exercises the operation, input and outcome its name names.       |
-| `test-name-verifies-claim`        | `it(...)` and `test(...)` calls                                                 | The test would fail if the named behaviour broke.                         |
-| `snapshot-only-behaviour-claim`   | `it(...)` and `test(...)` calls                                                 | A behaviour claim is checked by more than a whole-output snapshot.        |
-| `test-mocks-subject`              | `it(...)` and `test(...)` calls                                                 | The behaviour under test is not a mock reading back its own canned value. |
-
-The rules are also exported one by one, and as the lists `jev`, `jevCode` and `jevTests`, for your own plugin.
-
-jev-lint also has rules that look across files (module naming, failure paths no test reaches) and rules for types, classes, other languages, documents and commits. Those need more than one match at a time, so they are not here.
 
 ## The ai-slop rules
 
@@ -218,18 +228,21 @@ The cutoffs were tuned on Span-01 Lite (`openrouter/respan/span-01-lite`). The r
 
 ## Mix presets with your own rules
 
-Every preset and rule is exported, so you can build your own plugin with `createDecisionPlugin` from `@r_masseater/oxlint-plugin-decision`.
+Every preset and rule is exported, along with the lists `codeClaims` and `testClaims` of the rules adapted from jev-lint, so you can build your own plugin with `createDecisionPlugin` from `@r_masseater/oxlint-plugin-decision`.
 
 ```js
 // decision.mjs
 import { createDecisionPlugin, defineDecisionRule } from "@r_masseater/oxlint-plugin-decision";
-import { recommended, staleComment } from "@r_masseater/oxlint-plugin-decision-presets";
+import {
+  commentDescribesDeclaration,
+  recommended,
+} from "@r_masseater/oxlint-plugin-decision-presets";
 
 export default createDecisionPlugin({
   name: "team",
   rules: [
     ...recommended,
-    staleComment,
+    commentDescribesDeclaration,
     defineDecisionRule({
       id: "no-direct-db-in-handlers",
       target: "function",
@@ -250,11 +263,15 @@ export default defineConfig({
     "team/no-pii-in-logs": "error",
     "team/no-prompt-injection": "error",
     "team/no-hardcoded-secrets": "error",
-    "team/stale-comment": "warn",
+    "team/comment-describes-declaration": "warn",
     "team/no-direct-db-in-handlers": "error",
   },
 });
 ```
+
+## Credits
+
+The rules that check a claim the code makes about itself are adapted from [jev-lint](https://github.com/mizchi/jev-lint) by mizchi: `fn-name-promises`, `pure-name-is-pure`, `safe-name-is-safe`, `idempotent-name`, `catch-hides-failure`, `error-message-matches-condition`, `log-level-matches-event`, `log-message-matches-event`, `comment-describes-block`, `comment-describes-declaration`, `doc-errors-match-body`, `var-name-describes-value`, `describe-names-subject`, `test-name-describes-code`, `test-name-verifies-claim`, `snapshot-only-behaviour-claim` and `test-mocks-subject`. Their questions and cutoffs come from jev-lint, which tuned them on the default model, `openrouter/~typesafe/jev-latest`. jev-lint's rules that look across files, or at types, classes, other languages, documents and commits, are not here.
 
 ## License
 

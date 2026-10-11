@@ -11,9 +11,9 @@ This program is a fork of oxlint-plugin-jev
 that project. Those portions remain available under the MIT License below,
 whose copyright notice and permission notice must be kept.
 
-The questions of the jev rules (src/jev-rules.ts) are adapted from jev-lint
-(https://github.com/mizchi/jev-lint), also under the MIT License; its copyright
-notice is listed after the one below.
+The questions of the claim rules (src/code-claims.ts and src/test-claims.ts) are
+adapted from jev-lint (https://github.com/mizchi/jev-lint), also under the MIT
+License; its copyright notice is listed after the one below.
 
 --------------------------------------------------------------------------------
 

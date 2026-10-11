@@ -1,6 +1,6 @@
 const carts = new Map();
 
-/** Returns the cart, or null when no cart has this id. */
+/** Returns the cart, or null when no cart has this id. It never throws. */
 export function getCart(id) {
   const cart = carts.get(id);
   if (!cart) throw new Error(`no cart ${id}`);

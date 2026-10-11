@@ -7,8 +7,29 @@ export {
   noHardcodedSecrets,
   noPiiInLogs,
   noPromptInjection,
-  noSwallowedErrors,
   preferSchemaValidation,
-  staleComment,
   untrustedInputRisk,
 } from "./rules.ts";
+export {
+  catchHidesFailure,
+  codeClaims,
+  commentDescribesBlock,
+  commentDescribesDeclaration,
+  docErrorsMatchBody,
+  errorMessageMatchesCondition,
+  fnNamePromises,
+  idempotentName,
+  logLevelMatchesEvent,
+  logMessageMatchesEvent,
+  pureNameIsPure,
+  safeNameIsSafe,
+  varNameDescribesValue,
+} from "./code-claims.ts";
+export {
+  describeNamesSubject,
+  snapshotOnlyBehaviourClaim,
+  testClaims,
+  testMocksSubject,
+  testNameDescribesCode,
+  testNameVerifiesClaim,
+} from "./test-claims.ts";
