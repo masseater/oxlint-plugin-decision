@@ -18,6 +18,9 @@ const envOf = (name: string): Option.Option<string> =>
     Option.filter(Str.isNonEmpty),
   );
 
+const envNameOf = (env: Readonly<Record<string, string>>, name: string): string =>
+  env[name] ?? name;
+
 const failsInCi = (options: ResolvedOptions): boolean =>
   options.ci === "fail" && Option.isSome(envOf("CI"));
 
@@ -38,4 +41,4 @@ const messageOf = (error: unknown): string => {
   return String(error);
 };
 
-export { envOf, failsInCi, messageOf, runOrElse, warnOnce };
+export { envNameOf, envOf, failsInCi, messageOf, runOrElse, warnOnce };

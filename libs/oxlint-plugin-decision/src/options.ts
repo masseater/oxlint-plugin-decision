@@ -64,6 +64,7 @@ const DEFAULTS = {
   maxMatchesPerFile: 25,
   maxSnippetChars: 4000,
   model: "openrouter/~typesafe/jev-latest",
+  env: {},
 } as const satisfies Required<DecisionOptions>;
 
 const RULE_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
@@ -110,6 +111,7 @@ const OptionsSchema = Schema.Struct({
   maxMatchesPerFile: Schema.optionalKey(PositiveInt),
   maxSnippetChars: Schema.optionalKey(PositiveInt),
   model: Schema.optionalKey(ModelSpecSchema),
+  env: Schema.optionalKey(Schema.Record(Schema.NonEmptyString, Schema.NonEmptyString)),
 });
 
 const RuleSchema = Schema.Struct({
@@ -242,6 +244,7 @@ const resolveOptions = (
     timeoutMs: merged.timeoutMs,
     maxMatchesPerFile: merged.maxMatchesPerFile,
     maxSnippetChars: merged.maxSnippetChars,
+    env: merged.env,
     rules: checkRules(rules).map((rule) => resolveRule(model, providers)(rule)),
   };
 };
