@@ -3,6 +3,12 @@ name: publish
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit, branch, or tag to release
+        required: false
+        default: main
 
 permissions: {}
 
@@ -15,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: npm
     permissions:
-      contents: read
+      contents: write
       id-token: write
     env:
       PACKAGES: >-
@@ -24,6 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.ref || github.ref }}
           persist-credentials: false
       - uses: voidzero-dev/setup-vp@3754dd7dbdb32bd8f6d28b6043de13ad3a75f21f # v1.21.1
         with:
@@ -33,21 +40,38 @@ jobs:
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: false
-      - name: Check tag matches package versions
+      - name: Check package versions
+        id: version
         env:
+          EVENT_NAME: ${{ github.event_name }}
           TAG: ${{ github.ref_name }}
         run: |
+          expected=""
           for dir in $PACKAGES; do
             if [ ! -d "$dir" ]; then
               echo "::warning::$dir does not exist, skipping"
               continue
             fi
             version="$(jq -r .version "$dir/package.json")"
-            if [ "$TAG" != "v$version" ]; then
-              echo "::error::Tag $TAG does not match $dir version v$version"
+            if [ -z "$expected" ]; then
+              expected="$version"
+            elif [ "$version" != "$expected" ]; then
+              echo "::error::$dir version $version does not match $expected"
               exit 1
             fi
           done
+          if [ -z "$expected" ]; then
+            echo "::error::No package found in PACKAGES"
+            exit 1
+          fi
+          if [ "$EVENT_NAME" = "push" ] && [ "$TAG" != "v$expected" ]; then
+            echo "::error::Tag $TAG does not match package version v$expected"
+            exit 1
+          fi
+          {
+            echo "tag=v$expected"
+            echo "sha=$(git rev-parse HEAD)"
+          } >> "$GITHUB_OUTPUT"
       - run: vp run verify
         env:
           GH_TOKEN: ${{ github.token }}
@@ -63,15 +87,32 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
-      - name: Publish
+      - name: Tag the release
+        if: github.event_name == 'workflow_dispatch'
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ steps.version.outputs.tag }}
+          SHA: ${{ steps.version.outputs.sha }}
+        run: |
+          if existing="$(gh api "repos/$REPO/git/ref/tags/$TAG" --jq .object.sha 2>/dev/null)"; then
+            if [ "$existing" = "$SHA" ]; then
+              echo "$TAG already points to $SHA"
+            else
+              echo "::error::$TAG already points to $existing, not $SHA"
+              exit 1
+            fi
+          else
+            gh api "repos/$REPO/git/refs" -f ref="refs/tags/$TAG" -f sha="$SHA"
+          fi
+      - name: Publish
+        working-directory: ${{ runner.temp }}
         run: |
           npm --version
           for dir in $PACKAGES; do
-            [ -d "$dir" ] || continue
-            name="$(jq -r .name "$dir/package.json")"
-            version="$(jq -r .version "$dir/package.json")"
+            [ -d "$GITHUB_WORKSPACE/$dir" ] || continue
+            name="$(jq -r .name "$GITHUB_WORKSPACE/$dir/package.json")"
+            version="$(jq -r .version "$GITHUB_WORKSPACE/$dir/package.json")"
             if npm view "$name@$version" version >/dev/null 2>&1; then
               echo "$name@$version is already published, skipping"
               continue
