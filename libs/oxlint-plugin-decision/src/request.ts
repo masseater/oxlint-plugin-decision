@@ -260,6 +260,7 @@ export {
   parseVerdicts,
   refAt,
   selectedLocation,
+  sourceLines,
   truncateSnippet,
 };
 export type { LocatedMatch };

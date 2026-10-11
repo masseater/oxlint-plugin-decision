@@ -12,7 +12,7 @@ fi
 if ! command -v vp >/dev/null 2>&1; then
   if ! (curl -fsSL https://vite.plus | VP_NODE_MANAGER=no bash >&2); then
     work="$(mktemp -d)"
-    (cd "$work" && npm pack -q "@voidzero-dev/vite-plus-cli-linux-x64-gnu@latest" >&2 && tar xzf ./*.tgz)
+    (cd "$work" && npm pack -q "@voidzero-dev/vite-plus-cli-linux-x64-gnu@1.1.0" >&2 && tar xzf ./*.tgz)
     mkdir -p "$HOME/.local/bin"
     install -m 755 "$work/package/vp" "$HOME/.local/bin/vp"
     rm -rf "$work"

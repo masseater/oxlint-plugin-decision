@@ -1,6 +1,7 @@
 import type { Context } from "@oxlint/plugins";
 import { Array as Arr, Option } from "effect";
 
+import { sourceLines } from "./request.ts";
 import type { AstNode, EnclosingKind, RuleContext } from "./types.ts";
 
 const DEFAULT_LINES = 5;
@@ -37,7 +38,7 @@ const linesAround = (
     after = DEFAULT_LINES,
   }: { readonly before?: number; readonly after?: number },
 ): string => {
-  const lines = context.sourceCode.text.split("\n");
+  const lines = sourceLines(context.sourceCode.text);
   const first = Math.max(FIRST_LINE, node.loc.start.line - before);
   const last = Math.min(lines.length, node.loc.end.line + after);
   return lines

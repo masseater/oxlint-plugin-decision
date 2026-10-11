@@ -110,11 +110,12 @@ const textState = Effect.gen(function* test() {
 
 const contextFor = (
   context: RuleContext,
+  source = AROUND,
 ): Effect.Effect<Option.Option<string>, unknown, Services> =>
   Effect.gen(function* ask() {
     const env = yield* mockEnv("test-key");
     yield* lintProject({
-      files: { "log.js": AROUND },
+      files: { "log.js": source },
       options: { rules: [{ ...callRule, context }] },
       env,
     });
@@ -136,6 +137,10 @@ const contexts = Effect.gen(function* test() {
     Option.some("function handler() {\n  console.log(user.email, user.phone);\n}"),
   );
   deepStrictEqual(yield* contextFor({ scope: "file" }), Option.some(AROUND));
+  deepStrictEqual(
+    yield* contextFor({ scope: "lines", before: ONE, after: ONE }, AROUND.replaceAll("\n", "\r")),
+    Option.some("L2| function handler() {\nL3|   console.log(user.email, user.phone);\nL4| }"),
+  );
 });
 
 layer(NodeServices.layer, { excludeTestServices: true })("linting a project", (it) => {
