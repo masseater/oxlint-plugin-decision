@@ -42,7 +42,7 @@ Add the plugin and its one rule, `decision/ask`, to `.oxlintrc.json`. Your Engli
           {
             "id": "name-matches-behavior",
             "target": "function",
-            "question": "Does this function's name describe only reading or fetching data (for example get, find, load or fetch), while its body also writes, logs or sends something?",
+            "question": "Does this function's name imply it only reads data, while its body also writes or sends something?",
             "cutoff": 0.6,
             "context": { "scope": "enclosing", "kind": "class" }
           }
@@ -140,8 +140,6 @@ A model id is `<provider>/<model>`. The built-in provider is `openrouter`, so `o
 ```json
 { "model": ["openrouter/~typesafe/jev-latest", "openrouter/respan/span-01-lite"] }
 ```
-
-Respan models (`respan/...`) are asked about one match per request, because they read their state as plain text and lose track of which snippet a question means when several share it.
 
 Probabilities are not calibrated the same way across models, so a cutoff tuned for one model does not carry over to another. Pin a versioned id once your cutoffs are tuned. Each diagnostic names the model that answered.
 
@@ -275,7 +273,7 @@ TypeScript and [Effect](https://effect.website), built with [Vite+](https://vite
 vp run build
 vp check            # format, lint, typecheck
 vp run test         # against a mock OpenRouter server
-OPENROUTER_API_KEY=... vp run test:live   # the example against Span-01 Lite, a free model; checks it reports exactly fail.js's three violations and logs every answer's probability
+OPENROUTER_API_KEY=... vp run test:live   # the example against Span-01 Lite, a free model; checks the API round trip, not answer quality
 ```
 
 ## License
