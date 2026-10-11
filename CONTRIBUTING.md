@@ -22,7 +22,7 @@ Inside the package:
 vp run build
 vp check            # format, lint, typecheck
 vp run test         # against a mock OpenRouter server
-OPENROUTER_API_KEY=... vp run test:live   # the example against Span-01 Lite, a free model; checks the API round trip, not answer quality
+OPENROUTER_API_KEY=... vp run test:live   # the example against Span-01 Lite, a free model; checks it reports exactly fail.js's three violations and logs every answer's probability
 ```
 
 ## Example
