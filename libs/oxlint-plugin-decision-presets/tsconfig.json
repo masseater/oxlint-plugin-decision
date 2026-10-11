@@ -3,6 +3,9 @@
   "include": ["src", "tests", "*.ts"],
   "compilerOptions": {
     "types": ["node"],
-    "declaration": true
+    "declaration": true,
+    "paths": {
+      "oxlint-plugin-decision": ["../oxlint-plugin-decision/src/index.ts"]
+    }
   }
 }

@@ -4,6 +4,7 @@ export default defineConfig({
   pack: {
     entry: ["src/index.ts", "src/recommended.ts", "src/strict.ts", "src/review-only.ts"],
     platform: "node",
+    tsconfig: "tsconfig.build.json",
     dts: {
       generator: "tsgo",
     },
