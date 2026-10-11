@@ -69,6 +69,7 @@ const locate = (
 const outcomeOf = (answered: Answered, match: Match, ref: string): Outcome => {
   const verdict = Option.fromUndefinedOr(answered.verdicts.results[ref]);
   return {
+    served: `${answered.asking.model.provider.name}/${answered.verdicts.model}`,
     cached: answered.cached,
     answers: answered.verdicts.answers,
     verdict,

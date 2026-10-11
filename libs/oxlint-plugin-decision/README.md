@@ -231,20 +231,20 @@ You can also set `explain: true` (or `"json"`) in `createDecisionPlugin` or in `
 For every match the plugin asked a model about, it prints to stderr, so oxlint's own output stays as it is:
 
 ```text
-oxlint-plugin-decision explain: fail.js:5:3 [no-pii-in-logs] openrouter/respan/span-01-lite cached=no
+oxlint-plugin-decision explain: fail.js:5:3 [no-pii-in-logs] openrouter/respan/span-01-lite (served openrouter/respan/span-01-lite-20260925) cached=no
   state: 64 chars "state.snippets.s3: console.log(\"loaded\", user.email, user.ph"
   s3: yes=0.93
     Consider only snippet "s3" in state.snippets. Does this call write personal data, such as an email or phone number, to a log or console?
   verdict: yes 0.93, cutoff 0.80, reported
 ```
 
-- The file and position, the rule, and the model id from your config.
+- The file and position, the rule, the model id the rule was asked with (after any per-rule override), and the model that served the answer.
 - Whether the answer came from the cache.
 - The length and first characters of the source sent as state. The full source is not printed.
 - Each question exactly as sent, with the probability of each answer. When a Respan model answers a `classify` or `severity` rule, each yes/no question it was asked is listed on its own.
 - The verdict, the rule's cutoff, and whether it was reported.
 
-If the request failed, the record says why instead. In JSON Lines the same fields are `file`, `line`, `column`, `rule`, `model`, `cutoff`, `cached`, `state`, `questions`, `verdict`, `reported`, and `error`.
+If the request failed, the record says why instead. In JSON Lines the same fields are `file`, `line`, `column`, `rule`, `model`, `served`, `cutoff`, `cached`, `state`, `questions`, `verdict`, `reported`, and `error`.
 
 Explain mode only prints. It does not change what is asked, what is cached, or what is reported.
 

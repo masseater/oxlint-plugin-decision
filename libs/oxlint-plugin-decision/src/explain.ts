@@ -48,6 +48,7 @@ interface Explanation {
   readonly column: number;
   readonly rule: string;
   readonly model: string;
+  readonly served?: string;
   readonly cutoff: number;
   readonly cached?: boolean;
   readonly state: { readonly chars: number; readonly head: string };
@@ -58,6 +59,7 @@ interface Explanation {
 }
 
 interface Outcome {
+  readonly served: string;
   readonly answers: Readonly<Record<string, unknown>>;
   readonly cached: boolean | undefined;
   readonly verdict: Option.Option<Verdict>;
@@ -218,9 +220,15 @@ const verdictText = (explanation: Explanation): string => {
   });
 };
 
+const servedText = (served: string | undefined): string =>
+  Option.match(Option.fromUndefinedOr(served), {
+    onNone: () => "",
+    onSome: (id) => ` (served ${id})`,
+  });
+
 const asText = (explanation: Explanation): string =>
   [
-    `${PREFIX} explain: ${explanation.file}:${String(explanation.line)}:${String(explanation.column)} [${explanation.rule}] ${explanation.model} cached=${cachedText(explanation.cached)}`,
+    `${PREFIX} explain: ${explanation.file}:${String(explanation.line)}:${String(explanation.column)} [${explanation.rule}] ${explanation.model}${servedText(explanation.served)} cached=${cachedText(explanation.cached)}`,
     `  state: ${String(explanation.state.chars)} chars ${JSON.stringify(explanation.state.head)}`,
     ...explanation.questions.map(
       ({ id, question, probabilities }) =>
@@ -243,9 +251,10 @@ const explaining = (pass: ExplainPass, mode: "text" | "json"): Explainer => {
   const sent = wireRequestsFor(pass.request);
   const print = printerFor(mode);
   return {
-    outcome: (match, at, { answers, cached, verdict, reported }) => {
+    outcome: (match, at, { served, answers, cached, verdict, reported }) => {
       print({
         ...baseOf({ pass, sent }, match, at)(answers),
+        served,
         ...Option.match(Option.fromUndefinedOr(cached), {
           onNone: () => ({}),
           onSome: (hit) => ({ cached: hit }),

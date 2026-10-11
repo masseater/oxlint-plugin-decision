@@ -1,7 +1,7 @@
 import { NodeServices } from "@effect/platform-node";
 import { layer } from "@effect/vitest";
 import { assertInclude, deepStrictEqual, strictEqual } from "@effect/vitest/utils";
-import { Array as Arr, Effect, Option, Schema } from "effect";
+import { Array as Arr, Effect, Option, Order, Schema } from "effect";
 
 import type { DecisionPluginSetup } from "#src/types.ts";
 
@@ -9,6 +9,7 @@ import { TIMEOUT, callRule, lintProject, outputOf, withMock } from "./fixtures.t
 import { decisionLines, mockEnv, projectFilesFor, runOxlint, writeProject } from "./oxlint.ts";
 
 const SOURCE = "ok();\nconsole.log(user.email, user.phone);\n";
+const LOG_ONLY = "console.log(user.email, user.phone);\n";
 const RESPAN = "openrouter/respan/span-01-lite";
 const EXPLAIN_ENV = "OXLINT_DECISION_EXPLAIN";
 const FIRST_LINE = 1;
@@ -67,7 +68,7 @@ const textFromOption = Effect.gen(function* test() {
   });
   assertInclude(
     run.stderr,
-    "oxlint-plugin-decision explain: log.js:2:1 [any-call] openrouter/~typesafe/jev-latest cached=no",
+    "oxlint-plugin-decision explain: log.js:2:1 [any-call] openrouter/~typesafe/jev-latest (served openrouter/mock-decider) cached=no",
   );
   assertInclude(run.stderr, "  s1: yes=0.95\n    Consider only snippet");
   assertInclude(run.stderr, "  verdict: yes 0.95, cutoff 0.80, reported");
@@ -108,6 +109,27 @@ const jsonFromEnv = Effect.gen(function* test() {
   strictEqual(recordAt(records, FIRST_LINE).reported, false);
 });
 
+const modelPerRule = Effect.gen(function* test() {
+  const env = yield* mockEnv("test-key");
+  const run = yield* lintProject({
+    files: { "log.js": LOG_ONLY },
+    options: {
+      explain: "json",
+      model: "openrouter/first",
+      rules: [callRule, { ...callRule, id: "other-call" }],
+    },
+    ruleOptions: { "other-call": { model: "openrouter/second" } },
+    env,
+  });
+  deepStrictEqual(
+    Arr.sort(
+      recordsOf(run.stderr).map(({ rule, model }) => `${rule} ${model}`),
+      Order.String,
+    ),
+    ["any-call openrouter/first", "other-call openrouter/second"],
+  );
+});
+
 const explainSetup: DecisionPluginSetup = { explain: "json", rules: [callRule] };
 
 const cachedOnSecondRun = Effect.scoped(
@@ -145,5 +167,6 @@ layer(NodeServices.layer, { excludeTestServices: true })("explain mode", (it) =>
     () => withMock(jsonFromEnv),
     TIMEOUT,
   );
+  it.effect("names the model each rule was asked with", () => withMock(modelPerRule), TIMEOUT);
   it.effect("says when an answer came from the cache", () => withMock(cachedOnSecondRun), TIMEOUT);
 });
