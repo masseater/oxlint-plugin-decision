@@ -3,13 +3,7 @@ import { deepStrictEqual, strictEqual, throws } from "@effect/vitest/utils";
 import { Effect, Layer } from "effect";
 
 import { openRouter } from "#src/openrouter.ts";
-import {
-  DEFAULTS,
-  NAMED_PARENTS,
-  REPORT_LOC,
-  resolveOptions,
-  snippetNodeFor,
-} from "#src/options.ts";
+import { NAMED_PARENTS, REPORT_LOC, resolveOptions, snippetNodeFor } from "#src/options.ts";
 import type { AstNode, DecisionRule } from "#src/types.ts";
 
 const SIGNATURE_LINE = 10;
@@ -36,7 +30,7 @@ const resolvesDefaults = Effect.sync(() => {
     })),
     [
       {
-        models: [{ id: DEFAULTS.model, model: "~typesafe/jev-latest" }],
+        models: [{ id: "openrouter/~typesafe/jev-latest", model: "~typesafe/jev-latest" }],
         answer: { kind: "boolean" },
       },
     ],

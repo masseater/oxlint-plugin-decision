@@ -3,10 +3,10 @@ import { layer } from "@effect/vitest";
 import { deepStrictEqual } from "@effect/vitest/utils";
 import { Array as Arr, Config, Effect, FileSystem, Option, Redacted } from "effect";
 
-import { PLUGIN_NAME } from "#src/plugin.ts";
 import { presets } from "#src/presets.ts";
 
 import {
+  PLUGIN_NAME,
   TIMEOUT,
   enabled,
   fromRoot,

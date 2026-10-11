@@ -262,7 +262,6 @@ const REPORT_LOC = {
 
 export type { Sources };
 export {
-  DEFAULTS,
   checkRules,
   NAMED_PARENTS,
   OptionsError,

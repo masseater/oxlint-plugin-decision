@@ -63,6 +63,8 @@ const tempProject = (files: Env): Effect.Effect<string, PlatformError, Services 
     return dir;
   });
 
+const PLUGIN_NAME = "decision-presets";
+
 const reportedLines = (run: Run, plugin: string): readonly string[] =>
   run.stdout.split("\n").filter((line) => line.includes(`/${plugin}(`));
 
@@ -74,5 +76,16 @@ const enabled = (
 
 const outputOf = (run: Run): string => `${run.stdout}${run.stderr}`;
 
-export { FAILED, PASSED, TIMEOUT, enabled, fromRoot, outputOf, oxlint, reportedLines, tempProject };
+export {
+  FAILED,
+  PASSED,
+  PLUGIN_NAME,
+  TIMEOUT,
+  enabled,
+  fromRoot,
+  outputOf,
+  oxlint,
+  reportedLines,
+  tempProject,
+};
 export type { Env, Run, Services };

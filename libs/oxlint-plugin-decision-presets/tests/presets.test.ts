@@ -4,12 +4,12 @@ import { assertInclude, deepStrictEqual, strictEqual } from "@effect/vitest/util
 import { Effect, FileSystem } from "effect";
 import type { PlatformError } from "effect/PlatformError";
 
-import { PLUGIN_NAME } from "#src/plugin.ts";
 import { presets } from "#src/presets.ts";
 
 import {
   FAILED,
   PASSED,
+  PLUGIN_NAME,
   TIMEOUT,
   enabled,
   fromRoot,

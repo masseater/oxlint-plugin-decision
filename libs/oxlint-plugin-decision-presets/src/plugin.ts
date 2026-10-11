@@ -8,4 +8,4 @@ const PLUGIN_NAME = "decision-presets";
 const presetPlugin = (rules: Preset): DecisionPlugin =>
   createDecisionPlugin({ name: PLUGIN_NAME, rules });
 
-export { PLUGIN_NAME, presetPlugin };
+export { presetPlugin };
