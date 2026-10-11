@@ -18,6 +18,8 @@ npm i -D oxlint oxlint-plugin-decision
 export OPENROUTER_API_KEY="..."   # https://openrouter.ai/settings/keys
 ```
 
+The plugin reads the key from the `OPENROUTER_API_KEY` environment variable. Without it, the plugin warns once and reports nothing.
+
 In CI, set `ci: "fail"` so a run that could not reach a model fails instead of passing quietly.
 
 ## Config
@@ -143,7 +145,7 @@ A model id is `<provider>/<model>`. The built-in provider is `openrouter`, so `o
 
 Probabilities are not calibrated the same way across models, so a cutoff tuned for one model does not carry over to another. Pin a versioned id once your cutoffs are tuned. Each diagnostic names the model that answered.
 
-A key is required only for providers your config references. `OPENROUTER_BASE_URL` points the plugin at another host; the tests use it for a mock.
+A key is required only for providers your config references. `OPENROUTER_BASE_URL` points the plugin at another OpenRouter-compatible host.
 
 ### File locations
 
@@ -231,6 +233,17 @@ If a model can't be asked, because the key is missing, the request times out, or
 
 If only a location refinement fails, confirmed violations are still reported at the file level. Under CI with `ci: "fail"`, the refinement failure produces a separate diagnostic; otherwise it warns.
 
+## Cost and caching
+
+Every match is a paid model request unless its answer is already cached, so keep an eye on what your rules match.
+
+- A broad target, such as `"call"` on a large codebase, sends many matches. `maxMatchesPerFile` caps how many are sent per file.
+- Wider `context` and longer snippets cost more tokens. `maxSnippetChars` caps each snippet.
+- A list of models multiplies the requests: each model answers every match.
+- Answers are cached on disk under `node_modules/.cache/oxlint-plugin-decision`. Unchanged code is not asked again, so a second run over the same files is free. Editing a snippet, its context, a question or an answer kind re-asks that file; changing a cutoff or an `id` does not.
+- In CI, persist `node_modules/.cache/oxlint-plugin-decision` between runs to keep the cache warm.
+- Free models such as `openrouter/respan/span-01-lite` are a cheap way to try rules before switching to a paid model.
+
 ## In the editor
 
 The oxlint VS Code extension lints as you type, and every keystroke inside a match is a paid request that blocks the language server until the model answers.
@@ -253,28 +266,13 @@ oxlint -c .oxlintrc.ci.json   # CI and pre-push, models included
 
 ## Example
 
-`example/` has three rules that a pattern-based linter can't express, a file that fails all three, and a file that passes.
+Three rules that a pattern-based linter can't express, and code each one fails and passes on. The rules are the ones in the [Config](#config) section plus a prompt-injection check.
 
 | Rule                    | Fails on                                                | Passes on                                   |
 | ----------------------- | ------------------------------------------------------- | ------------------------------------------- |
 | `no-pii-in-logs`        | `console.log("loaded", user.email, user.phone)`         | `console.log("notified", { userId: id })`   |
 | `name-matches-behavior` | `getUser` that also sends an email                      | The same body named `notifySignIn`          |
 | `no-prompt-injection`   | A customer message pasted into the system prompt string | The message passed as a separate user field |
-
-```sh
-vp run --filter oxlint-plugin-decision example
-```
-
-## Development
-
-TypeScript and [Effect](https://effect.website), built with [Vite+](https://viteplus.dev). ESM only.
-
-```sh
-vp run build
-vp check            # format, lint, typecheck
-vp run test         # against a mock OpenRouter server
-OPENROUTER_API_KEY=... vp run test:live   # the example against Span-01 Lite, a free model; checks the API round trip, not answer quality
-```
 
 ## License
 
