@@ -43,7 +43,8 @@ const noSwallowedErrors = defineDecisionRule({
 const untrustedInputRisk = defineDecisionRule({
   id: "untrusted-input-risk",
   target: "function",
-  question: "Does this function handle untrusted input in a way that could be exploited?",
+  question:
+    "Does this function splice untrusted input, such as a user message or request parameter, into the same string as a SQL query, shell command, eval code, HTML, or language model instructions, instead of passing it as a separate parameter or field?",
   cutoff: 0.6,
   answer: { kind: "severity", minimum: "warn" },
 });
@@ -57,9 +58,10 @@ const staleComment = defineDecisionRule({
   answer: {
     kind: "classify",
     labels: {
-      accurate: "The comment describes what the code does",
+      accurate: "Everything the comment says, the code does",
       missing: "There is no comment right above the function",
-      stale: "The comment describes behavior the code no longer has",
+      stale:
+        "The comment claims something, such as logging, returning or checking, that the code does not do",
     },
     report: ["stale"],
   },

@@ -68,7 +68,7 @@ See the [plugin README](libs/oxlint-plugin-decision/README.md) for rule fields, 
 
 The default model, `openrouter/~typesafe/jev-latest`, supports every rule and preset.
 
-Respan models, such as the free `openrouter/respan/span-01-lite`, answer only yes/no questions. They cannot answer `classify` or `severity` rules or file-rule `location` questions, so of the presets only `recommended` works with them; `strict` and `review-only` do not.
+Respan models, such as the free `openrouter/respan/span-01-lite`, answer only yes/no questions. The plugin asks them `classify`, `severity` and file-rule `location` questions as one yes/no question per label, level or line, so every preset works with them. These rules cost more requests on Respan models, and `location` is less precise than on the default model.
 
 ## Contributing
 
