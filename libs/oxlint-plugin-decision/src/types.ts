@@ -49,6 +49,7 @@ interface DecisionOptions {
   readonly maxMatchesPerFile?: number;
   readonly maxSnippetChars?: number;
   readonly model?: ModelSpec;
+  readonly env?: Readonly<Record<string, string>>;
   readonly explain?: ExplainSetting;
 }
 
@@ -81,6 +82,7 @@ type DecideResult =
 interface DecideInput {
   readonly request: DecisionRequest;
   readonly timeoutMs: number;
+  readonly env: Readonly<Record<string, string>>;
 }
 
 interface DecisionProvider {
@@ -116,6 +118,7 @@ interface ResolvedOptions {
   readonly timeoutMs: number;
   readonly maxMatchesPerFile: number;
   readonly maxSnippetChars: number;
+  readonly env: Readonly<Record<string, string>>;
   readonly explain: ExplainSetting;
   readonly rules: readonly ResolvedRule[];
 }

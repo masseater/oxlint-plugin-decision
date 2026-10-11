@@ -128,6 +128,27 @@ const textStatePerSnippet = Effect.gen(function* test() {
   strictEqual(decisionLines(run).length, ONE);
 });
 
+const renamedEnv = Effect.gen(function* test() {
+  const { OPENROUTER_API_KEY: key, OPENROUTER_BASE_URL: url } = yield* mockEnv("team-key");
+  const files = { "log.js": LOG_LINE };
+  const options = {
+    env: { OPENROUTER_API_KEY: "TEAM_OPENROUTER_KEY", OPENROUTER_BASE_URL: "TEAM_OPENROUTER_URL" },
+    rules: [callRule],
+  };
+  const without = yield* lintProject({ files, options, env: { OPENROUTER_API_KEY: "ignored" } });
+  assertInclude(without.stderr, "TEAM_OPENROUTER_KEY is not set, skipping openrouter models");
+  const run = yield* lintProject({
+    files,
+    options,
+    env: { TEAM_OPENROUTER_KEY: String(key), TEAM_OPENROUTER_URL: String(url) },
+  });
+  deepStrictEqual(
+    (yield* loggedRequests).map(({ authorization }) => authorization),
+    ["Bearer team-key"],
+  );
+  strictEqual(decisionLines(run).length, ONE);
+});
+
 const contextFor = (
   context: RuleContext,
   source = AROUND,
@@ -187,4 +208,9 @@ layer(NodeServices.layer, { excludeTestServices: true })("linting a project", (i
   );
   it.effect("lets a rule override the default model", () => withMock(ruleModel), TIMEOUT);
   it.effect("sends the source a rule's context scope asks for", () => contexts, TIMEOUT);
+  it.effect(
+    "reads the key and base URL from the variables env names",
+    () => withMock(renamedEnv),
+    TIMEOUT,
+  );
 });

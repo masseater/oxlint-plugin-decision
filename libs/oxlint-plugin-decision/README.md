@@ -20,7 +20,7 @@ npm i -D oxlint @r_masseater/oxlint-plugin-decision
 export OPENROUTER_API_KEY="..."   # https://openrouter.ai/settings/keys
 ```
 
-The plugin reads the key from the `OPENROUTER_API_KEY` environment variable. Without it, the plugin warns once and reports nothing.
+The plugin reads the key from the `OPENROUTER_API_KEY` environment variable. Without it, the plugin warns once and reports nothing. To read the key from a variable with another name, set `env` (see [Settings](#settings)). The key itself is never passed in code or config.
 
 In CI, set `ci: "fail"` so a run that could not reach a model fails instead of passing quietly.
 
@@ -214,6 +214,7 @@ createDecisionPlugin({ name: "team", ci: "fail", timeoutMs: 20_000, rules: [ ...
 | `maxMatchesPerFile` | `25`                                | Matches sent per file across all rules. Extra matches are dropped in source order and the file is named on stderr.                                     |
 | `maxSnippetChars`   | `4000`                              | Longer snippets are cut and end with `/* ...truncated */`.                                                                                             |
 | `model`             | `"openrouter/~typesafe/jev-latest"` | The default model id or list of ids.                                                                                                                   |
+| `env`               | `{}`                                | Renames the environment variables providers read, such as `{ "OPENROUTER_API_KEY": "TEAM_OPENROUTER_KEY" }`. Values are variable names, not keys.      |
 | `explain`           | `false`                             | `true` or `"text"` prints why each match was or wasn't reported, `"json"` prints the same as JSON Lines. See [Explain mode](#explain-mode).            |
 
 ## Explain mode

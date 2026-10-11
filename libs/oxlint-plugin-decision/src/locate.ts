@@ -26,6 +26,7 @@ interface Located {
 interface Asking {
   readonly model: ModelRef;
   readonly deadline: number;
+  readonly env: Readonly<Record<string, string>>;
 }
 
 interface Refinement {
@@ -44,6 +45,7 @@ const fetchVerdicts = (asking: Asking, request: DecisionRequest): VerdictResult 
   const result = asking.model.provider.decide({
     request,
     timeoutMs: remainingMs(asking.deadline),
+    env: asking.env,
   });
   if (!result.ok) {
     return result;

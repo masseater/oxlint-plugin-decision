@@ -5,7 +5,7 @@ import { contextOf } from "./context.ts";
 import { OptionsError, REPORT_LOC, TARGET_NODE_TYPES, snippetNodeFor } from "./options.ts";
 import { reportModel } from "./report.ts";
 import { truncateSnippet } from "./request.ts";
-import { envOf, failsInCi, warnOnce } from "./runtime.ts";
+import { envNameOf, envOf, failsInCi, warnOnce } from "./runtime.ts";
 import type {
   AstNode,
   DecisionProvider,
@@ -45,11 +45,13 @@ type OptionsFor = (settings: Readonly<Record<string, unknown>>) => ResolvedOptio
 
 const raisedMissing = new Set<string>();
 
-const missingEnvOf = (provider: DecisionProvider): readonly string[] =>
-  provider.requiredEnv.filter((name) => Option.isNone(envOf(name)));
+const missingEnvOf = (options: ResolvedOptions, provider: DecisionProvider): readonly string[] =>
+  provider.requiredEnv
+    .map((name) => envNameOf(options.env, name))
+    .filter((name) => Option.isNone(envOf(name)));
 
 const isAvailable = (options: ResolvedOptions, { provider }: ModelRef): boolean => {
-  const missingNames = missingEnvOf(provider);
+  const missingNames = missingEnvOf(options, provider);
   if (Arr.isReadonlyArrayEmpty(missingNames)) {
     return true;
   }

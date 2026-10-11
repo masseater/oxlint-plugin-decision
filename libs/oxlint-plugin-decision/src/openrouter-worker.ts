@@ -5,7 +5,7 @@ import { Config, Crypto, Effect, FileSystem, Option, Path, Redacted } from "effe
 import { runAsWorker } from "synckit";
 
 import { parseVerdicts } from "./request.ts";
-import { messageOf } from "./runtime.ts";
+import { envNameOf, messageOf } from "./runtime.ts";
 import type { DecideInput, DecideResult, DecisionRequest } from "./types.ts";
 import { mergeResponses, wireRequestsFor } from "./wire.ts";
 import type { WireRequest } from "./wire.ts";
@@ -26,10 +26,11 @@ const reasonFor = (error: unknown): string => {
   return `network: ${messageOf(error)}`;
 };
 
-const serverUrl = Config.String("OPENROUTER_BASE_URL").pipe(
-  Config.withDefault(DEFAULT_BASE_URL),
-  Config.map((url) => url.trim().replace(API_SUFFIX, "")),
-);
+const serverUrlOf = (env: Readonly<Record<string, string>>): Config.Config<string> =>
+  Config.String(envNameOf(env, "OPENROUTER_BASE_URL")).pipe(
+    Config.withDefault(DEFAULT_BASE_URL),
+    Config.map((url) => url.trim().replace(API_SUFFIX, "")),
+  );
 
 const toHex = (bytes: readonly number[]): string =>
   bytes.map((byte) => byte.toString(HEX_RADIX).padStart(HEX_BYTE_WIDTH, "0")).join("");
@@ -76,9 +77,9 @@ const writeCache = Effect.fn("writeCache")(function* writeCache(file: string, js
 const send = Effect.fn("send")(function* send(
   endpoint: string,
   decisionsRequest: WireRequest,
-  timeoutMs: number,
+  { timeoutMs, env }: Pick<DecideInput, "timeoutMs" | "env">,
 ) {
-  const apiKey = yield* Config.Redacted("OPENROUTER_API_KEY");
+  const apiKey = yield* Config.Redacted(envNameOf(env, "OPENROUTER_API_KEY"));
   const client = new OpenRouter({ apiKey: Redacted.value(apiKey) });
   const response: unknown = yield* Effect.tryPromise({
     try: (signal) =>
@@ -105,10 +106,13 @@ const send = Effect.fn("send")(function* send(
   return response;
 });
 
-const ask = Effect.fn("ask")(function* ask(endpoint: string, { request, timeoutMs }: DecideInput) {
+const ask = Effect.fn("ask")(function* ask(
+  endpoint: string,
+  { request, timeoutMs, env }: DecideInput,
+) {
   const responses = yield* Effect.forEach(
     wireRequestsFor(request),
-    (wire) => send(endpoint, wire, timeoutMs),
+    (wire) => send(endpoint, wire, { timeoutMs, env }),
     { concurrency: "unbounded" },
   ).pipe(
     Effect.timeoutOrElse({
@@ -132,7 +136,7 @@ const askAndStore = Effect.fn("askAndStore")(function* askAndStore(
 });
 
 const decide = Effect.fn("decide")(function* decide(input: DecideInput) {
-  const endpoint = yield* serverUrl;
+  const endpoint = yield* serverUrlOf(input.env);
   const file = yield* cacheFile(endpoint, input.request);
   const cached = yield* readCache(file, input.request);
   if (Option.isSome(cached)) {
