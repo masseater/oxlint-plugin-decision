@@ -214,6 +214,38 @@ createDecisionPlugin({ name: "team", ci: "fail", timeoutMs: 20_000, rules: [ ...
 | `maxMatchesPerFile` | `25`                                | Matches sent per file across all rules. Extra matches are dropped in source order and the file is named on stderr.                                     |
 | `maxSnippetChars`   | `4000`                              | Longer snippets are cut and end with `/* ...truncated */`.                                                                                             |
 | `model`             | `"openrouter/~typesafe/jev-latest"` | The default model id or list of ids.                                                                                                                   |
+| `explain`           | `false`                             | `true` or `"text"` prints why each match was or wasn't reported, `"json"` prints the same as JSON Lines. See [Explain mode](#explain-mode).            |
+
+## Explain mode
+
+When you tune a question or try another model, explain mode shows why each match was or wasn't reported. Turn it on for one run with an environment variable, since oxlint does not pass command-line flags to plugins:
+
+```sh
+OXLINT_DECISION_EXPLAIN=1 npx oxlint      # readable text
+OXLINT_DECISION_EXPLAIN=json npx oxlint   # one JSON object per match
+```
+
+You can also set `explain: true` (or `"json"`) in `createDecisionPlugin` or in `settings.<plugin name>`. The environment variable wins when it is set, and `OXLINT_DECISION_EXPLAIN=0` turns it off.
+
+For every match the plugin asked a model about, it prints to stderr, so oxlint's own output stays as it is:
+
+```text
+oxlint-plugin-decision explain: fail.js:5:3 [no-pii-in-logs] openrouter/respan/span-01-lite cached=no
+  state: 64 chars "state.snippets.s3: console.log(\"loaded\", user.email, user.ph"
+  s3: yes=0.93
+    Consider only snippet "s3" in state.snippets. Does this call write personal data, such as an email or phone number, to a log or console?
+  verdict: yes 0.93, cutoff 0.80, reported
+```
+
+- The file and position, the rule, and the model id from your config.
+- Whether the answer came from the cache.
+- The length and first characters of the source sent as state. The full source is not printed.
+- Each question exactly as sent, with the probability of each answer. When a Respan model answers a `classify` or `severity` rule, each yes/no question it was asked is listed on its own.
+- The verdict, the rule's cutoff, and whether it was reported.
+
+If the request failed, the record says why instead. In JSON Lines the same fields are `file`, `line`, `column`, `rule`, `model`, `cutoff`, `cached`, `state`, `questions`, `verdict`, `reported`, and `error`.
+
+Explain mode only prints. It does not change what is asked, what is cached, or what is reported.
 
 ## Providers
 

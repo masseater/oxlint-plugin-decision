@@ -13,6 +13,7 @@ export type {
   DecisionRequest,
   DecisionRule,
   EnclosingKind,
+  ExplainSetting,
   ModelSpec,
   NoulQuestion,
   Question,

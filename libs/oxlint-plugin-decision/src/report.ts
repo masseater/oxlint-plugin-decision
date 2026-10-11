@@ -1,7 +1,9 @@
 import type { Context, Location } from "@oxlint/plugins";
-import { Option } from "effect";
+import { Array as Arr, Option } from "effect";
 
 import { isReported } from "./answer.ts";
+import { explainerFor } from "./explain.ts";
+import type { ExplainPass, Explainer, Outcome, Placed } from "./explain.ts";
 import { fetchVerdicts, locateMatch } from "./locate.ts";
 import type { Asking, Located } from "./locate.ts";
 import { OptionsError } from "./options.ts";
@@ -28,6 +30,8 @@ interface Answered {
   readonly asking: Asking;
   readonly verdicts: Verdicts;
   readonly request: DecisionRequest;
+  readonly cached: boolean | undefined;
+  readonly explainer: Explainer;
 }
 
 const DECIMALS = 2;
@@ -62,45 +66,87 @@ const locate = (
   return locateMatch(answered.asking, match, { ...answered, ref });
 };
 
+const outcomeOf = (answered: Answered, match: Match, ref: string): Outcome => {
+  const verdict = Option.fromUndefinedOr(answered.verdicts.results[ref]);
+  return {
+    cached: answered.cached,
+    answers: answered.verdicts.answers,
+    verdict,
+    reported: Option.exists(verdict, (found) => isReported(match.rule, found)),
+  };
+};
+
+const reportMatch = (
+  pass: ModelPass,
+  answered: Answered,
+  { match, ref, failed }: { readonly match: Match; readonly ref: string; readonly failed: boolean },
+): Option.Option<string> => {
+  const outcome = outcomeOf(answered, match, ref);
+  const { verdict } = outcome;
+  if (!outcome.reported || Option.isNone(verdict)) {
+    answered.explainer.outcome(match, { ref, loc: match.loc }, outcome);
+    return Option.none();
+  }
+  const located = locate(answered, match, { ref, failed });
+  const at: Placed = { ref, loc: located.loc };
+  answered.explainer.outcome(match, at, outcome);
+  pass.contextOf(match).report({
+    loc: located.loc,
+    messageId: "yes",
+    data: {
+      id: match.rule.id,
+      model: `${pass.model.provider.name}/${answered.verdicts.model}`,
+      answer: verdict.value.answer,
+      score: verdict.value.probability.toFixed(DECIMALS),
+      cutoff: match.rule.cutoff.toFixed(DECIMALS),
+      question: match.rule.question,
+    },
+  });
+  return located.failure;
+};
+
 const reportMatches = (pass: ModelPass, answered: Answered): Option.Option<Failure> => {
   let failure: Option.Option<Failure> = Option.none();
   for (const [index, match] of pass.matches.entries()) {
-    const ref = refAt(index);
-    const verdict = Option.fromUndefinedOr(answered.verdicts.results[ref]);
-    if (Option.isSome(verdict) && isReported(match.rule, verdict.value)) {
-      const located = locate(answered, match, { ref, failed: Option.isSome(failure) });
-      failure = Option.orElse(failure, () =>
-        located.failure.pipe(Option.map((reason) => ({ match, loc: match.loc, reason }))),
-      );
-      pass.contextOf(match).report({
-        loc: located.loc,
-        messageId: "yes",
-        data: {
-          id: match.rule.id,
-          model: `${pass.model.provider.name}/${answered.verdicts.model}`,
-          answer: verdict.value.answer,
-          score: verdict.value.probability.toFixed(DECIMALS),
-          cutoff: match.rule.cutoff.toFixed(DECIMALS),
-          question: match.rule.question,
-        },
-      });
-    }
+    const located = reportMatch(pass, answered, {
+      match,
+      ref: refAt(index),
+      failed: Option.isSome(failure),
+    });
+    failure = Option.orElse(failure, () =>
+      located.pipe(Option.map((reason) => ({ match, loc: match.loc, reason }))),
+    );
   }
   return failure;
 };
 
+const explainPassOf = (pass: ModelPass, request: DecisionRequest): ExplainPass => ({
+  setting: pass.options.explain,
+  cwd: Option.match(Arr.head(pass.matches), {
+    onNone: () => "",
+    onSome: (match) => pass.contextOf(match).cwd,
+  }),
+  filename: pass.filename,
+  model: pass.model.id,
+  request,
+});
+
+const explainerOf = (pass: ModelPass, request: DecisionRequest): Explainer =>
+  explainerFor(explainPassOf(pass, request));
+
 const reportModel = (pass: ModelPass): void => {
   const asking: Asking = { model: pass.model, deadline: pass.deadline };
   const request = buildRequest(pass.model.model, pass.matches);
+  const explainer = explainerOf(pass, request);
   const result = fetchVerdicts(asking, request);
   if (!result.ok) {
+    explainer.failure(pass.matches, result.reason);
     degrade(pass, result.reason);
     return;
   }
-  const failure = reportMatches(pass, { asking, verdicts: result.verdicts, request });
-  if (Option.isSome(failure)) {
-    reportFailure(pass, failure.value);
-  }
+  Option.map(reportMatches(pass, { ...result, asking, request, explainer }), (failure) => {
+    reportFailure(pass, failure);
+  });
 };
 
 export { reportModel };

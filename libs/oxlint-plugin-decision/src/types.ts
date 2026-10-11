@@ -6,6 +6,8 @@ type CiBehavior = "skip" | "fail";
 
 type ModelSpec = string | readonly string[];
 
+type ExplainSetting = boolean | "text" | "json";
+
 interface RuleLocation {
   readonly question: string;
   readonly cutoff: number;
@@ -47,6 +49,7 @@ interface DecisionOptions {
   readonly maxMatchesPerFile?: number;
   readonly maxSnippetChars?: number;
   readonly model?: ModelSpec;
+  readonly explain?: ExplainSetting;
 }
 
 interface NoulQuestion {
@@ -72,7 +75,7 @@ interface DecisionRequest {
 }
 
 type DecideResult =
-  | { readonly ok: true; readonly response: unknown }
+  | { readonly ok: true; readonly response: unknown; readonly cached?: boolean }
   | { readonly ok: false; readonly reason: string };
 
 interface DecideInput {
@@ -113,6 +116,7 @@ interface ResolvedOptions {
   readonly timeoutMs: number;
   readonly maxMatchesPerFile: number;
   readonly maxSnippetChars: number;
+  readonly explain: ExplainSetting;
   readonly rules: readonly ResolvedRule[];
 }
 
@@ -168,6 +172,7 @@ export type {
   DecisionRequest,
   DecisionRule,
   EnclosingKind,
+  ExplainSetting,
   LineRange,
   Match,
   ModelRef,
