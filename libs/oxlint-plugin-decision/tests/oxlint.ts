@@ -1,4 +1,14 @@
-import { Array as Arr, Config, Effect, FileSystem, Option, Path, Schema, Stream } from "effect";
+import {
+  Array as Arr,
+  Config,
+  Effect,
+  FileSystem,
+  Option,
+  Path,
+  Predicate,
+  Schema,
+  Stream,
+} from "effect";
 import type { Scope } from "effect";
 import type { PlatformError } from "effect/PlatformError";
 import { ChildProcess } from "effect/process";
@@ -111,13 +121,26 @@ const ruleEntry = (options: object | undefined): unknown =>
     onSome: (value) => ["error", value],
   });
 
+const REGEXP_KEY = "\u0000regexp";
+const SERIALIZED_REGEXP = /\{"\\u0000regexp":\[(?<source>"(?:[^"\\]|\\.)*"),"(?<flags>\w*)"\]\}/gu;
+
+const withRegExps = (_key: string, value: unknown): unknown => {
+  if (Predicate.isRegExp(value)) {
+    return { [REGEXP_KEY]: [value.source, value.flags] };
+  }
+  return value;
+};
+
+const setupSource = (setup: DecisionPluginSetup): string =>
+  JSON.stringify(setup, withRegExps).replaceAll(SERIALIZED_REGEXP, 'new RegExp($1, "$2")');
+
 const projectFilesFor = (
   setup: DecisionPluginSetup,
   ruleOptions: Readonly<Record<string, object>> = {},
 ): Effect.Effect<Readonly<Record<string, string>>, never, Path.Path> =>
   pluginPath.pipe(
     Effect.map((plugin) => ({
-      "plugin.mjs": `import { createDecisionPlugin } from ${JSON.stringify(plugin)};\n\nexport default createDecisionPlugin(${JSON.stringify(setup)});\n`,
+      "plugin.mjs": `import { createDecisionPlugin } from ${JSON.stringify(plugin)};\n\nexport default createDecisionPlugin(${setupSource(setup)});\n`,
       ".oxlintrc.json": JSON.stringify({
         jsPlugins: ["./plugin.mjs"],
         rules: Object.fromEntries(

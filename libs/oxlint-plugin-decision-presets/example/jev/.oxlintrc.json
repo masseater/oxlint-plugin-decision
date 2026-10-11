@@ -1,0 +1,46 @@
+{
+  "jsPlugins": ["../../dist/jev.mjs"],
+  "rules": {
+    "decision-jev/fn-name-promises": "error",
+    "decision-jev/pure-name-is-pure": "error",
+    "decision-jev/safe-name-is-safe": "error",
+    "decision-jev/idempotent-name": "error",
+    "decision-jev/catch-hides-failure": "error",
+    "decision-jev/error-message-matches-condition": "error",
+    "decision-jev/log-level-matches-event": "error",
+    "decision-jev/log-message-matches-event": "error",
+    "decision-jev/comment-describes-block": "error",
+    "decision-jev/comment-describes-declaration": "error",
+    "decision-jev/doc-errors-match-body": "error",
+    "decision-jev/var-name-describes-value": "error"
+  },
+  "overrides": [
+    {
+      "files": ["*.test.js"],
+      "rules": {
+        "decision-jev/fn-name-promises": "off",
+        "decision-jev/pure-name-is-pure": "off",
+        "decision-jev/safe-name-is-safe": "off",
+        "decision-jev/idempotent-name": "off",
+        "decision-jev/catch-hides-failure": "off",
+        "decision-jev/error-message-matches-condition": "off",
+        "decision-jev/log-level-matches-event": "off",
+        "decision-jev/log-message-matches-event": "off",
+        "decision-jev/comment-describes-block": "off",
+        "decision-jev/comment-describes-declaration": "off",
+        "decision-jev/doc-errors-match-body": "off",
+        "decision-jev/var-name-describes-value": "off",
+        "decision-jev/describe-names-subject": "error",
+        "decision-jev/test-name-describes-code": "error",
+        "decision-jev/test-name-verifies-claim": "error",
+        "decision-jev/snapshot-only-behaviour-claim": "error",
+        "decision-jev/test-mocks-subject": "error"
+      }
+    }
+  ],
+  "settings": {
+    "decision-jev": {
+      "maxMatchesPerFile": 100
+    }
+  }
+}

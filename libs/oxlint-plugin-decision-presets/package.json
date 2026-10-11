@@ -45,6 +45,10 @@
       "types": "./dist/review-only.d.mts",
       "default": "./dist/review-only.mjs"
     },
+    "./jev": {
+      "types": "./dist/jev.d.mts",
+      "default": "./dist/jev.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {

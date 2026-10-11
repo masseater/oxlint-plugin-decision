@@ -70,18 +70,20 @@ The rules you turn on share one request per file and model, so turning on more r
 
 ### Rules
 
-| Field      | What it is                                                                                            |
-| ---------- | ----------------------------------------------------------------------------------------------------- |
-| `id`       | The oxlint rule name after `<plugin name>/`. Lowercase words joined by hyphens, unique in the plugin. |
-| `target`   | `"function"`, `"call"`, `"jsx"`, or `"file"`.                                                         |
-| `question` | The question, in English. With the default answer kind, "yes" means "report this".                    |
-| `cutoff`   | 0 to 1. The probability the reported answer needs, at or above.                                       |
-| `answer`   | Optional. What kind of answer to ask for. See [Answers](#answers). Defaults to `{ kind: "boolean" }`. |
-| `context`  | Optional. Extra source the model reads around the match. See [Context](#context).                     |
-| `model`    | Optional. Overrides the plugin's `model` for this rule. See [Rule options](#rule-options).            |
-| `location` | Optional for file rules: a source-location `question` and a `cutoff` greater than 0.5 and at most 1.  |
+| Field         | What it is                                                                                            |
+| ------------- | ----------------------------------------------------------------------------------------------------- |
+| `id`          | The oxlint rule name after `<plugin name>/`. Lowercase words joined by hyphens, unique in the plugin. |
+| `target`      | `"function"`, `"call"`, `"jsx"`, or `"file"`.                                                         |
+| `question`    | The question, in English. With the default answer kind, "yes" means "report this".                    |
+| `cutoff`      | 0 to 1. The probability the reported answer needs, at or above.                                       |
+| `message`     | Optional. A short sentence the error shows instead of the question.                                   |
+| `nameMatches` | Optional. A `RegExp` the match's name must satisfy. See [Names](#names).                              |
+| `answer`      | Optional. What kind of answer to ask for. See [Answers](#answers). Defaults to `{ kind: "boolean" }`. |
+| `context`     | Optional. Extra source the model reads around the match. See [Context](#context).                     |
+| `model`       | Optional. Overrides the plugin's `model` for this rule. See [Rule options](#rule-options).            |
+| `location`    | Optional for file rules: a source-location `question` and a `cutoff` greater than 0.5 and at most 1.  |
 
-`target` decides what the model gets to read. There is no selector syntax and no other target.
+`target` decides what the model gets to read. There is no selector syntax and no other target; `nameMatches` narrows a target down by name.
 
 | Target       | The model sees                                                                                               | The error underlines |
 | ------------ | ------------------------------------------------------------------------------------------------------------ | -------------------- |
@@ -91,6 +93,30 @@ The rules you turn on share one request per file and model, so turning on more r
 | `"file"`     | The whole file.                                                                                              | The first line       |
 
 The wording of the question is the rule, so be precise about what counts. "Does this send personal data" also fires on a legitimate `mailer.send(user.email, ...)`. "To a log or console" does not.
+
+### Names
+
+`nameMatches` asks only about matches whose name satisfies a `RegExp` (without the `g` or `y` flag). The name is plain source text, so a parser decides which code is worth a question before any request is sent.
+
+| Target       | The name tested                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------- |
+| `"function"` | The function's own name, or the binding, property, or method that holds it. Anonymous ones never match. |
+| `"call"`     | The callee as written, such as `console.error` or `it.only`.                                            |
+| `"jsx"`      | The tag name, such as `Button` or `motion.div`.                                                         |
+
+File rules have no name and refuse `nameMatches`.
+
+```js
+defineDecisionRule({
+  id: "pure-name-is-pure",
+  target: "function",
+  nameMatches: /^(compute|calculate|derive|format|to|parse)([A-Z0-9_]|$)/u,
+  question:
+    "This function's name presents it as a pure computation, but its body changes state outside itself or performs I/O.",
+  message: "The name promises a pure computation, but the body has side effects.",
+  cutoff: 0.54,
+});
+```
 
 ### Answers
 
@@ -143,6 +169,9 @@ By default the model reads only the match. `context` sends more source with it, 
 | `{ scope: "lines", before: 5, after: 5 }`  | Numbered lines around the match. Both counts default to 5. |
 | `{ scope: "enclosing", kind: "function" }` | The nearest enclosing `function`, `class`, or `block`.     |
 | `{ scope: "file" }`                        | The whole file.                                            |
+| `{ scope: "comment" }`                     | See below.                                                 |
+
+`{ scope: "comment" }` is for rules about the comment above the code. The match is sent starting at the comments directly above it (or above the `export` or declaration that holds it), with nothing between them but whitespace. A match without such a comment is not asked about.
 
 More context costs more tokens and is cached together with the match, so an edit anywhere in the context re-asks that file.
 

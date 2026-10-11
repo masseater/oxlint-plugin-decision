@@ -19,7 +19,8 @@ type RuleContext =
   | { readonly scope: "node" }
   | { readonly scope: "lines"; readonly before?: number; readonly after?: number }
   | { readonly scope: "enclosing"; readonly kind: EnclosingKind }
-  | { readonly scope: "file" };
+  | { readonly scope: "file" }
+  | { readonly scope: "comment" };
 
 type Severity = "info" | "warn" | "error";
 
@@ -37,6 +38,8 @@ interface DecisionRule {
   readonly target: Target;
   readonly question: string;
   readonly cutoff: number;
+  readonly message?: string;
+  readonly nameMatches?: Readonly<RegExp>;
   readonly location?: RuleLocation;
   readonly model?: ModelSpec;
   readonly context?: RuleContext;
@@ -159,7 +162,10 @@ interface AstNode {
   readonly parent?: AstNode | null;
   readonly init?: unknown;
   readonly value?: unknown;
-  readonly openingElement?: { readonly loc: Location } | null;
+  readonly id?: AstNode | null;
+  readonly key?: AstNode;
+  readonly callee?: AstNode;
+  readonly openingElement?: { readonly loc: Location; readonly name?: AstNode } | null;
 }
 
 export type {
