@@ -78,7 +78,7 @@ The rules you turn on share one request per file and model, so turning on more r
 | `cutoff`   | 0 to 1. The probability the reported answer needs, at or above.                                       |
 | `answer`   | Optional. What kind of answer to ask for. See [Answers](#answers). Defaults to `{ kind: "boolean" }`. |
 | `context`  | Optional. Extra source the model reads around the match. See [Context](#context).                     |
-| `model`    | Optional. Overrides the plugin's `model` for this rule.                                               |
+| `model`    | Optional. Overrides the plugin's `model` for this rule. See [Rule options](#rule-options).            |
 | `location` | Optional for file rules: a source-location `question` and a `cutoff` greater than 0.5 and at most 1.  |
 
 `target` decides what the model gets to read. There is no selector syntax and no other target.
@@ -215,6 +215,29 @@ createDecisionPlugin({ name: "team", ci: "fail", timeoutMs: 20_000, rules: [ ...
 | `maxSnippetChars`   | `4000`                              | Longer snippets are cut and end with `/* ...truncated */`.                                                                                             |
 | `model`             | `"openrouter/~typesafe/jev-latest"` | The default model id or list of ids.                                                                                                                   |
 | `env`               | `{}`                                | Renames the environment variables providers read, such as `{ "OPENROUTER_API_KEY": "TEAM_OPENROUTER_KEY" }`. Values are variable names, not keys.      |
+
+### Rule options
+
+Each rule also takes options in `.oxlintrc.json`, next to its severity. They change only that rule, so one config can run different rules on different models.
+
+```json
+{
+  "jsPlugins": ["./decision-plugin.mjs"],
+  "settings": { "team": { "model": "openrouter/respan/span-01-lite" } },
+  "rules": {
+    "team/no-pii-in-logs": "error",
+    "team/name-matches-behavior": ["warn", { "model": "openrouter/~typesafe/jev-latest" }]
+  }
+}
+```
+
+| Option  | Meaning                                  |
+| ------- | ---------------------------------------- |
+| `model` | A model id or list of ids for this rule. |
+
+A rule's model comes from the first of these that sets one: the rule's options in `.oxlintrc.json`, the rule's own `model`, `settings.<plugin name>.model`, the `model` passed to `createDecisionPlugin`, and the default.
+
+Rules on different models are asked separately, one request per file and model, so a Respan model and `~typesafe/jev-latest` can share a config: each model gets only the matches of the rules that use it. Answers are cached by the request each model receives, so rules never share or overwrite each other's cached answers.
 
 ## Providers
 
