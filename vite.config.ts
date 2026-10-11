@@ -18,6 +18,7 @@ export default defineConfig({
     sortPackageJson: true,
   },
   lint: {
+    ignorePatterns: ["libs/oxlint-plugin-decision/example/**"],
     plugins: [
       "eslint",
       "typescript",
@@ -74,10 +75,7 @@ export default defineConfig({
         },
       ],
       "eslint/no-duplicate-imports": ["error", { allowSeparateTypeImports: true }],
-      "eslint/new-cap": [
-        "error",
-        { capIsNewExceptionPattern: "^(Config|Context|Data|Schema)\\." },
-      ],
+      "eslint/new-cap": ["error", { capIsNewExceptionPattern: "^(Config|Context|Data|Schema)\\." }],
       "vitest/require-hook": ["error", { allowedFunctionCalls: ["runAsWorker", "layer"] }],
       "typescript/no-empty-interface": ["error", { allowSingleExtends: true }],
       "typescript/no-empty-object-type": ["error", { allowInterfaces: "with-single-extends" }],

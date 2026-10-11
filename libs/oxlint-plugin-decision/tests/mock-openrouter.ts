@@ -260,4 +260,4 @@ const loggedRequests: Effect.Effect<readonly LoggedRequest[], never, MockOpenRou
 );
 
 export { MockOpenRouter, MockOpenRouterLayer, loggedRequests };
-export type { LoggedRequest };
+export type { Body, LoggedRequest };

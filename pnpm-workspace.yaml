@@ -15,7 +15,6 @@ catalog:
   eslint-plugin-no-comments: 1.2.1
   oxlint: 1.87.0
   synckit: 0.12.1
-  vite: npm:@voidzero-dev/vite-plus-core@1.1.0
 catalogs:
   stack:
     "@effect/tsgo": 0.50.0
@@ -27,7 +26,7 @@ overrides:
   effect: "catalog:stack"
   "@effect/platform-node-shared": 4.0.0
   "@effect/vitest": 4.0.0
-  vite@*: "catalog:"
+  vite@*: npm:@voidzero-dev/vite-plus-core@1.1.0
 peerDependencyRules:
   allowAny:
     - vite

@@ -32,7 +32,10 @@ const enclosingText = (context: Context, node: AstNode, kind: EnclosingKind): st
 const linesAround = (
   context: Context,
   node: AstNode,
-  { before, after }: { readonly before: number; readonly after: number },
+  {
+    before = DEFAULT_LINES,
+    after = DEFAULT_LINES,
+  }: { readonly before?: number; readonly after?: number },
 ): string => {
   const lines = context.sourceCode.text.split("\n");
   const first = Math.max(FIRST_LINE, node.loc.start.line - before);
@@ -44,28 +47,13 @@ const linesAround = (
 };
 
 const contextOf = (context: Context, node: AstNode, rule: RuleContext): Option.Option<string> => {
-  switch (rule.scope) {
-    case "node": {
-      return Option.none();
-    }
-    case "lines": {
-      return Option.some(
-        linesAround(context, node, {
-          before: rule.before ?? DEFAULT_LINES,
-          after: rule.after ?? DEFAULT_LINES,
-        }),
-      );
-    }
-    case "enclosing": {
-      return Option.some(enclosingText(context, node, rule.kind));
-    }
-    case "file": {
-      return Option.some(context.sourceCode.text);
-    }
-    default: {
-      return Option.none();
-    }
+  if (rule.scope === "lines") {
+    return Option.some(linesAround(context, node, rule));
   }
+  if (rule.scope === "enclosing") {
+    return Option.some(enclosingText(context, node, rule.kind));
+  }
+  return Option.liftPredicate(context.sourceCode.text, () => rule.scope === "file");
 };
 
 export { contextOf };

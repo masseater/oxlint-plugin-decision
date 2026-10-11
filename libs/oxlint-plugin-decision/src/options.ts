@@ -246,12 +246,13 @@ const resolveOptions = (
   Option.map(duplicateIdOf(rules), (duplicate) => {
     throw new OptionsError(`rule id "${duplicate}" is used more than once`);
   });
+  const { model, ...settings } = { ...DEFAULTS, ...options };
   return {
-    ci: options.ci ?? DEFAULTS.ci,
-    timeoutMs: options.timeoutMs ?? DEFAULTS.timeoutMs,
-    maxMatchesPerFile: options.maxMatchesPerFile ?? DEFAULTS.maxMatchesPerFile,
-    maxSnippetChars: options.maxSnippetChars ?? DEFAULTS.maxSnippetChars,
-    rules: rules.map((rule) => resolveRule(options.model ?? DEFAULTS.model, providers)(rule)),
+    ci: settings.ci,
+    timeoutMs: settings.timeoutMs,
+    maxMatchesPerFile: settings.maxMatchesPerFile,
+    maxSnippetChars: settings.maxSnippetChars,
+    rules: rules.map((rule) => resolveRule(model, providers)(rule)),
   };
 };
 
@@ -280,4 +281,3 @@ export {
   resolveOptions,
   snippetNodeFor,
 };
-export type { NamedField };

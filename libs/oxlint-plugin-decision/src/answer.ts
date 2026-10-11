@@ -109,13 +109,18 @@ const verdictOf = (question: Question, raw: unknown): Option.Option<Verdict> => 
 
 const rankOf = (label: string): number => SEVERITY_ORDER.indexOf(label);
 
+const severityMatches = (
+  { minimum = DEFAULT_MINIMUM }: { readonly minimum?: Severity },
+  label: string,
+): boolean => rankOf(label) >= rankOf(minimum);
+
 const answerMatches = (answer: RuleAnswer, label: string): boolean => {
   switch (answer.kind) {
     case "classify": {
       return answer.report.includes(label);
     }
     case "severity": {
-      return rankOf(label) >= rankOf(answer.minimum ?? DEFAULT_MINIMUM);
+      return severityMatches(answer, label);
     }
     case "boolean": {
       return label === YES;
@@ -131,4 +136,4 @@ const isReported = (
   verdict: Verdict,
 ): boolean => verdict.probability >= rule.cutoff && answerMatches(rule.answer, verdict.answer);
 
-export { BOOLEAN_ANSWER, SEVERITY_CRITERIA, decodeRuleAnswer, isReported, questionFor, verdictOf };
+export { BOOLEAN_ANSWER, decodeRuleAnswer, isReported, questionFor, verdictOf };

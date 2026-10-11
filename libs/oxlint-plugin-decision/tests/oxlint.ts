@@ -162,4 +162,4 @@ export {
   runOxlint,
   writeProject,
 };
-export type { OxlintDiagnostic, OxlintRun, OxlintSpan, Services };
+export type { OxlintCall, OxlintDiagnostic, OxlintRun, OxlintSpan, Services };

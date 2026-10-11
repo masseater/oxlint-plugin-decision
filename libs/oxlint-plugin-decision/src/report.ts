@@ -105,3 +105,4 @@ const reportModel = (pass: ModelPass): void => {
 };
 
 export { reportModel };
+export type { ModelPass };

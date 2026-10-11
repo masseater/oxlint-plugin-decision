@@ -90,4 +90,4 @@ const cacheEntries = (
   });
 
 export { LARGE_SOURCE, LOG_CALL, SOURCE, cacheEntries, fileRule, lineOf, locationProject, spanOf };
-export type { Linted, LocationProject };
+export type { Linted, LocationProject, ProjectSetup };

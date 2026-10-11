@@ -167,3 +167,4 @@ const visitorFor =
   };
 
 export { visitorFor };
+export type { OptionsFor };

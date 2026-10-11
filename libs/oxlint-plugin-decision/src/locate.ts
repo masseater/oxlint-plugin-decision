@@ -123,4 +123,4 @@ const locateMatch = (
 };
 
 export { fetchVerdicts, locateMatch };
-export type { Asking, Located };
+export type { Asking, Located, VerdictResult };

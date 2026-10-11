@@ -84,4 +84,4 @@ export {
   questionCount,
   withMock,
 };
-export type { Env, MockTest };
+export type { Env, MockTest, ProjectRun };
