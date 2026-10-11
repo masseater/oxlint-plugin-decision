@@ -30,7 +30,7 @@ OPENROUTER_API_KEY=... vp run test:live   # the example against Span-01 Lite, a 
 `libs/oxlint-plugin-decision/example/` holds a file that fails the example rules and a file that passes them. Run the example against a real model with:
 
 ```sh
-vp run --filter oxlint-plugin-decision example
+vp run --filter @r_masseater/oxlint-plugin-decision example
 ```
 
 `OPENROUTER_BASE_URL` points the plugin at another host; the tests use it for a mock server.
