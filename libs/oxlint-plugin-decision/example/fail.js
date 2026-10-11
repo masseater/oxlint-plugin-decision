@@ -1,9 +1,9 @@
-import { db, mailer, llm } from './deps.js';
+import { db, mailer, llm } from "./deps.js";
 
 export async function getUser(id) {
   const user = await db.users.find(id);
-  console.log('loaded', user.email, user.phone);
-  await mailer.send(user.email, 'New sign-in to your account');
+  console.log("loaded", user.email, user.phone);
+  await mailer.send(user.email, "New sign-in to your account");
   return user;
 }
 

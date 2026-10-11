@@ -1,10 +1,11 @@
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
-import { parseVerdicts } from './jev.ts';
-import type { ChoiceQuestions, Verdicts } from './types.ts';
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
+import { parseVerdicts } from "./jev.ts";
+import type { ChoiceQuestions, Verdicts } from "./types.ts";
 
 export const defaultCacheDir = (): string =>
-  path.join(process.cwd(), 'node_modules', '.cache', 'oxlint-plugin-jev');
+  path.join(process.cwd(), "node_modules", ".cache", "oxlint-plugin-jev");
 
 export function readCache(
   dir: string,
@@ -13,7 +14,7 @@ export function readCache(
   choices: ChoiceQuestions = {},
 ): Verdicts | null {
   try {
-    const stored: unknown = JSON.parse(readFileSync(path.join(dir, `${key}.json`), 'utf8'));
+    const stored: unknown = JSON.parse(readFileSync(path.join(dir, `${key}.json`), "utf8"));
     const verdicts = parseVerdicts(stored, refs, choices);
     return verdicts.complete ? verdicts : null;
   } catch {

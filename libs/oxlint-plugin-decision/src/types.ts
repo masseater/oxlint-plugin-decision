@@ -1,9 +1,9 @@
-import type { Location, Range } from '@oxlint/plugins';
-import type { ChoiceQuestion, NoulQuestion } from '@typesafe-ai/sdk';
+import type { Location, Range } from "@oxlint/plugins";
+import type { ChoiceQuestion, NoulQuestion } from "@typesafe-ai/sdk";
 
-export type Target = 'function' | 'call' | 'jsx' | 'file';
+export type Target = "function" | "call" | "jsx" | "file";
 
-export type CiBehavior = 'skip' | 'fail';
+export type CiBehavior = "skip" | "fail";
 
 export interface JevRule {
   /** Unique within the rule list. Shown in the lint message. */
@@ -30,7 +30,7 @@ export interface JevOptions {
 export type ResolvedOptions = Required<JevOptions>;
 
 export interface RequestMatch {
-  readonly rule: Pick<JevRule, 'question' | 'location'>;
+  readonly rule: Pick<JevRule, "question" | "location">;
   readonly snippet: string;
   readonly truncated?: boolean;
 }
@@ -46,7 +46,7 @@ export interface JevRequest {
   questions: Record<string, NoulQuestion | ChoiceQuestion>;
 }
 
-export type ChoiceQuestions = Record<string, ChoiceQuestion['criteria']>;
+export type ChoiceQuestions = Record<string, ChoiceQuestion["criteria"]>;
 
 export interface Verdicts {
   /** The versioned id that answered, such as `jev-1.13.0`, even when the request said `jev-latest`. */

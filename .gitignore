@@ -1,3 +1,9 @@
 node_modules
-.cache
 dist
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+.claude/worktrees/
+.fallow
