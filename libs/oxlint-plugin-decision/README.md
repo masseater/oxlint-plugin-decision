@@ -44,7 +44,7 @@ Add the plugin and its one rule, `decision/ask`, to `.oxlintrc.json`. Your Engli
           {
             "id": "name-matches-behavior",
             "target": "function",
-            "question": "Does this function's name imply it only reads data, while its body also writes or sends something?",
+            "question": "Does this function's name describe only reading or fetching data (for example get, find, load or fetch), while its body also writes, logs or sends something?",
             "cutoff": 0.6,
             "context": { "scope": "enclosing", "kind": "class" }
           }
@@ -143,6 +143,8 @@ A model id is `<provider>/<model>`. The built-in provider is `openrouter`, so `o
 { "model": ["openrouter/~typesafe/jev-latest", "openrouter/respan/span-01-lite"] }
 ```
 
+Respan models, such as `openrouter/respan/span-01-lite`, are asked about one match per request, so they send more requests than other models on files with many matches.
+
 Probabilities are not calibrated the same way across models, so a cutoff tuned for one model does not carry over to another. Pin a versioned id once your cutoffs are tuned. Each diagnostic names the model that answered.
 
 A key is required only for providers your config references. `OPENROUTER_BASE_URL` points the plugin at another OpenRouter-compatible host.
@@ -223,7 +225,7 @@ Types for all of this are exported: `DecisionRule`, `DecisionOptions`, `RuleAnsw
 
 ## How it works
 
-Each file gets one request per model, with every match for that model in it. A file rule with `location` adds numbered source and a choice question. Above 254 nonblank lines the model selects a range and refines it in follow-up requests with the same context. All requests share the per-file `timeoutMs` budget.
+Each file gets one request per model, with every match for that model in it. Respan models get one request per match instead. A file rule with `location` adds numbered source and a choice question. Above 254 nonblank lines the model selects a range and refines it in follow-up requests with the same context. All requests share the per-file `timeoutMs` budget.
 
 Answers are cached under `node_modules/.cache/oxlint-plugin-decision`, keyed by the endpoint and the request. Changing a snippet, its context, a question or an answer kind re-asks that file. Changing a cutoff or an `id` does not. Malformed answers are never cached, and malformed entries already on disk are asked again.
 
