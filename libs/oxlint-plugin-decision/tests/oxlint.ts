@@ -32,6 +32,7 @@ const PASSED_ENV = [
   "NODE_EXTRA_CA_CERTS",
   "NODE_USE_ENV_PROXY",
   "SSL_CERT_FILE",
+  "NODE_V8_COVERAGE",
 ] as const;
 
 const DECISION_PLUGINS = ["decision", "team"] as const;

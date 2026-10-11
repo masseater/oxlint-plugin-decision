@@ -41,7 +41,7 @@
   "scripts": {
     "build": "vp pack",
     "dev": "vp pack --watch",
-    "test": "vp test --project=mock",
+    "test": "vp test --project=mock --coverage",
     "example": "vp run build && ./node_modules/oxlint/bin/oxlint -c example/.oxlintrc.json example/",
     "prepublishOnly": "vp run build",
     "prepare": "effect-tsgo patch --typescript --oxlint"
@@ -57,6 +57,7 @@
     "@effect/vitest": "catalog:",
     "@oxlint/plugins": "catalog:",
     "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:stack",
     "oxlint": "catalog:",
     "typescript": "catalog:stack",
     "vite-plus": "catalog:stack"

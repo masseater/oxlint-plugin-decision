@@ -6,6 +6,10 @@
   "ignorePatterns": [".claude/**", "libs/*/example/**"],
   "dynamicallyLoaded": ["libs/oxlint-plugin-decision/src/openrouter-worker.ts"],
   "audit": { "gate": "all" },
+  "health": {
+    "coverage": "libs/oxlint-plugin-decision/coverage/coverage-final.json",
+    "maxCrap": 5,
+  },
   "security": {
     "categories": {
       "include": [

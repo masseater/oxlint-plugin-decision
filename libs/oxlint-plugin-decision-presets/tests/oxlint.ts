@@ -1,4 +1,4 @@
-import { Config, Effect, FileSystem, Path, Stream } from "effect";
+import { Config, Effect, FileSystem, Option, Path, Stream } from "effect";
 import type { Scope } from "effect";
 import type { PlatformError } from "effect/PlatformError";
 import { ChildProcess } from "effect/process";
@@ -39,9 +39,17 @@ const oxlint = (
     Effect.gen(function* run() {
       const bin = yield* fromRoot("node_modules", "oxlint", "bin", "oxlint");
       const PATH = yield* Effect.orDie(Config.String("PATH"));
+      const coverage = yield* Effect.orDie(Config.option(Config.String("NODE_V8_COVERAGE")));
       const handle = yield* ChildProcess.make(bin, args, {
         cwd,
-        env: { PATH, ...env },
+        env: {
+          PATH,
+          ...Option.match(coverage, {
+            onNone: () => ({}),
+            onSome: (dir) => ({ NODE_V8_COVERAGE: dir }),
+          }),
+          ...env,
+        },
         extendEnv: false,
       });
       const [stdout, stderr, status] = yield* Effect.all(

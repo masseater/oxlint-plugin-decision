@@ -54,7 +54,7 @@
   "scripts": {
     "build": "vp pack",
     "dev": "vp pack --watch",
-    "test": "vp test --project=mock",
+    "test": "vp test --project=mock --coverage",
     "example": "vp run build && ./node_modules/oxlint/bin/oxlint -c example/.oxlintrc.json example/",
     "prepublishOnly": "vp run build"
   },
@@ -63,6 +63,7 @@
     "@effect/vitest": "catalog:",
     "@r_masseater/oxlint-plugin-decision": "workspace:*",
     "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:stack",
     "effect": "catalog:stack",
     "oxlint": "catalog:",
     "typescript": "catalog:stack",
