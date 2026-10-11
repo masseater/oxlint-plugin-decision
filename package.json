@@ -12,6 +12,7 @@
     "@ast-grep/cli": "catalog:",
     "@commitlint/cli": "catalog:",
     "@commitlint/config-conventional": "catalog:",
+    "@effect/tsgo": "catalog:stack",
     "@types/node": "catalog:",
     "eslint-plugin-no-comments": "catalog:",
     "fallow": "catalog:stack",

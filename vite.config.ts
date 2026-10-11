@@ -1,4 +1,13 @@
+import { presets as effectPresets } from "@effect/tsgo/oxlint-presets";
 import { defineConfig } from "vite-plus";
+
+type Rules = Readonly<Record<string, "error">>;
+
+const effectRules: Rules = Object.fromEntries(
+  Object.values(effectPresets).flatMap((preset) =>
+    Object.keys(preset.rules ?? {}).map((name) => [name, "error"] as const),
+  ),
+);
 
 export default defineConfig({
   staged: {
@@ -36,6 +45,7 @@ export default defineConfig({
     rules: {
       "vite-plus/prefer-vite-plus-imports": "error",
       "no-comments/disallowComments": ["error", { allow: ["oxlint-disable", "eslint-disable"] }],
+      ...effectRules,
       "eslint/sort-imports": "off",
       "eslint/sort-keys": "off",
       "import/no-named-export": "off",
@@ -45,14 +55,36 @@ export default defineConfig({
       "oxc/no-rest-spread-properties": "off",
       "node/no-top-level-await": "off",
       "eslint/one-var": ["error", "never"],
-      "typescript/prefer-readonly-parameter-types": ["error", { ignoreInferredTypes: true }],
+      "typescript/prefer-readonly-parameter-types": [
+        "error",
+        {
+          ignoreInferredTypes: true,
+          allow: [
+            {
+              from: "package",
+              package: "@oxlint/plugins",
+              name: ["Context", "Location", "Node", "Range", "SourceCode", "VisitorWithHooks"],
+            },
+            {
+              from: "package",
+              package: "effect",
+              name: ["Cause", "Context", "Effect", "Exit", "Layer", "Option"],
+            },
+          ],
+        },
+      ],
       "eslint/no-duplicate-imports": ["error", { allowSeparateTypeImports: true }],
+      "eslint/new-cap": [
+        "error",
+        { capIsNewExceptionPattern: "^(Config|Context|Data|Schema)\\." },
+      ],
+      "vitest/require-hook": ["error", { allowedFunctionCalls: ["runAsWorker"] }],
       "typescript/no-empty-interface": ["error", { allowSingleExtends: true }],
       "typescript/no-empty-object-type": ["error", { allowInterfaces: "with-single-extends" }],
     },
     overrides: [
       {
-        files: ["**/*.config.ts"],
+        files: ["**/*.config.ts", "libs/oxlint-plugin-decision/src/index.ts"],
         rules: { "import/no-default-export": "off" },
       },
     ],

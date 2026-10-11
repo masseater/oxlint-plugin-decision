@@ -2,6 +2,7 @@ import { appendFileSync } from "node:fs";
 import { createServer, type ServerResponse } from "node:http";
 
 interface MockRequestBody {
+  model: string;
   questions: Record<
     string,
     { type: string; instructions: string; criteria?: Record<string, unknown> }
@@ -60,7 +61,7 @@ function answer(body: MockRequestBody, token: string) {
             : scoreFor(body.questions[ref].instructions, body.state.snippets[ref]),
     };
   }
-  return { model: "jev-mock", answers, usage: { input_tokens: 0, output_tokens: 0 } };
+  return { model: body.model === "mock/second" ? "mock-second" : "mock-decider", answers, usage: { input_tokens: 0, output_tokens: 0, cost: 0 } };
 }
 
 const hitsByToken: Record<string, number> = {};
@@ -95,7 +96,7 @@ const server = createServer((request, response) => {
   request.on("data", (chunk: Buffer) => chunks.push(chunk));
   request.on("end", () => {
     const raw = Buffer.concat(chunks).toString("utf8");
-    if (request.method !== "POST" || request.url !== "/v1/systemone") {
+    if (request.method !== "POST" || request.url !== "/api/alpha/decisions") {
       response.writeHead(404).end("{}");
       return;
     }

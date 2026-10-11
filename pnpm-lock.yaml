@@ -173,15 +173,18 @@ catalogs:
     '@commitlint/config-conventional':
       specifier: 21.2.3
       version: 21.2.3
+    '@effect/platform-node':
+      specifier: 4.0.0
+      version: 4.0.0
+    '@openrouter/sdk':
+      specifier: 1.4.25
+      version: 1.4.25
     '@oxlint/plugins':
       specifier: 1.87.0
       version: 1.87.0
     '@types/node':
       specifier: 26.6.5
       version: 26.6.5
-    '@typesafe-ai/sdk':
-      specifier: 0.6.0
-      version: 0.6.0
     eslint-plugin-no-comments:
       specifier: 1.2.1
       version: 1.2.1
@@ -192,6 +195,9 @@ catalogs:
       specifier: 0.12.1
       version: 0.12.1
   stack:
+    '@effect/tsgo':
+      specifier: 0.50.0
+      version: 0.50.0
     fallow:
       specifier: 3.32.0
       version: 3.32.0
@@ -203,6 +209,8 @@ catalogs:
       version: 1.1.0
 
 overrides:
+  effect: 4.0.0
+  '@effect/platform-node-shared': 4.0.0
   vite@*: npm:@voidzero-dev/vite-plus-core@1.1.0
 
 importers:
@@ -218,6 +226,9 @@ importers:
       '@commitlint/config-conventional':
         specifier: 'catalog:'
         version: 21.2.3
+      '@effect/tsgo':
+        specifier: catalog:stack
+        version: 0.50.0
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.5
@@ -233,13 +244,22 @@ importers:
 
   libs/oxlint-plugin-decision:
     dependencies:
-      '@typesafe-ai/sdk':
+      '@effect/platform-node':
         specifier: 'catalog:'
-        version: 0.6.0
+        version: 4.0.0(effect@4.0.0)(redis@6.3.0)
+      '@openrouter/sdk':
+        specifier: 'catalog:'
+        version: 1.4.25
+      effect:
+        specifier: 4.0.0
+        version: 4.0.0
       synckit:
         specifier: 'catalog:'
         version: 0.12.1
     devDependencies:
+      '@effect/tsgo':
+        specifier: catalog:stack
+        version: 0.50.0
       '@oxlint/plugins':
         specifier: 'catalog:'
         version: 1.87.0
@@ -416,6 +436,58 @@ packages:
   '@dual-bundle/import-meta-resolve@4.2.1':
     resolution: {integrity: sha512-id+7YRUgoUX6CgV0DtuhirQWodeeA7Lf4i2x71JS/vtA5pRb/hIGWlw+G6MeXvsM+MXrz0VAydTGElX1rAfgPg==}
 
+  '@effect/platform-node-shared@4.0.0':
+    resolution: {integrity: sha512-VBXHJU9UXVZPdQGGDRjGXpo+TpOzRwZuMrdKAtIxi1qwcRftmacZ1zTgIrzBa0Z2RA2KVkoOecQUsTlt/nJZhw==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      effect: 4.0.0
+
+  '@effect/platform-node@4.0.0':
+    resolution: {integrity: sha512-/L+4MUbl8FejPKLHLROYSOebvHnfixkP8KiblSD/DE5uH5xENZBHaux4nH6XMnRP+lr8ajpEJFS8sUrmmxFJeQ==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      effect: 4.0.0
+      redis: '>=5.0.0 <7.0.0'
+
+  '@effect/tsgo-darwin-arm64@0.50.0':
+    resolution: {integrity: sha512-CtpXnQbf2BXavXeY3g/LZinyXWEsMftVcbla0zbwe4HiGqueUaacCqI1HTGZ2JUFYo/3M5MsnFFe2VCWW0wj4w==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@effect/tsgo-darwin-x64@0.50.0':
+    resolution: {integrity: sha512-SC3Tk1nDtjUA+UYg3qyyKUz62/mhpPOdhL9HmBBI+Cksg3XXjYw8cenmDT24yJKiwFxO3AbYQ0siXy3QrYaOdQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@effect/tsgo-linux-arm64@0.50.0':
+    resolution: {integrity: sha512-u6oBSeK9bL7Ta5OJX/v92AErjl+9YQXZuHPuWGsajia6cV2IpyR5UwbOX2ekk4V2QhVpSzmSIYVIEkq9jOL6Pg==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@effect/tsgo-linux-arm@0.50.0':
+    resolution: {integrity: sha512-qLJdYvGw4mrMrjonhqzSkwByR4X5SlUhG2Pg0LIlKVSy21B0RxLQ2Sg1Re90XpwQCcFCV1byoqW4QLT6A1YDcQ==}
+    cpu: [arm]
+    os: [linux]
+
+  '@effect/tsgo-linux-x64@0.50.0':
+    resolution: {integrity: sha512-x7Xz7IPP/4CKHaWk58tm+LpgMPAwNXGQcLXZAkWUoarjcXzrDG3QCoEjnIpCRSzL7O8ykShApgGcYv0Pd2tJkA==}
+    cpu: [x64]
+    os: [linux]
+
+  '@effect/tsgo-win32-arm64@0.50.0':
+    resolution: {integrity: sha512-VK3PTybFLmwKI50FMcNeX1LpPv9m55coKv+PKLj7gkb91YZIUooQ7hQJdSUhiuCTaUU3kikHQpnW7UbN9q4zDw==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@effect/tsgo-win32-x64@0.50.0':
+    resolution: {integrity: sha512-ANbPqHKT/owJ9vIjyOWai+vO0IZAKZd3nN6QlPBBJyHe5BWMjz+MpntNwGxSvvp2PTMb4ZPBLQ2ixh4c9IMOMg==}
+    cpu: [x64]
+    os: [win32]
+
+  '@effect/tsgo@0.50.0':
+    resolution: {integrity: sha512-BCRwWFBVfQGhFPXmLlNCbYhohTPoIzCL+0iSrDkSpSN2TRtGbbxCB1Mi4oBPr1jRk5VgMB0jOFEvXmPt3SqCDg==}
+    hasBin: true
+
   '@eslint-community/eslint-utils@4.10.1':
     resolution: {integrity: sha512-cuadcxVFE8sDK6iWJbs8Sn0av2Nrh2QSGQhVlBW9AaAHqHwjWsZHT8LJ4hFGPh7ASBV2deFdM7H/DPjulmh8rg==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -524,6 +596,9 @@ packages:
 
   '@keyv/serialize@1.1.1':
     resolution: {integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==}
+
+  '@openrouter/sdk@1.4.25':
+    resolution: {integrity: sha512-H218lYMy9WhU5cMigUvW/k+e1BimCqTTP+9PqssdDXnQ0gFCeEME0HTsFGPbR6UgJgyYh2hTct43/9pMcBem5A==}
 
   '@oxc-project/runtime@0.153.0':
     resolution: {integrity: sha512-rXJvtlsVG4xJNq64hiaUTIatE7jbBgpa6l4QgmEa2jLgT3ULH9scUBkpsC9N1DfmqixLEyT6DuK6OSXozziIlw==}
@@ -821,6 +896,42 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
+  '@redis/bloom@6.3.0':
+    resolution: {integrity: sha512-NQ5poYpZr0jv6zazN1cy6JY5kIipKFZ3R9GTL4kOUTX3a9YAfY29U8bsE4lWhVQEM+G4V0BXVC57mubIdDijeA==}
+    engines: {node: '>= 20.0.0'}
+    peerDependencies:
+      '@redis/client': ^6.3.0
+
+  '@redis/client@6.3.0':
+    resolution: {integrity: sha512-fHrjwGCBvAANGi+TuRuwKi83sIOzgHr8eh+Uf48w3fSX7Hhrz174NrWqfJhAC2vnN0d/tfaZpdr6+o6JC3QHwg==}
+    engines: {node: '>= 20.0.0'}
+    peerDependencies:
+      '@node-rs/xxhash': ^1.1.0
+      '@opentelemetry/api': '>=1 <2'
+    peerDependenciesMeta:
+      '@node-rs/xxhash':
+        optional: true
+      '@opentelemetry/api':
+        optional: true
+
+  '@redis/json@6.3.0':
+    resolution: {integrity: sha512-yt6vRfPBXtW/3qm53cF81TSQpLMjWdW4/2E9WQ2GgbvsKkuCKCFQIcMiKlil1ZMnezK+IQuS795xKU5psbaegw==}
+    engines: {node: '>= 20.0.0'}
+    peerDependencies:
+      '@redis/client': ^6.3.0
+
+  '@redis/search@6.3.0':
+    resolution: {integrity: sha512-RPXAZmKjZZG7Tm7m1w9keFdXzbL91PiSHQBfQRe9xwW40jNsTRbG0FwhIz4QlHPU4gKDAsCy8IQHj4yZl4H9rw==}
+    engines: {node: '>= 20.0.0'}
+    peerDependencies:
+      '@redis/client': ^6.3.0
+
+  '@redis/time-series@6.3.0':
+    resolution: {integrity: sha512-+fJOB8mN1z5WRakCJNh5lVdz1KqvHGSOistsKeitD24QsCtPwyRQXWC0iq6T/i/ubLE/YcguZqPm8F598MKk4A==}
+    engines: {node: '>= 20.0.0'}
+    peerDependencies:
+      '@redis/client': ^6.3.0
+
   '@simple-libs/child-process-utils@2.0.0':
     resolution: {integrity: sha512-dvNoRKLijXnD0XoJAz94pbNuB5GQgDr55UhpSPhffDkTT0Cmcqh9jSCOtwfT2d4H6MI9E7c4SgtMuJXZ6F3c6A==}
     engines: {node: '>=22'}
@@ -860,9 +971,8 @@ packages:
   '@types/node@26.6.5':
     resolution: {integrity: sha512-uMzsv9stDdofIZBx4UGh4Z9ZgXnGC9seRDscilBcTHAeOFk67MZg/k9bWVfO+bk4qZmG+l52hRnLwUiH2LnJTg==}
 
-  '@typesafe-ai/sdk@0.6.0':
-    resolution: {integrity: sha512-IddX+Q0XM+VagOUZFeP7wZjaO4SHMdvnh2zEBdrZZnXedWI3BNK1lKhMx3ayrkFWvVLbVcUHJy6AVZlY+e6Jaw==}
-    engines: {node: '>=20'}
+  '@types/ws@8.18.2':
+    resolution: {integrity: sha512-67MQl+fpWKVTT1NYdnmo3U4sc/xPo/zQBncVnI74qmQa0z/b+1g6iYqNmGCPbxO+zz2aklb08a0oHfegiVd0/w==}
 
   '@typescript/typescript-aix-ppc64@7.0.2':
     resolution: {integrity: sha512-MTKKkWB7p/0E9xi1d1tHtZ5PiLkGEMIq88pK2CubZjOsLtYTLqhgIgi6zepFa+9GHZ6h05NMCkQxGKiPXMxXtQ==}
@@ -1428,6 +1538,9 @@ packages:
   dom-accessibility-api@0.5.16:
     resolution: {integrity: sha512-X7BJ2yElsnOJ30pZF4uIIDfBEVgF4XEBxL9Bxhy6dnrm5hkzqmsWHGTiHqRiITNhMyFLyAiWndIJP7Z1NTteDg==}
 
+  effect@4.0.0:
+    resolution: {integrity: sha512-ooc1TG5t+FfzgYnFz2ff6BBKyZ7EwBRVXC7c4RhQUAD6/TZ2gTXXMeb4WX7a19ozQo4J73/QW+S00YAIresoMQ==}
+
   emoji-regex@10.6.0:
     resolution: {integrity: sha512-toUI84YS5YmxW219erniWD0CIVOo46xGKColeNQRgOzDorgBi1v4D71/OFzgD9GO2UGKIv1C3Sp8DAn0+j5w7A==}
 
@@ -1855,6 +1968,10 @@ packages:
   react-is@17.0.2:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
 
+  redis@6.3.0:
+    resolution: {integrity: sha512-XFQbPie1lGpKeUZ8ySYY43yLnQy/iIQtHNvIr/1XdaABpb96rUSdm3Mfl+98FEVbv9ZJIzINMno5s0Nh8E5LEw==}
+    engines: {node: '>= 20.0.0'}
+
   require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
     engines: {node: '>=0.10.0'}
@@ -1942,6 +2059,10 @@ packages:
 
   undici-types@8.9.0:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
+
+  undici@8.11.2:
+    resolution: {integrity: sha512-u4UB2/IrKdU6lFxumHmmo1a3fCQO5tzQllRorfoRS63txhrB7xTpSn1PftwC4qEHkOaqP95fCWW4lJzwErwzhQ==}
+    engines: {node: '>=22.19.0'}
 
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
@@ -2061,6 +2182,9 @@ packages:
 
   yuku-parser@0.9.5:
     resolution: {integrity: sha512-IBnAdNVMswWbJcM7woPluOudectJzFjJ1N8jVRxP9Uq4CIv5hZdBIcdmtRbFDYF/Ph2j2gVup4YJ4N9mh0jYFA==}
+
+  zod@4.6.5:
+    resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
 
 snapshots:
 
@@ -2242,6 +2366,56 @@ snapshots:
 
   '@dual-bundle/import-meta-resolve@4.2.1': {}
 
+  '@effect/platform-node-shared@4.0.0(effect@4.0.0)':
+    dependencies:
+      '@types/ws': 8.18.2
+      effect: 4.0.0
+      ws: 8.22.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@effect/platform-node@4.0.0(effect@4.0.0)(redis@6.3.0)':
+    dependencies:
+      '@effect/platform-node-shared': 4.0.0(effect@4.0.0)
+      effect: 4.0.0
+      redis: 6.3.0
+      undici: 8.11.2
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@effect/tsgo-darwin-arm64@0.50.0':
+    optional: true
+
+  '@effect/tsgo-darwin-x64@0.50.0':
+    optional: true
+
+  '@effect/tsgo-linux-arm64@0.50.0':
+    optional: true
+
+  '@effect/tsgo-linux-arm@0.50.0':
+    optional: true
+
+  '@effect/tsgo-linux-x64@0.50.0':
+    optional: true
+
+  '@effect/tsgo-win32-arm64@0.50.0':
+    optional: true
+
+  '@effect/tsgo-win32-x64@0.50.0':
+    optional: true
+
+  '@effect/tsgo@0.50.0':
+    optionalDependencies:
+      '@effect/tsgo-darwin-arm64': 0.50.0
+      '@effect/tsgo-darwin-x64': 0.50.0
+      '@effect/tsgo-linux-arm': 0.50.0
+      '@effect/tsgo-linux-arm64': 0.50.0
+      '@effect/tsgo-linux-x64': 0.50.0
+      '@effect/tsgo-win32-arm64': 0.50.0
+      '@effect/tsgo-win32-x64': 0.50.0
+
   '@eslint-community/eslint-utils@4.10.1(eslint@10.12.0(jiti@2.6.1))':
     dependencies:
       eslint: 10.12.0(jiti@2.6.1)
@@ -2328,6 +2502,10 @@ snapshots:
       keyv: 5.6.0
 
   '@keyv/serialize@1.1.1': {}
+
+  '@openrouter/sdk@1.4.25':
+    dependencies:
+      zod: 4.6.5
 
   '@oxc-project/runtime@0.153.0': {}
 
@@ -2473,6 +2651,24 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
+  '@redis/bloom@6.3.0(@redis/client@6.3.0)':
+    dependencies:
+      '@redis/client': 6.3.0
+
+  '@redis/client@6.3.0': {}
+
+  '@redis/json@6.3.0(@redis/client@6.3.0)':
+    dependencies:
+      '@redis/client': 6.3.0
+
+  '@redis/search@6.3.0(@redis/client@6.3.0)':
+    dependencies:
+      '@redis/client': 6.3.0
+
+  '@redis/time-series@6.3.0(@redis/client@6.3.0)':
+    dependencies:
+      '@redis/client': 6.3.0
+
   '@simple-libs/child-process-utils@2.0.0':
     dependencies:
       '@simple-libs/stream-utils': 2.0.0
@@ -2513,7 +2709,9 @@ snapshots:
     dependencies:
       undici-types: 8.9.0
 
-  '@typesafe-ai/sdk@0.6.0': {}
+  '@types/ws@8.18.2':
+    dependencies:
+      '@types/node': 26.6.5
 
   '@typescript/typescript-aix-ppc64@7.0.2':
     optional: true
@@ -2935,6 +3133,8 @@ snapshots:
 
   dom-accessibility-api@0.5.16: {}
 
+  effect@4.0.0: {}
+
   emoji-regex@10.6.0: {}
 
   env-paths@2.2.1: {}
@@ -3343,6 +3543,17 @@ snapshots:
 
   react-is@17.0.2: {}
 
+  redis@6.3.0:
+    dependencies:
+      '@redis/bloom': 6.3.0(@redis/client@6.3.0)
+      '@redis/client': 6.3.0
+      '@redis/json': 6.3.0(@redis/client@6.3.0)
+      '@redis/search': 6.3.0(@redis/client@6.3.0)
+      '@redis/time-series': 6.3.0(@redis/client@6.3.0)
+    transitivePeerDependencies:
+      - '@node-rs/xxhash'
+      - '@opentelemetry/api'
+
   require-from-string@2.0.2: {}
 
   resolve-from@4.0.0: {}
@@ -3430,6 +3641,8 @@ snapshots:
       '@typescript/typescript-win32-x64': 7.0.2
 
   undici-types@8.9.0: {}
+
+  undici@8.11.2: {}
 
   uri-js@4.4.1:
     dependencies:
@@ -3608,3 +3821,5 @@ snapshots:
       '@yuku-parser/binding-linux-x64-musl': 0.9.5
       '@yuku-parser/binding-win32-arm64': 0.9.5
       '@yuku-parser/binding-win32-x64': 0.9.5
+
+  zod@4.6.5: {}

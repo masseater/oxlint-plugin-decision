@@ -2,7 +2,7 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   pack: {
-    entry: ["src/index.ts", "src/worker.ts", "src/sync-jev.ts"],
+    entry: ["src/index.ts", "src/openrouter-worker.ts"],
     platform: "node",
     deps: { resolveDepSubpath: true },
     dts: {
@@ -11,6 +11,6 @@ export default defineConfig({
   },
   test: {
     fileParallelism: false,
-    testTimeout: 120000,
+    testTimeout: 120_000,
   },
 });
