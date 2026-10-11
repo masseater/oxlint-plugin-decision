@@ -26,7 +26,6 @@ export OPENROUTER_API_KEY="..."   # https://openrouter.ai/settings/keys
 ```json
 {
   "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
-  "settings": { "decision-presets": { "ci": "fail" } },
   "rules": {
     "decision-presets/no-pii-in-logs": "error",
     "decision-presets/no-prompt-injection": "error",

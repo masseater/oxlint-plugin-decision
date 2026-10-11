@@ -1,8 +1,5 @@
 {
   "jsPlugins": ["../dist/strict.mjs"],
-  "settings": {
-    "decision-presets": { "ci": "fail" }
-  },
   "rules": {
     "decision-presets/no-pii-in-logs": "error",
     "decision-presets/no-prompt-injection": "error",

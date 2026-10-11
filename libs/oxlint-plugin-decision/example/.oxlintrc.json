@@ -1,9 +1,6 @@
 {
   "jsPlugins": ["./plugin.mjs"],
   "ignorePatterns": ["plugin.mjs"],
-  "settings": {
-    "team": { "ci": "fail" }
-  },
   "rules": {
     "team/no-pii-in-logs": "error",
     "team/name-matches-behavior": "error",

@@ -14,7 +14,7 @@ npm i -D oxlint @r_masseater/oxlint-plugin-decision @r_masseater/oxlint-plugin-d
 export OPENROUTER_API_KEY="..."   # https://openrouter.ai/settings/keys
 ```
 
-The plugin reads the key from the `OPENROUTER_API_KEY` environment variable; set `env` under `settings["decision-presets"]`, such as `{ "OPENROUTER_API_KEY": "TEAM_OPENROUTER_KEY" }`, to read it from a variable with another name. Without it, the plugin warns once and reports nothing. In CI, set `ci: "fail"` so a run that could not reach a model fails instead of passing quietly.
+The plugin reads the key from the `OPENROUTER_API_KEY` environment variable; set `env` under `settings["decision-presets"]`, such as `{ "OPENROUTER_API_KEY": "TEAM_OPENROUTER_KEY" }`, to read it from a variable with another name. Without it, the plugin warns once and reports nothing. In CI (when the `CI` environment variable is set), a run that could not reach a model fails instead of passing quietly.
 
 ## Use a preset
 
@@ -23,7 +23,6 @@ Point `jsPlugins` at a preset and turn on its rules. Each rule is its own oxlint
 ```json
 {
   "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
-  "settings": { "decision-presets": { "ci": "fail" } },
   "rules": {
     "decision-presets/no-pii-in-logs": "error",
     "decision-presets/no-prompt-injection": "error",
@@ -121,7 +120,6 @@ export default createDecisionPlugin({
 ```json
 {
   "jsPlugins": ["./decision.mjs"],
-  "settings": { "team": { "ci": "fail" } },
   "rules": {
     "team/no-pii-in-logs": "error",
     "team/no-prompt-injection": "error",

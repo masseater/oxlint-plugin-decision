@@ -127,10 +127,6 @@ layer(NodeServices.layer, { excludeTestServices: true })("the example project", 
     () => withMock(underlines),
     TIMEOUT,
   );
-  it.effect(
-    "fails the run when the key is missing under CI with ci: fail",
-    () => failsInCi,
-    TIMEOUT,
-  );
+  it.effect("fails the run by default when the key is missing under CI", () => failsInCi, TIMEOUT);
   it.effect("warns and skips when the key is missing outside CI", () => skipsOutsideCi, TIMEOUT);
 });
