@@ -3,20 +3,39 @@
 > [!WARNING]
 > This package is experimental. Use at your own risk.
 
-Oxlint rules written in plain English, answered by decision models on OpenRouter.
+[Oxlint](https://oxc.rs/docs/guide/usage/linter.html) rules written in plain English, answered by decision models on [OpenRouter](https://openrouter.ai).
 
-The package lives in [`libs/oxlint-plugin-decision`](libs/oxlint-plugin-decision), and its [README](libs/oxlint-plugin-decision/README.md) covers installing, configuring and extending it.
-
-This is a fork of [oxlint-plugin-jev](https://github.com/wobsoriano/oxlint-plugin-jev) by [Robert Soriano](https://github.com/wobsoriano).
-
-## Development
-
-The workspace uses [Vite+](https://viteplus.dev) (`vp`) on Node 26.
+You write a rule as a question, such as "Does this call write personal data to a log?". The plugin sends each matching function, call, JSX element or file to a decision model through the OpenRouter Decisions API, gets back the probability of each answer, and reports a lint error when the answer clears your cutoff.
 
 ```sh
-vp install
-vp run verify   # format, lint, typecheck, build, mock tests, workflow lint, fallow
+npm i -D oxlint oxlint-plugin-decision
+export OPENROUTER_API_KEY="..."
 ```
+
+```json
+{
+  "jsPlugins": ["oxlint-plugin-decision"],
+  "rules": {
+    "decision/ask": [
+      "error",
+      {
+        "rules": [
+          {
+            "id": "no-pii-in-logs",
+            "target": "call",
+            "question": "Does this call write personal data, such as an email or phone number, to a log or console?",
+            "cutoff": 0.8
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+See the [package README](libs/oxlint-plugin-decision/README.md) for the full guide: rule fields, answer kinds, context, models, settings, rules in code, cost and caching. To work on the plugin itself, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+This is a fork of [oxlint-plugin-jev](https://github.com/wobsoriano/oxlint-plugin-jev) by [Robert Soriano](https://github.com/wobsoriano).
 
 ## License
 
