@@ -90,7 +90,7 @@ const reportMatches = (pass: ModelPass, answered: Answered): Option.Option<Failu
 };
 
 const reportModel = (pass: ModelPass): void => {
-  const asking: Asking = { model: pass.model, deadline: pass.deadline };
+  const asking: Asking = { model: pass.model, deadline: pass.deadline, env: pass.options.env };
   const request = buildRequest(pass.model.model, pass.matches);
   const result = fetchVerdicts(asking, request);
   if (!result.ok) {
