@@ -116,4 +116,4 @@ export default createDecisionPlugin({
 
 ## License
 
-MIT
+AGPL-3.0-only. Portions from oxlint-plugin-jev stay under the MIT License; see NOTICE.

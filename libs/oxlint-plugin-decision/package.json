@@ -13,14 +13,15 @@
   "bugs": {
     "url": "https://github.com/masseater/oxlint-plugin-decision/issues"
   },
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/masseater/oxlint-plugin-decision.git",
     "directory": "libs/oxlint-plugin-decision"
   },
   "files": [
-    "dist"
+    "dist",
+    "NOTICE"
   ],
   "type": "module",
   "imports": {
