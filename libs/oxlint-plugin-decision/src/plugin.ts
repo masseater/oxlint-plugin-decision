@@ -3,6 +3,7 @@ import { Predicate } from "effect";
 
 import { openRouter } from "./openrouter.ts";
 import { PREFIX, checkRules, resolveOptions } from "./options.ts";
+import { RULE_OPTIONS_SCHEMA, overrideRule } from "./override.ts";
 import type {
   DecisionOptions,
   DecisionPlugin,
@@ -10,6 +11,7 @@ import type {
   DecisionProvider,
   DecisionRule,
   ResolvedOptions,
+  ResolvedRule,
 } from "./types.ts";
 import { sharedFile, visitorFor } from "./visitor.ts";
 
@@ -18,7 +20,7 @@ const DEFAULT_NAME = "decision";
 const metaOf = (rule: DecisionRule): RuleMeta => ({
   type: "problem",
   docs: { description: rule.question },
-  schema: [],
+  schema: RULE_OPTIONS_SCHEMA,
   messages: {
     yes: "[{{id}}] {{model}} answered {{answer}} ({{score}} >= {{cutoff}}): {{question}}",
     unlocated: `${PREFIX}: {{reason}} while refining the location of [{{id}}]; the finding is reported at the file level`,
@@ -46,6 +48,24 @@ const memoized = (resolve: Resolve): Resolve => {
   };
 };
 
+const memoizedRules = (
+  providers: Readonly<Record<string, DecisionProvider>>,
+): ((rule: ResolvedRule, options: unknown) => ResolvedRule) => {
+  const resolved = new WeakMap<ResolvedRule, Map<string, ResolvedRule>>();
+  return (rule, options) => {
+    const known = resolved.get(rule) ?? new Map<string, ResolvedRule>();
+    resolved.set(rule, known);
+    const key = JSON.stringify([options]);
+    const cached = known.get(key);
+    if (Predicate.isNotUndefined(cached)) {
+      return cached;
+    }
+    const fresh = overrideRule(rule, options, providers);
+    known.set(key, fresh);
+    return fresh;
+  };
+};
+
 const createDecisionPlugin = (setup: DecisionPluginSetup): DecisionPlugin => {
   const name = setup.name ?? DEFAULT_NAME;
   const providers: Readonly<Record<string, DecisionProvider>> = Object.fromEntries(
@@ -55,7 +75,7 @@ const createDecisionPlugin = (setup: DecisionPluginSetup): DecisionPlugin => {
   const options = optionsOf(setup);
   const resolve = memoized((settings) => resolveOptions({ options, settings }, rules, providers));
   resolve({});
-  const shared = sharedFile((settings) => resolve(settings[name]));
+  const shared = sharedFile((settings) => resolve(settings[name]), memoizedRules(providers));
 
   return {
     meta: { name },

@@ -140,9 +140,9 @@ const decide = Effect.fn("decide")(function* decide(input: DecideInput) {
   const file = yield* cacheFile(endpoint, input.request);
   const cached = yield* readCache(file, input.request);
   if (Option.isSome(cached)) {
-    return cached.value;
+    return { response: cached.value, cached: true };
   }
-  return yield* askAndStore(endpoint, file, input);
+  return { response: yield* askAndStore(endpoint, file, input), cached: false };
 });
 
 const reasonOf = (error: unknown): string => {
@@ -156,7 +156,7 @@ const run = (input: DecideInput): Promise<DecideResult> =>
   Effect.runPromise(
     decide(input).pipe(
       Effect.match({
-        onSuccess: (response): DecideResult => ({ ok: true, response }),
+        onSuccess: ({ response, cached }): DecideResult => ({ ok: true, response, cached }),
         onFailure: (error): DecideResult => ({ ok: false, reason: reasonOf(error) }),
       }),
       Effect.provide(NodeServices.layer),

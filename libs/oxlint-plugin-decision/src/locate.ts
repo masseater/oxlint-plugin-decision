@@ -15,7 +15,7 @@ import { messageOf, runOrElse } from "./runtime.ts";
 import type { DecisionRequest, LineRange, Match, ModelRef, Verdicts } from "./types.ts";
 
 type VerdictResult =
-  | { readonly ok: true; readonly verdicts: Verdicts }
+  | { readonly ok: true; readonly verdicts: Verdicts; readonly cached: boolean | undefined }
   | { readonly ok: false; readonly reason: string };
 
 interface Located {
@@ -54,6 +54,7 @@ const fetchVerdicts = (asking: Asking, request: DecisionRequest): VerdictResult 
     Effect.sync((): VerdictResult => ({
       ok: true,
       verdicts: parseVerdicts(result.response, request),
+      cached: result.cached,
     })),
     (cause) => ({ ok: false, reason: messageOf(cause) }),
   );
