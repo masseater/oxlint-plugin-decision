@@ -1,6 +1,6 @@
 {
   "name": "oxlint-plugin-decision",
-  "version": "0.2.0",
+  "version": "0.0.1",
   "description": "Oxlint JS plugin that lints code with plain-English rules answered by decision models on OpenRouter.",
   "keywords": [
     "decision-model",
@@ -9,7 +9,16 @@
     "oxlint",
     "oxlint-plugin"
   ],
+  "homepage": "https://github.com/masseater/oxlint-plugin-decision#readme",
+  "bugs": {
+    "url": "https://github.com/masseater/oxlint-plugin-decision/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/masseater/oxlint-plugin-decision.git",
+    "directory": "libs/oxlint-plugin-decision"
+  },
   "files": [
     "dist"
   ],
@@ -23,6 +32,10 @@
       "default": "./dist/index.mjs"
     },
     "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "build": "vp pack",
