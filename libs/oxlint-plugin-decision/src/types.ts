@@ -1,4 +1,17 @@
-import type { Location, Range } from "@oxlint/plugins";
+import type { Context, ESTree, Location, Range } from "@oxlint/plugins";
+
+type Frozen<Value> = Value extends (...args: never) => unknown
+  ? Value
+  : Value extends object
+    ? { readonly [Key in keyof Value]: Frozen<Value[Key]> }
+    : Value;
+
+type SelectedNode = Frozen<ESTree.Node>;
+
+interface SelectMatch {
+  readonly name: string | undefined;
+  readonly context: Context;
+}
 
 type Target = "function" | "call" | "jsx" | "file";
 
@@ -39,7 +52,7 @@ interface DecisionRule {
   readonly question: string;
   readonly cutoff: number;
   readonly message?: string;
-  readonly nameMatches?: Readonly<RegExp>;
+  readonly select?: (node: SelectedNode, match: SelectMatch) => boolean;
   readonly location?: RuleLocation;
   readonly model?: ModelSpec;
   readonly context?: RuleContext;
@@ -170,6 +183,9 @@ interface AstNode {
 
 export type {
   AstNode,
+  Frozen,
+  SelectedNode,
+  SelectMatch,
   ChoiceQuestion,
   CiBehavior,
   DecideInput,

@@ -50,7 +50,11 @@ const byName = Effect.gen(function* test() {
   const env = yield* mockEnv("test-key");
   const run = yield* lintProject({
     files: { "names.js": NAMED },
-    options: { rules: [{ ...functionRule, nameMatches: /^compute/u }] },
+    options: {
+      rules: [
+        { ...functionRule, select: (_node, { name = "" }): boolean => name.startsWith("compute") },
+      ],
+    },
     env,
   });
   strictEqual(run.status, PASSED, outputOf(run));
@@ -66,7 +70,18 @@ const byCallee = Effect.gen(function* test() {
   const env = yield* mockEnv("test-key");
   yield* lintProject({
     files: { "calls.js": "console.log(user.email, user.phone);\nlogger.log(1);\nrun();\n" },
-    options: { rules: [{ ...callRule, nameMatches: /^console\./u }] },
+    options: {
+      rules: [
+        {
+          ...callRule,
+          select: (node): boolean =>
+            node.type === "CallExpression" &&
+            node.callee.type === "MemberExpression" &&
+            node.callee.object.type === "Identifier" &&
+            node.callee.object.name === "console",
+        },
+      ],
+    },
     env,
   });
   deepStrictEqual(yield* sentSnippets, ["console.log(user.email, user.phone)"]);
@@ -76,7 +91,15 @@ const byElement = Effect.gen(function* test() {
   const env = yield* mockEnv("test-key");
   yield* lintProject({
     files: { "view.jsx": "const a = <Button>Hi</Button>;\nconst b = <div>Hi</div>;\n" },
-    options: { rules: [{ ...callRule, target: "jsx", nameMatches: /^[A-Z]/u }] },
+    options: {
+      rules: [
+        {
+          ...callRule,
+          target: "jsx",
+          select: (_node, { name = "" }): boolean => name !== name.toLowerCase(),
+        },
+      ],
+    },
     env,
   });
   deepStrictEqual(yield* sentSnippets, ["<Button>Hi</Button>"]);
@@ -101,43 +124,37 @@ const withComment = Effect.gen(function* test() {
   );
 });
 
-const refuses = (rule: DecisionRule, expected: string): Effect.Effect<void, unknown> =>
-  Effect.gen(function* test() {
-    const run = yield* lintProject({
-      files: { "pass.js": "ok();\n" },
-      options: { rules: [rule] },
-      env: {},
-      format: "default",
-    });
-    strictEqual(run.status === PASSED, false);
-    assertInclude(outputOf(run), expected);
-  }).pipe(Effect.provide(NodeServices.layer));
+const refusesNonFunction = Effect.gen(function* test() {
+  const run = yield* lintProject({
+    files: { "pass.js": "ok();\n" },
+    options: { rules: [{ ...callRule, ...JSON.parse('{"select":"console"}') }] },
+    env: {},
+    format: "default",
+  });
+  strictEqual(run.status === PASSED, false);
+  assertInclude(outputOf(run), "select");
+});
 
 layer(NodeServices.layer, { excludeTestServices: true })("choosing what to ask about", (it) => {
-  it.effect("asks only about functions whose name matches", () => withMock(byName), TIMEOUT);
-  it.effect("asks only about calls whose callee matches", () => withMock(byCallee), TIMEOUT);
-  it.effect("asks only about elements whose tag matches", () => withMock(byElement), TIMEOUT);
+  it.effect(
+    "asks only about functions the selector picks by name",
+    () => withMock(byName),
+    TIMEOUT,
+  );
+  it.effect(
+    "asks only about calls the selector picks from the AST",
+    () => withMock(byCallee),
+    TIMEOUT,
+  );
+  it.effect(
+    "asks only about elements the selector picks by tag",
+    () => withMock(byElement),
+    TIMEOUT,
+  );
   it.effect(
     "sends the comment above a match and skips matches without one",
     () => withMock(withComment),
     TIMEOUT,
   );
-  it.effect(
-    "refuses a stateful nameMatches",
-    () =>
-      refuses(
-        { ...callRule, nameMatches: /x/gu },
-        'rule "any-call" has a nameMatches with the g or y flag',
-      ),
-    TIMEOUT,
-  );
-  it.effect(
-    "refuses nameMatches on a file rule",
-    () =>
-      refuses(
-        { ...callRule, target: "file", nameMatches: /x/u },
-        "nameMatches is not supported for file rules",
-      ),
-    TIMEOUT,
-  );
+  it.effect("refuses a select that is not a function", () => refusesNonFunction, TIMEOUT);
 });

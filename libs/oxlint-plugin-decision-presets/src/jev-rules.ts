@@ -2,6 +2,8 @@ import { defineDecisionRule } from "@r_masseater/oxlint-plugin-decision";
 import type { DecisionRule, RuleContext } from "@r_masseater/oxlint-plugin-decision";
 import { Predicate } from "effect";
 
+import { isDescribeCall, isLogCall, isTestCall, namedLike } from "./jev-select.ts";
+
 interface Judgement {
   readonly ask: string;
   readonly yes: string;
@@ -13,7 +15,7 @@ interface JevRule extends Judgement {
   readonly id: string;
   readonly target?: "function" | "call";
   readonly cutoff: number;
-  readonly nameMatches?: Readonly<RegExp>;
+  readonly select?: NonNullable<DecisionRule["select"]>;
   readonly context?: RuleContext;
 }
 
@@ -30,10 +32,6 @@ const jevRule = ({ ask, yes, no, note, ...rule }: JevRule): DecisionRule =>
     question: questionOf({ ask, yes, no, note }),
   });
 
-const TEST_CALL = /^(?:it|test)(?:\.\w+)*$/u;
-const DESCRIBE_CALL = /^describe(?:\.\w+)*$/u;
-const LOG_CALL =
-  /^\w*(?:[Ll]og|console)\w*\.(?:trace|debug|verbose|info|log|warn|warning|error|fatal)$/u;
 const COMMENT: RuleContext = { scope: "comment" };
 const ENCLOSING_FUNCTION: RuleContext = { scope: "enclosing", kind: "function" };
 
@@ -48,7 +46,7 @@ const fnNamePromises = jevRule({
 const pureNameIsPure = jevRule({
   id: "pure-name-is-pure",
   cutoff: 0.54,
-  nameMatches: /^(?:compute|calculate|derive|format|to|parse)(?:[A-Z0-9_]|$)/u,
+  select: namedLike({ prefixes: ["compute", "calculate", "derive", "format", "to", "parse"] }),
   ask: "This function's name presents it as a computation of a result from its inputs, but its body changes state outside itself or performs I/O.",
   yes: "The body mutates an argument or something reachable through one, assigns to a module-level binding, a field of `this` or an object it did not create, stores something it computed into a cache, Map, Set or other store that outlives the call, logs, emits or increments a metric, or reads or writes a file, network, database, environment, clock or random source, directly or through a call whose name or arguments show it does so (fetch, a path, a URL, a query, send, save). One such read or write on any path is enough.",
   no: "The body derives its result from its parameters, from `this`, from module-level values it only reads, and from dependencies it obtains, and returns it. A mutable local accumulator, a copy of an argument that is then modified, and a local object built up and returned are not effects outside the function.",
@@ -58,7 +56,10 @@ const pureNameIsPure = jevRule({
 const safeNameIsSafe = jevRule({
   id: "safe-name-is-safe",
   cutoff: 0.53,
-  nameMatches: /^(?:safe|try)(?:[A-Z0-9_]|$)|(?:OrNull|OrDefault|OrUndefined)$/u,
+  select: namedLike({
+    prefixes: ["safe", "try"],
+    suffixes: ["OrNull", "OrDefault", "OrUndefined"],
+  }),
   ask: "This function's name says that failure is absorbed and reported as a value, but its body has a path on which a failure escapes as a throw or a rejection.",
   yes: "A failure of the kind the name promises to absorb can reach the caller as an exception or a rejected promise: the operation that can fail is outside any try, the catch rethrows or throws a new error, a failing case is detected and answered with a throw instead of the null, undefined, default, false or result value the name promises, or the fallback itself is computed by something that can fail.",
   no: "Every failure of the kind the name refers to is turned into the value the name promises: null, undefined, a default, a boolean, or a result object the caller can inspect. A body that cannot fail at all, and so has nothing to catch, honours the name.",
@@ -68,7 +69,7 @@ const safeNameIsSafe = jevRule({
 const idempotentName = jevRule({
   id: "idempotent-name",
   cutoff: 0.4,
-  nameMatches: /^(?:ensure|upsert|setup|install|register)(?:[A-Z0-9_]|$)/u,
+  select: namedLike({ prefixes: ["ensure", "upsert", "setup", "install", "register"] }),
   ask: "This function's name says a repeated call is harmless, but calling it a second time with the same arguments leaves a different result from calling it once.",
   yes: "The body performs its effect without finding out whether it is already in place, and repeating the effect accumulates or fails: it appends to a list or adds a listener, creates a record, index, table, column or resource that would then exist twice or make the second creation fail, inserts where a matching row may already be, or runs a step that is not itself safe to repeat, with no existence check, no keyed overwrite and no guard that makes the second call a no-op.",
   no: "A second call finds the effect already in place and leaves the state as the first call left it: the body checks for existence before acting, writes by key so a repeat overwrites the same entry, assigns rather than appends, uses an operation that is inherently repeatable (put, set, mkdir with recursive, CREATE IF NOT EXISTS, ON CONFLICT), returns early on a flag it sets, or has no effect at all beyond its return value.",
@@ -95,7 +96,7 @@ const logLevelMatchesEvent = jevRule({
   id: "log-level-matches-event",
   target: "call",
   cutoff: 0.6,
-  nameMatches: LOG_CALL,
+  select: isLogCall,
   context: ENCLOSING_FUNCTION,
   ask: "The level of this log call misstates the severity of what the surrounding code is handling at that point.",
   yes: "The call is at info, debug or trace but sits on a path where the operation has failed and the function gives up, rethrows, exits, discards data or returns a failure the caller must act on; the call is at debug or trace for an outcome the function reports to its caller, such as a refusal; the call is at error or fatal but sits on the ordinary success path or on a routine, expected branch such as a cache miss or a validation failure; or the call is at warn but the code immediately exits or throws with no recovery.",
@@ -106,7 +107,7 @@ const logMessageMatchesEvent = jevRule({
   id: "log-message-matches-event",
   target: "call",
   cutoff: 0.62,
-  nameMatches: LOG_CALL,
+  select: isLogCall,
   context: ENCLOSING_FUNCTION,
   ask: "The message of this log call misdescribes the event at the point in the code where the call sits.",
   yes: "What the message says happened is not what the code path shows at that point: it reports an outcome as done before the operation that produces it runs, or on the branch where that operation failed or was skipped; it names an action (a retry, a deletion, a cache hit, a send) that the path does not perform; it reports a count of what was selected or attempted as the count of what was deleted, sent or written; it interpolates a value that is not what the message calls it; or it names a kind of thing other than the one the surrounding code acts on.",
@@ -153,7 +154,7 @@ const describeNamesSubject = jevRule({
   id: "describe-names-subject",
   cutoff: 0.45,
   target: "call",
-  nameMatches: DESCRIBE_CALL,
+  select: isDescribeCall,
   ask: "The tests inside this describe block exercise something other than what its title names.",
   yes: "The title names a specific function, method, class or module and no test in the block calls, constructs or otherwise reaches it: every test calls a differently named sibling instead; or the title names a behaviour and no test makes that behaviour happen or observes it.",
   no: "What the title names is what the tests exercise, directly or through something that reaches it: a feature tested through a public function of another name, a class tested through its factory or an instance created in beforeEach, a title that is a file name, a scenario or a sentence when the tests are about it, or an abbreviation or synonym of what the tests call.",
@@ -163,7 +164,7 @@ const testNameDescribesCode = jevRule({
   id: "test-name-describes-code",
   cutoff: 0.72,
   target: "call",
-  nameMatches: TEST_CALL,
+  select: isTestCall,
   ask: "The operation, input or outcome this test exercises is not the one the test's name names.",
   yes: "The operation the code calls is not the one the name says; the input or case the code sets up is not the one the name states (three units where the name says above ten); the outcome the code expects is the opposite of the one the name implies; the name promises a throw or a rejection where the code expects an ordinary value; or the name refers to something that the code never calls and never checks.",
   no: "The code calls the operation the name says, on the input the name says, and expects the kind of outcome the name says, however weak the assertion is. A one-word title, a synonym for the operation's name, and setup that calls other operations before the named one are all fine.",
@@ -173,7 +174,7 @@ const testNameVerifiesClaim = jevRule({
   id: "test-name-verifies-claim",
   cutoff: 0.66,
   target: "call",
-  nameMatches: TEST_CALL,
+  select: isTestCall,
   ask: "This test would still pass if the behaviour its name claims were broken.",
   yes: "The body does not establish what the name claims: it asserts nothing at all, it asserts something that would hold whether or not the named behaviour worked, it checks an incidental property such as a length or a type instead of the named behaviour itself, or it never sets up the case the name is about.",
   no: "The body contains at least one assertion that would fail if the named behaviour were broken. A name that claims only that something renders or matches a snapshot is established by the snapshot; a name that claims an interaction with a collaborator is established by an assertion on that call; a name that claims only that something does not throw is established by calling it.",
@@ -183,7 +184,7 @@ const snapshotOnlyBehaviourClaim = jevRule({
   id: "snapshot-only-behaviour-claim",
   cutoff: 0.67,
   target: "call",
-  nameMatches: TEST_CALL,
+  select: isTestCall,
   ask: "This test's name claims a specific behaviour, but the body only compares a snapshot.",
   yes: "The title asserts a property of the output (an ordering, an element hidden or shown, a state rendered under a condition, a format applied) and the only assertions are toMatchSnapshot, toMatchInlineSnapshot or toMatchFileSnapshot over a whole rendering, so nothing isolates the named property.",
   no: "The body uses no snapshot; or the title claims only that the output matches a snapshot or renders, or only names the input; or at least one assertion targets the named behaviour directly; or the inline snapshot is a short literal that is itself the named outcome.",
@@ -193,7 +194,7 @@ const testMocksSubject = jevRule({
   id: "test-mocks-subject",
   cutoff: 0.3,
   target: "call",
-  nameMatches: TEST_CALL,
+  select: isTestCall,
   ask: "The behaviour this test's name attributes to the code under test is performed by a mock or stub whose canned value the assertion reads back unchanged.",
   yes: "The title says the code under test computes, derives or returns something, but the function or module that would do it is replaced (vi.mock or jest.mock with a fake, mockReturnValue or mockResolvedValue, a stubbed global) and the value the assertion checks can be traced to that stub's configuration with none of the subject's own logic in between. The assertion then checks the test's own setup.",
   no: "The body mocks nothing; or the stub stands in for a collaborator the code under test calls (the network, the clock, a repository, a mailer) and the assertion checks what the real code did with the stub's output; or the title is itself about the collaborator; or the spy has no replacement value and the real method runs.",
