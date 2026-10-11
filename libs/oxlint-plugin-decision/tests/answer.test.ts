@@ -37,16 +37,16 @@ const classify = answered(
     report: ["leaks"],
   },
   [
-    "log.js:2:1: [any-call] openrouter/mock-decider answered leaks (0.99 >= 0.80): Does this call write personal data to a log? [Error/decision(ask)]",
+    "log.js:2:1: [any-call] openrouter/mock-decider answered leaks (0.99 >= 0.80): Does this call write personal data to a log? [Error/decision(any-call)]",
   ],
 );
 
 const severity = answered({ kind: "severity" }, [
-  "log.js:2:1: [any-call] openrouter/mock-decider answered error (0.99 >= 0.80): Does this call write personal data to a log? [Error/decision(ask)]",
+  "log.js:2:1: [any-call] openrouter/mock-decider answered error (0.99 >= 0.80): Does this call write personal data to a log? [Error/decision(any-call)]",
 ]);
 
 const severityAboveError = answered({ kind: "severity", minimum: "error" }, [
-  "log.js:2:1: [any-call] openrouter/mock-decider answered error (0.99 >= 0.80): Does this call write personal data to a log? [Error/decision(ask)]",
+  "log.js:2:1: [any-call] openrouter/mock-decider answered error (0.99 >= 0.80): Does this call write personal data to a log? [Error/decision(any-call)]",
 ]);
 
 const LEAKS = {
@@ -58,7 +58,7 @@ const LEAKS = {
 const classifyYesNo = answered(
   LEAKS,
   [
-    "log.js:2:1: [any-call] openrouter/mock-decider answered leaks (0.90 >= 0.80): Does this call write personal data to a log? [Error/decision(ask)]",
+    "log.js:2:1: [any-call] openrouter/mock-decider answered leaks (0.90 >= 0.80): Does this call write personal data to a log? [Error/decision(any-call)]",
   ],
   { model: RESPAN },
 );
@@ -66,7 +66,7 @@ const classifyYesNo = answered(
 const severityYesNo = answered(
   { kind: "severity" },
   [
-    "log.js:2:1: [any-call] openrouter/mock-decider answered error (0.85 >= 0.80): Does this call write personal data to a log? [Error/decision(ask)]",
+    "log.js:2:1: [any-call] openrouter/mock-decider answered error (0.85 >= 0.80): Does this call write personal data to a log? [Error/decision(any-call)]",
   ],
   { model: RESPAN },
 );

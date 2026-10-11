@@ -10,7 +10,8 @@ import { failsInCi, warnOnce } from "./runtime.ts";
 import type { DecisionRequest, Match, ModelRef, ResolvedOptions, Verdicts } from "./types.ts";
 
 interface ModelPass {
-  readonly context: Context;
+  readonly contextOf: (match: Match) => Context;
+  readonly filename: string;
   readonly options: ResolvedOptions;
   readonly model: ModelRef;
   readonly matches: readonly Match[];
@@ -18,7 +19,7 @@ interface ModelPass {
 }
 
 interface Failure {
-  readonly id: string;
+  readonly match: Match;
   readonly loc: Location;
   readonly reason: string;
 }
@@ -33,21 +34,21 @@ const DECIMALS = 2;
 
 const degrade = (pass: ModelPass, reason: string): void => {
   if (failsInCi(pass.options)) {
-    throw new OptionsError(`${reason} (${pass.context.filename})`);
+    throw new OptionsError(`${reason} (${pass.filename})`);
   }
-  warnOnce(reason, `${reason} (${pass.context.filename})`);
+  warnOnce(reason, `${reason} (${pass.filename})`);
 };
 
 const reportFailure = (pass: ModelPass, failure: Failure): void => {
   if (failsInCi(pass.options)) {
-    pass.context.report({
+    pass.contextOf(failure.match).report({
       loc: failure.loc,
       messageId: "unlocated",
-      data: { id: failure.id, reason: failure.reason },
+      data: { id: failure.match.rule.id, reason: failure.reason },
     });
     return;
   }
-  warnOnce(failure.reason, `${failure.reason} (${pass.context.filename})`);
+  warnOnce(failure.reason, `${failure.reason} (${pass.filename})`);
 };
 
 const locate = (
@@ -69,11 +70,9 @@ const reportMatches = (pass: ModelPass, answered: Answered): Option.Option<Failu
     if (Option.isSome(verdict) && isReported(match.rule, verdict.value)) {
       const located = locate(answered, match, { ref, failed: Option.isSome(failure) });
       failure = Option.orElse(failure, () =>
-        located.failure.pipe(
-          Option.map((reason) => ({ id: match.rule.id, loc: match.loc, reason })),
-        ),
+        located.failure.pipe(Option.map((reason) => ({ match, loc: match.loc, reason }))),
       );
-      pass.context.report({
+      pass.contextOf(match).report({
         loc: located.loc,
         messageId: "yes",
         data: {

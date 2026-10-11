@@ -1,10 +1,17 @@
 import { Array as Arr, Effect, FileSystem, Option, Path } from "effect";
 import type { Scope } from "effect";
 
-import type { DecisionOptions, DecisionRule } from "#src/types.ts";
+import type { DecisionPluginSetup, DecisionRule } from "#src/types.ts";
 
 import type { MockOpenRouter } from "./mock-openrouter.ts";
-import { configFor, diagnosticsOf, firstSpan, mockEnv, runOxlint, writeProject } from "./oxlint.ts";
+import {
+  diagnosticsOf,
+  firstSpan,
+  mockEnv,
+  projectFilesFor,
+  runOxlint,
+  writeProject,
+} from "./oxlint.ts";
 import type { OxlintDiagnostic, OxlintRun, OxlintSpan, Services } from "./oxlint.ts";
 
 const SOURCE =
@@ -34,7 +41,7 @@ interface LocationProject {
 
 interface ProjectSetup {
   readonly text?: string;
-  readonly options?: DecisionOptions;
+  readonly options?: Partial<DecisionPluginSetup>;
   readonly token?: string;
 }
 
@@ -57,13 +64,13 @@ const locationProject = ({
   Services | MockOpenRouter | Scope.Scope
 > =>
   Effect.gen(function* setup() {
-    const config = yield* configFor({
+    const project = yield* projectFilesFor({
       ci: "fail",
       maxSnippetChars: MAX_SNIPPET_CHARS,
       rules: [fileRule],
       ...options,
     });
-    const cwd = yield* writeProject({ "source.ts": text, ".oxlintrc.json": config });
+    const cwd = yield* writeProject({ "source.ts": text, ...project });
     const env = { ...(yield* mockEnv(token)), CI: "1" };
     const lint = Effect.gen(function* lintOnce() {
       const run = yield* runOxlint({ cwd, args: ARGS, env });

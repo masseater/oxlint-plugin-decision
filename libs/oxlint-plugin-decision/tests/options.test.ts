@@ -3,14 +3,7 @@ import { deepStrictEqual, strictEqual, throws } from "@effect/vitest/utils";
 import { Effect, Layer } from "effect";
 
 import { openRouter } from "#src/openrouter.ts";
-import {
-  DEFAULTS,
-  NAMED_PARENTS,
-  REPORT_LOC,
-  SCHEMA,
-  resolveOptions,
-  snippetNodeFor,
-} from "#src/options.ts";
+import { NAMED_PARENTS, REPORT_LOC, resolveOptions, snippetNodeFor } from "#src/options.ts";
 import type { AstNode, DecisionRule } from "#src/types.ts";
 
 const SIGNATURE_LINE = 10;
@@ -21,12 +14,15 @@ const CALL_START = 2;
 const CALL_END = 9;
 const FIRST_LINE = 1;
 const START = 0;
+const TIMEOUT_MS = 5;
 
 const rule: DecisionRule = { id: "a", target: "call", question: "Is it bad?", cutoff: 0.8 };
 const providers = { openrouter: openRouter };
 
+const noSettings = { options: {} };
+
 const resolvesDefaults = Effect.sync(() => {
-  const { rules } = resolveOptions({ rules: [rule] }, [], providers);
+  const { rules } = resolveOptions(noSettings, [rule], providers);
   deepStrictEqual(
     rules.map(({ models, answer }) => ({
       models: models.map(({ id, model }) => ({ id, model })),
@@ -34,46 +30,44 @@ const resolvesDefaults = Effect.sync(() => {
     })),
     [
       {
-        models: [{ id: DEFAULTS.model, model: "~typesafe/jev-latest" }],
+        models: [{ id: "openrouter/~typesafe/jev-latest", model: "~typesafe/jev-latest" }],
         answer: { kind: "boolean" },
       },
     ],
   );
 });
 
-const mergesCodeRules = Effect.sync(() => {
-  const resolved = resolveOptions({ rules: [rule] }, [{ ...rule, id: "code" }], providers);
+const settingsOverrideCode = Effect.sync(() => {
+  const resolved = resolveOptions(
+    {
+      options: { model: "openrouter/code", timeoutMs: 5 },
+      settings: { model: "openrouter/config" },
+    },
+    [rule],
+    providers,
+  );
   deepStrictEqual(
-    resolved.rules.map(({ id }) => id),
-    ["code", "a"],
+    [resolved.timeoutMs, resolved.rules.flatMap(({ models }) => models.map(({ model }) => model))],
+    [TIMEOUT_MS, ["config"]],
   );
 });
 
 const refusesEmpty = Effect.sync(() => {
   throws(() => {
-    resolveOptions({}, [], providers);
+    resolveOptions(noSettings, [], providers);
   });
 });
 
 const dedupesModels = Effect.sync(() => {
   const resolved = resolveOptions(
-    { model: ["openrouter/x", "openrouter/x", "openrouter/y"], rules: [rule] },
-    [],
+    { options: { model: ["openrouter/x", "openrouter/x", "openrouter/y"] } },
+    [rule],
     providers,
   );
   deepStrictEqual(
     resolved.rules.flatMap(({ models }) => models.map(({ model }) => model)),
     ["x", "y"],
   );
-});
-
-const schemaMatchesDefaults = Effect.sync(() => {
-  deepStrictEqual(
-    Object.keys(DEFAULTS).filter((field) => !Object.hasOwn(SCHEMA.properties, field)),
-    [],
-  );
-  strictEqual(Object.hasOwn(SCHEMA, "required"), false);
-  deepStrictEqual(SCHEMA.properties.rules.items.required, ["id", "target", "question", "cutoff"]);
 });
 
 const node = (type: string): AstNode => ({
@@ -120,13 +114,9 @@ const reportLocations = Effect.sync(() => {
 
 layer(Layer.empty)("resolving options", (it) => {
   it.effect("fills the default model and a boolean answer", () => resolvesDefaults);
-  it.effect("puts code rules before config rules", () => mergesCodeRules);
-  it.effect("refuses options with no rules", () => refusesEmpty);
+  it.effect("lets oxlint settings override the plugin's own options", () => settingsOverrideCode);
+  it.effect("refuses a plugin with no rules", () => refusesEmpty);
   it.effect("asks each listed model once", () => dedupesModels);
-  it.effect(
-    "offers every default in the schema and leaves rules optional",
-    () => schemaMatchesDefaults,
-  );
   it.effect(
     "sends the binding for an anonymous function stored under a name",
     () => namesAnonymousFunctions,

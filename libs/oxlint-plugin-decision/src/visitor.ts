@@ -1,5 +1,5 @@
 import type { Context, VisitorWithHooks } from "@oxlint/plugins";
-import { Array as Arr, Option } from "effect";
+import { Array as Arr, Option, Predicate } from "effect";
 
 import { contextOf } from "./context.ts";
 import { OptionsError, REPORT_LOC, TARGET_NODE_TYPES, snippetNodeFor } from "./options.ts";
@@ -13,25 +13,35 @@ import type {
   ModelRef,
   ResolvedOptions,
   ResolvedRule,
+  Target,
 } from "./types.ts";
-
-interface FileState {
-  readonly options: ResolvedOptions;
-  readonly models: readonly ModelRef[];
-  readonly matches: Match[];
-  readonly dropped: string[];
-}
 
 interface Collected {
   readonly options: ResolvedOptions;
-  readonly models: readonly ModelRef[];
+  readonly contexts: Readonly<Record<string, Context>>;
   readonly matches: readonly Match[];
   readonly dropped: readonly string[];
 }
 
-type OptionsFor = (raw: unknown) => ResolvedOptions;
+interface FileBatch extends Collected {
+  readonly contexts: Record<string, Context>;
+  readonly matches: Match[];
+  readonly dropped: string[];
+  exiting: boolean;
+  exits: number;
+}
 
-const NODE_TYPES: readonly string[] = Object.values(TARGET_NODE_TYPES).flat();
+interface RuleFile {
+  readonly batch: FileBatch;
+  readonly rule: ResolvedRule;
+}
+
+interface SharedFile {
+  readonly join: (context: Context, id: string) => FileBatch;
+  readonly leave: () => void;
+}
+
+type OptionsFor = (settings: Readonly<Record<string, unknown>>) => ResolvedOptions;
 
 const raisedMissing = new Set<string>();
 
@@ -53,17 +63,15 @@ const isAvailable = (options: ResolvedOptions, { provider }: ModelRef): boolean 
   return false;
 };
 
-const availableModels = (options: ResolvedOptions): readonly ModelRef[] =>
+const availableModels = (batch: Collected): readonly ModelRef[] =>
   [
     ...new Map(
-      options.rules.flatMap((rule) => rule.models).map((model) => [model.id, model]),
+      batch.options.rules
+        .filter((rule) => Object.hasOwn(batch.contexts, rule.id))
+        .flatMap((rule) => rule.models)
+        .map((model) => [model.id, model]),
     ).values(),
-  ].filter((model) => isAvailable(options, model));
-
-const rulesFor = (options: ResolvedOptions, type: string): readonly ResolvedRule[] =>
-  options.rules.filter((rule) =>
-    (TARGET_NODE_TYPES[rule.target] as readonly string[]).includes(type),
-  );
+  ].filter((model) => isAvailable(batch.options, model));
 
 const snippetOf = (context: Context, node: AstNode): string => {
   if (node.type === "Program") {
@@ -96,75 +104,134 @@ const matchOf = (
   };
 };
 
-const finish = (context: Context, collected: Collected): void => {
-  if (Arr.isReadonlyArrayNonEmpty(collected.dropped)) {
-    const dropped = collected.dropped.length;
-    warnOnce(
-      `capped:${context.filename}`,
-      `${String(collected.matches.length + dropped)} matches exceeded maxMatchesPerFile=${String(collected.options.maxMatchesPerFile)}, ${String(dropped)} not checked (${context.filename})`,
-    );
+const contextOfRule = (batch: Collected, id: string): Context =>
+  Option.getOrThrow(Option.fromUndefinedOr(batch.contexts[id]));
+
+const warnDropped = (batch: Collected, filename: string): void => {
+  if (Arr.isReadonlyArrayEmpty(batch.dropped)) {
+    return;
   }
-  const deadline = Date.now() + collected.options.timeoutMs;
-  for (const model of collected.models) {
-    const matches = collected.matches.filter(({ rule }) =>
+  const dropped = batch.dropped.length;
+  warnOnce(
+    `capped:${filename}`,
+    `${String(batch.matches.length + dropped)} matches exceeded maxMatchesPerFile=${String(batch.options.maxMatchesPerFile)}, ${String(dropped)} not checked (${filename})`,
+  );
+};
+
+const finish = (batch: Collected): void => {
+  const [first] = Object.values(batch.contexts);
+  if (Predicate.isUndefined(first)) {
+    return;
+  }
+  const models = availableModels(batch);
+  warnDropped(batch, first.filename);
+  const deadline = Date.now() + batch.options.timeoutMs;
+  for (const model of models) {
+    const matches = batch.matches.filter(({ rule }) =>
       rule.models.some(({ id }) => id === model.id),
     );
     if (Arr.isReadonlyArrayNonEmpty(matches)) {
-      reportModel({ context, options: collected.options, model, matches, deadline });
+      reportModel({
+        contextOf: (match) => contextOfRule(batch, match.rule.id),
+        filename: first.filename,
+        options: batch.options,
+        model,
+        matches,
+        deadline,
+      });
     }
   }
 };
 
-const startFile = (options: ResolvedOptions): Option.Option<FileState> => {
-  const models = availableModels(options);
-  if (Arr.isReadonlyArrayEmpty(models)) {
-    return Option.none();
-  }
-  return Option.some({ options, models, matches: [], dropped: [] });
+const sharedFile = (optionsFor: OptionsFor): SharedFile => {
+  let current: Option.Option<FileBatch> = Option.none();
+  const start = (context: Context): FileBatch => {
+    const batch: FileBatch = {
+      options: optionsFor(context.settings),
+      contexts: {},
+      matches: [],
+      dropped: [],
+      exiting: false,
+      exits: 0,
+    };
+    current = Option.some(batch);
+    return batch;
+  };
+  return {
+    join: (context, id) => {
+      const batch = Option.match(current, {
+        onNone: () => start(context),
+        onSome: (open) => {
+          if (open.exiting) {
+            return start(context);
+          }
+          return open;
+        },
+      });
+      batch.contexts[id] = context;
+      return batch;
+    },
+    leave: () => {
+      if (Option.isNone(current)) {
+        return;
+      }
+      const batch = current.value;
+      batch.exits += 1;
+      if (batch.exits >= Object.keys(batch.contexts).length) {
+        current = Option.none();
+      }
+      if (!batch.exiting) {
+        batch.exiting = true;
+        finish(batch);
+      }
+    },
+  };
 };
 
-const visitorFor =
-  (optionsFor: OptionsFor) =>
-  (context: Context): VisitorWithHooks => {
-    let file: Option.Option<FileState> = Option.none();
+const ruleIn = (batch: Collected, id: string): ResolvedRule =>
+  Option.getOrThrow(Arr.findFirst(batch.options.rules, (rule) => rule.id === id));
 
-    const collect = (type: string, node: AstNode): void => {
+const visitorFor =
+  (shared: SharedFile, { id, target }: { readonly id: string; readonly target: Target }) =>
+  (context: Context): VisitorWithHooks => {
+    let file: Option.Option<RuleFile> = Option.none();
+
+    const collect = (node: AstNode): void => {
       if (Option.isNone(file)) {
         return;
       }
-      const state = file.value;
-      for (const rule of rulesFor(state.options, type)) {
-        if (state.matches.length >= state.options.maxMatchesPerFile) {
-          state.dropped.push(rule.id);
-        } else {
-          state.matches.push(matchOf(context, node, { rule, options: state.options }));
-        }
+      const { batch, rule } = file.value;
+      if (batch.matches.length >= batch.options.maxMatchesPerFile) {
+        batch.dropped.push(rule.id);
+      } else {
+        batch.matches.push(matchOf(context, node, { rule, options: batch.options }));
       }
     };
 
+    const nodeTypes: readonly string[] = TARGET_NODE_TYPES[target];
+
     return {
       ...Object.fromEntries(
-        NODE_TYPES.map((type) => [
+        nodeTypes.map((type) => [
           type,
           (node: AstNode): void => {
-            collect(type, node);
+            collect(node);
           },
         ]),
       ),
       Program: (node: AstNode): void => {
-        const raw = Option.getOrUndefined(Arr.head(context.options));
-        file = startFile(optionsFor(raw));
-        collect("Program", node);
+        const batch = shared.join(context, id);
+        file = Option.some({ batch, rule: ruleIn(batch, id) });
+        if (target === "file") {
+          collect(node);
+        }
       },
       "Program:exit": (): void => {
-        const done = file;
         file = Option.none();
-        if (Option.isSome(done)) {
-          finish(context, done.value);
-        }
+        shared.leave();
       },
     };
   };
 
-export { visitorFor };
-export type { OptionsFor };
+export { sharedFile, visitorFor };
+export type { Collected, FileBatch, OptionsFor, SharedFile };

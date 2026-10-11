@@ -3,7 +3,18 @@ import { layer } from "@effect/vitest";
 import { deepStrictEqual } from "@effect/vitest/utils";
 import { Array as Arr, Config, Effect, FileSystem, Option, Redacted } from "effect";
 
-import { TIMEOUT, fromRoot, outputOf, oxlint, reportedLines, tempProject } from "./oxlint.ts";
+import { presets } from "#src/presets.ts";
+
+import {
+  PLUGIN_NAME,
+  TIMEOUT,
+  enabled,
+  fromRoot,
+  outputOf,
+  oxlint,
+  reportedLines,
+  tempProject,
+} from "./oxlint.ts";
 import type { Services } from "./oxlint.ts";
 
 const LIVE_MODEL = "openrouter/respan/span-01-lite";
@@ -37,6 +48,12 @@ const EXPECTED = {
 
 type PresetEntry = keyof typeof EXPECTED;
 
+const PRESET_RULES = {
+  recommended: presets.recommended,
+  strict: presets.strict,
+  "review-only": presets.reviewOnly,
+} as const satisfies Readonly<Record<PresetEntry, unknown>>;
+
 const proxyEnv = Effect.map(
   Effect.all(PROXY_ENV.map((name) => Effect.orDie(Config.option(Config.String(name))))),
   (values) =>
@@ -64,7 +81,8 @@ const presetLive = (preset: PresetEntry): Effect.Effect<void, unknown, Services>
         "pass.js": yield* fs.readFileString(yield* fromRoot("example", "pass.js")),
         ".oxlintrc.json": JSON.stringify({
           jsPlugins: [plugin],
-          rules: { "decision/ask": ["error", { model: LIVE_MODEL, ci: "fail" }] },
+          settings: { [PLUGIN_NAME]: { model: LIVE_MODEL, ci: "fail" } },
+          rules: enabled(PLUGIN_NAME, PRESET_RULES[preset]),
         }),
       });
       const run = yield* oxlint(
@@ -77,7 +95,7 @@ const presetLive = (preset: PresetEntry): Effect.Effect<void, unknown, Services>
       );
       yield* Effect.log(outputOf(run));
       deepStrictEqual(
-        reportedLines(run, "decision").map((line) => headOf(line)),
+        reportedLines(run, PLUGIN_NAME).map((line) => headOf(line)),
         [...EXPECTED[preset]],
       );
     }),
