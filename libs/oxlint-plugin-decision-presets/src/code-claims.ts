@@ -1,41 +1,9 @@
-import { defineDecisionRule } from "@r_masseater/oxlint-plugin-decision";
-import type { DecisionRule, RuleContext } from "@r_masseater/oxlint-plugin-decision";
-import { Predicate } from "effect";
+import type { DecisionRule } from "@r_masseater/oxlint-plugin-decision";
 
-import { isDescribeCall, isLogCall, isTestCall, namedLike } from "./jev-select.ts";
+import { COMMENT, ENCLOSING_FUNCTION, claimRule } from "./claim-rule.ts";
+import { isLogCall, namedLike } from "./claim-select.ts";
 
-interface Judgement {
-  readonly ask: string;
-  readonly yes: string;
-  readonly no: string;
-  readonly note?: string | undefined;
-}
-
-interface JevRule extends Judgement {
-  readonly id: string;
-  readonly target?: "function" | "call";
-  readonly cutoff: number;
-  readonly select?: NonNullable<DecisionRule["select"]>;
-  readonly context?: RuleContext;
-}
-
-const questionOf = ({ ask, yes, no, note }: Judgement): string =>
-  [ask, `It is true when: ${yes}`, `It is false when: ${no}`, note]
-    .filter((part) => Predicate.isNotUndefined(part))
-    .join("\n\n");
-
-const jevRule = ({ ask, yes, no, note, ...rule }: JevRule): DecisionRule =>
-  defineDecisionRule({
-    target: "function",
-    ...rule,
-    message: ask,
-    question: questionOf({ ask, yes, no, note }),
-  });
-
-const COMMENT: RuleContext = { scope: "comment" };
-const ENCLOSING_FUNCTION: RuleContext = { scope: "enclosing", kind: "function" };
-
-const fnNamePromises = jevRule({
+const fnNamePromises = claimRule({
   id: "fn-name-promises",
   cutoff: 0.55,
   ask: "The body of this function does something materially different from what its name promises.",
@@ -43,7 +11,7 @@ const fnNamePromises = jevRule({
   no: "The name and parameter list describe what the body actually does. Someone who read only them would not be surprised by the body, even if a longer or more specific name could be imagined. A terse or conventional name (run, handle, take, len, fmt, toString, a getter) that the body fits is not a violation, and a comment inside the body that is wrong about the body is a wrong comment, not a wrong name.",
 });
 
-const pureNameIsPure = jevRule({
+const pureNameIsPure = claimRule({
   id: "pure-name-is-pure",
   cutoff: 0.54,
   select: namedLike({ prefixes: ["compute", "calculate", "derive", "format", "to", "parse"] }),
@@ -53,7 +21,7 @@ const pureNameIsPure = jevRule({
   note: "Obtaining a dependency (a module, a client, a parser handed back by a loader) is not an effect; using an acquired client to fetch, read, write or send is. A body that puts its own result into a cache that outlives the call is an effect even when it is only memoisation.",
 });
 
-const safeNameIsSafe = jevRule({
+const safeNameIsSafe = claimRule({
   id: "safe-name-is-safe",
   cutoff: 0.53,
   select: namedLike({
@@ -66,7 +34,7 @@ const safeNameIsSafe = jevRule({
   note: "A throw on a programmer error, such as an argument of the wrong type, is not the failure such a name promises to absorb. Logging before returning the fallback is fine.",
 });
 
-const idempotentName = jevRule({
+const idempotentName = claimRule({
   id: "idempotent-name",
   cutoff: 0.4,
   select: namedLike({ prefixes: ["ensure", "upsert", "setup", "install", "register"] }),
@@ -76,7 +44,7 @@ const idempotentName = jevRule({
   note: "A helper whose own name says it is repeat-safe (ensure*, upsert*, put*, set*) is assumed to be. Logging on each call, or returning a fresh object each call, is not a different result.",
 });
 
-const catchHidesFailure = jevRule({
+const catchHidesFailure = claimRule({
   id: "catch-hides-failure",
   cutoff: 0.55,
   ask: "A catch block in this function hides a failure the function's caller needed to know about.",
@@ -84,7 +52,7 @@ const catchHidesFailure = jevRule({
   no: "The function has no catch block; or the failure is propagated (rethrown, wrapped, or logged and then rethrown); converted into a value the caller can distinguish from success, such as a Result or null when the return type admits it; or absorbed where absorbing is the point: a cleanup or best-effort step after the real result is in hand, a fallback to the next attempt or source, a catch that swallows only the case in which the goal already holds, or a top-level entry point that reports and exits with a non-zero status. A function named safe*, try* or *OrNull has promised to absorb failure.",
 });
 
-const errorMessageMatchesCondition = jevRule({
+const errorMessageMatchesCondition = claimRule({
   id: "error-message-matches-condition",
   cutoff: 0.65,
   ask: "The message given to an error thrown in this function misdescribes the condition that leads to the throw.",
@@ -92,7 +60,7 @@ const errorMessageMatchesCondition = jevRule({
   no: "The function throws nothing with a message; or every message describes the condition that leads to its throw, whether it states the failed requirement, its consequence, or the intent the check serves. A message that is short, generic or lacks detail is not wrong, only unhelpful. A message that quotes the offending input, names what cannot proceed, or wraps a caught error with the name of the operation that failed, is a match.",
 });
 
-const logLevelMatchesEvent = jevRule({
+const logLevelMatchesEvent = claimRule({
   id: "log-level-matches-event",
   target: "call",
   cutoff: 0.6,
@@ -103,7 +71,7 @@ const logLevelMatchesEvent = jevRule({
   no: "The level fits what the code around the call shows: error or warn where something went wrong that an operator should see, even if the function recovers from it; info for routine outcomes; debug or trace for per-item progress and chatter; warn for a degraded or transient condition the code goes on to handle. Whether the message text is well written is not the question.",
 });
 
-const logMessageMatchesEvent = jevRule({
+const logMessageMatchesEvent = claimRule({
   id: "log-message-matches-event",
   target: "call",
   cutoff: 0.62,
@@ -114,7 +82,7 @@ const logMessageMatchesEvent = jevRule({
   no: "The message is true of the point where it sits: an intent phrased before the operation, a completion phrased after it, a failure on the branch that fails, a templated message whose values are what it calls them, or a terse message on the path it describes. A message that is vague or could say more is not wrong. Whether the level fits is not the question.",
 });
 
-const commentDescribesBlock = jevRule({
+const commentDescribesBlock = claimRule({
   id: "comment-describes-block",
   cutoff: 0.75,
   ask: "A comment inside this function makes a claim about the code beneath it that the code contradicts.",
@@ -122,7 +90,7 @@ const commentDescribesBlock = jevRule({
   no: "The function has no comment inside its body; or every specific claim in each comment holds for the code beneath it, meaning the run of statements down to the next comment or the end of the block. A comment that gives a reason outside the code, says what the whole function is for, is vague, or summarises the code loosely but not wrongly, makes no claim the code can contradict. A comment at the end of a line belongs to that line.",
 });
 
-const commentDescribesDeclaration = jevRule({
+const commentDescribesDeclaration = claimRule({
   id: "comment-describes-declaration",
   cutoff: 0.63,
   context: COMMENT,
@@ -132,7 +100,7 @@ const commentDescribesDeclaration = jevRule({
   note: "Only a comment that ends on the line just before the function, or just before the export or declaration that holds it, is directly above it; a comment followed by other code belongs to that code. Judge only claims the code can confirm or contradict. A comment about a caller's obligations, about performance, or about history is not checkable here.",
 });
 
-const docErrorsMatchBody = jevRule({
+const docErrorsMatchBody = claimRule({
   id: "doc-errors-match-body",
   cutoff: 0.56,
   context: COMMENT,
@@ -142,7 +110,7 @@ const docErrorsMatchBody = jevRule({
   note: "The snippet starts with the documentation directly above the function, and that documentation is what is judged. An error that merely passes through unchanged from a callee is the callee's failure, not a clause this body owes, unless the documentation says the function cannot fail.",
 });
 
-const varNameDescribesValue = jevRule({
+const varNameDescribesValue = claimRule({
   id: "var-name-describes-value",
   cutoff: 0.5,
   ask: "A binding declared in this function has a name that misdescribes the value it is bound to.",
@@ -150,57 +118,7 @@ const varNameDescribesValue = jevRule({
   no: "Every name is an accurate description of what its initializer produces, even if it is terse or a clearer name could be imagined. Being short or generic is not a mismatch. A plural name on a number names the count of those things; an accumulator, index or buffer name is a convention, not a claim.",
 });
 
-const describeNamesSubject = jevRule({
-  id: "describe-names-subject",
-  cutoff: 0.45,
-  target: "call",
-  select: isDescribeCall,
-  ask: "The tests inside this describe block exercise something other than what its title names.",
-  yes: "The title names a specific function, method, class or module and no test in the block calls, constructs or otherwise reaches it: every test calls a differently named sibling instead; or the title names a behaviour and no test makes that behaviour happen or observes it.",
-  no: "What the title names is what the tests exercise, directly or through something that reaches it: a feature tested through a public function of another name, a class tested through its factory or an instance created in beforeEach, a title that is a file name, a scenario or a sentence when the tests are about it, or an abbreviation or synonym of what the tests call.",
-});
-
-const testNameDescribesCode = jevRule({
-  id: "test-name-describes-code",
-  cutoff: 0.72,
-  target: "call",
-  select: isTestCall,
-  ask: "The operation, input or outcome this test exercises is not the one the test's name names.",
-  yes: "The operation the code calls is not the one the name says; the input or case the code sets up is not the one the name states (three units where the name says above ten); the outcome the code expects is the opposite of the one the name implies; the name promises a throw or a rejection where the code expects an ordinary value; or the name refers to something that the code never calls and never checks.",
-  no: "The code calls the operation the name says, on the input the name says, and expects the kind of outcome the name says, however weak the assertion is. A one-word title, a synonym for the operation's name, and setup that calls other operations before the named one are all fine.",
-});
-
-const testNameVerifiesClaim = jevRule({
-  id: "test-name-verifies-claim",
-  cutoff: 0.66,
-  target: "call",
-  select: isTestCall,
-  ask: "This test would still pass if the behaviour its name claims were broken.",
-  yes: "The body does not establish what the name claims: it asserts nothing at all, it asserts something that would hold whether or not the named behaviour worked, it checks an incidental property such as a length or a type instead of the named behaviour itself, or it never sets up the case the name is about.",
-  no: "The body contains at least one assertion that would fail if the named behaviour were broken. A name that claims only that something renders or matches a snapshot is established by the snapshot; a name that claims an interaction with a collaborator is established by an assertion on that call; a name that claims only that something does not throw is established by calling it.",
-});
-
-const snapshotOnlyBehaviourClaim = jevRule({
-  id: "snapshot-only-behaviour-claim",
-  cutoff: 0.67,
-  target: "call",
-  select: isTestCall,
-  ask: "This test's name claims a specific behaviour, but the body only compares a snapshot.",
-  yes: "The title asserts a property of the output (an ordering, an element hidden or shown, a state rendered under a condition, a format applied) and the only assertions are toMatchSnapshot, toMatchInlineSnapshot or toMatchFileSnapshot over a whole rendering, so nothing isolates the named property.",
-  no: "The body uses no snapshot; or the title claims only that the output matches a snapshot or renders, or only names the input; or at least one assertion targets the named behaviour directly; or the inline snapshot is a short literal that is itself the named outcome.",
-});
-
-const testMocksSubject = jevRule({
-  id: "test-mocks-subject",
-  cutoff: 0.3,
-  target: "call",
-  select: isTestCall,
-  ask: "The behaviour this test's name attributes to the code under test is performed by a mock or stub whose canned value the assertion reads back unchanged.",
-  yes: "The title says the code under test computes, derives or returns something, but the function or module that would do it is replaced (vi.mock or jest.mock with a fake, mockReturnValue or mockResolvedValue, a stubbed global) and the value the assertion checks can be traced to that stub's configuration with none of the subject's own logic in between. The assertion then checks the test's own setup.",
-  no: "The body mocks nothing; or the stub stands in for a collaborator the code under test calls (the network, the clock, a repository, a mailer) and the assertion checks what the real code did with the stub's output; or the title is itself about the collaborator; or the spy has no replacement value and the real method runs.",
-});
-
-const jevCode = [
+const codeClaims = [
   fnNamePromises,
   pureNameIsPure,
   safeNameIsSafe,
@@ -215,32 +133,18 @@ const jevCode = [
   varNameDescribesValue,
 ] as const satisfies readonly DecisionRule[];
 
-const jevTests = [
-  describeNamesSubject,
-  testNameDescribesCode,
-  testNameVerifiesClaim,
-  snapshotOnlyBehaviourClaim,
-  testMocksSubject,
-] as const satisfies readonly DecisionRule[];
-
 export {
   catchHidesFailure,
+  codeClaims,
   commentDescribesBlock,
   commentDescribesDeclaration,
-  describeNamesSubject,
   docErrorsMatchBody,
   errorMessageMatchesCondition,
   fnNamePromises,
   idempotentName,
-  jevCode,
-  jevTests,
   logLevelMatchesEvent,
   logMessageMatchesEvent,
   pureNameIsPure,
   safeNameIsSafe,
-  snapshotOnlyBehaviourClaim,
-  testMocksSubject,
-  testNameDescribesCode,
-  testNameVerifiesClaim,
   varNameDescribesValue,
 };

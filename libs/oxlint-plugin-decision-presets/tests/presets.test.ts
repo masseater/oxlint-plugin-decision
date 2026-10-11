@@ -34,7 +34,9 @@ const MARKERS = {
   "language model prompt": "complete(`",
   "hard-coded secret": "sk_live_",
   "only reading or fetching": '"loaded"',
-  "drop it": "catch {}",
+  "materially different from what its name promises": '"loaded"',
+  "hides a failure the function's caller needed": "catch {}",
+  "directly above this function claims": "logs the error",
   "untrusted input": "complete(`",
   "mechanism word": "processData",
   "hand-written chain": "typeof body.id",
@@ -92,7 +94,7 @@ const lintWithFake = (preset: PresetName): Effect.Effect<Run, PlatformError, Ser
         ...(yield* exampleFiles),
         ".oxlintrc.json": JSON.stringify({
           jsPlugins: ["./plugin.mjs"],
-          settings: { decision: { model: "fake/any", ci: "fail" } },
+          settings: { decision: { model: "fake/any", ci: "fail", maxMatchesPerFile: 100 } },
           rules: enabled("decision", presets[preset]),
         }),
       });
@@ -111,9 +113,14 @@ const EXPECTED = {
     "no-pii-in-logs",
     "no-prompt-injection",
     "untrusted-input-risk",
-    "no-swallowed-errors",
+    "catch-hides-failure",
   ],
-  reviewOnly: ["name-matches-behavior", "domain-naming", "prefer-schema-validation"],
+  reviewOnly: [
+    "fn-name-promises",
+    "comment-describes-declaration",
+    "domain-naming",
+    "prefer-schema-validation",
+  ],
 } as const satisfies Readonly<Record<PresetName, readonly string[]>>;
 
 const reportsOnlyFail = (preset: PresetName): Check =>

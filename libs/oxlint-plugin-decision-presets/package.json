@@ -45,10 +45,6 @@
       "types": "./dist/review-only.d.mts",
       "default": "./dist/review-only.mjs"
     },
-    "./jev": {
-      "types": "./dist/jev.d.mts",
-      "default": "./dist/jev.mjs"
-    },
     "./ai-slop": {
       "types": "./dist/ai-slop.d.mts",
       "default": "./dist/ai-slop.mjs"
