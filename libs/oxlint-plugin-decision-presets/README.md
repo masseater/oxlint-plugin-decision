@@ -104,7 +104,6 @@ import { defineConfig } from "oxlint";
 
 export default defineConfig({
   jsPlugins: ["@r_masseater/oxlint-plugin-decision-presets/strict"],
-  settings: { "decision-presets": { maxMatchesPerFile: 100 } },
   rules: {
     "decision-presets/name-matches-behavior": "error",
     "decision-presets/catch-hides-failure": "error",
@@ -122,8 +121,6 @@ export default defineConfig({
   ],
 });
 ```
-
-Rules that ask about every function add up quickly, so a file can easily pass the default `maxMatchesPerFile` of 25. Raise it, or turn on only the rules you want.
 
 ## Models
 
@@ -191,11 +188,6 @@ import { defineConfig } from "oxlint";
 
 export default defineConfig({
   jsPlugins: ["@r_masseater/oxlint-plugin-decision-presets/ai-slop"],
-  settings: {
-    "decision-ai-slop": {
-      maxMatchesPerFile: 100,
-    },
-  },
   rules: {
     "decision-ai-slop/redundant-guard": "warn",
     "decision-ai-slop/default-masks-missing-value": "warn",

@@ -129,7 +129,7 @@ const askedWhere = Effect.scoped(
       "oxlint.config.ts": configSource({
         jsPlugins: ["./plugin.mjs"],
         rules: enabled(AI_SLOP, aiSlopRules),
-        settings: { [AI_SLOP]: { model: "fake/any", maxMatchesPerFile: 100 } },
+        settings: { [AI_SLOP]: { model: "fake/any" } },
       }),
     });
     const run = yield* oxlint(cwd, ["--format", "unix", "-c", "oxlint.config.ts", ...EXAMPLES], {});

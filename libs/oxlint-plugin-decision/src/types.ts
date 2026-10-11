@@ -62,7 +62,6 @@ interface DecisionRule {
 interface DecisionOptions {
   readonly ci?: CiBehavior;
   readonly timeoutMs?: number;
-  readonly maxMatchesPerFile?: number;
   readonly maxSnippetChars?: number;
   readonly model?: ModelSpec;
   readonly env?: Readonly<Record<string, string>>;
@@ -132,7 +131,6 @@ interface ResolvedRule extends DecisionRule {
 interface ResolvedOptions {
   readonly ci: CiBehavior;
   readonly timeoutMs: number;
-  readonly maxMatchesPerFile: number;
   readonly maxSnippetChars: number;
   readonly env: Readonly<Record<string, string>>;
   readonly explain: ExplainSetting;

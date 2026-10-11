@@ -22,9 +22,4 @@ export default defineConfig({
       },
     },
   ],
-  settings: {
-    "decision-presets": {
-      maxMatchesPerFile: 100,
-    },
-  },
 });

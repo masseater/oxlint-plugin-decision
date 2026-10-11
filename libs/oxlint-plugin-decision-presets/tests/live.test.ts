@@ -89,7 +89,7 @@ const presetLive = (preset: PresetEntry): Effect.Effect<void, unknown, Services>
         ...(yield* exampleFiles),
         "oxlint.config.ts": configSource({
           jsPlugins: [plugin],
-          settings: { [PLUGIN_NAME]: { model: LIVE_MODEL, ci: "fail", maxMatchesPerFile: 100 } },
+          settings: { [PLUGIN_NAME]: { model: LIVE_MODEL, ci: "fail" } },
           rules: enabled(PLUGIN_NAME, PRESET_RULES[preset]),
         }),
       });

@@ -84,7 +84,7 @@ const aiSlopLive = Effect.scoped(
         jsPlugins: [yield* fromRoot("dist", "ai-slop.mjs")],
         rules: enabled(AI_SLOP, aiSlopRules),
         settings: {
-          [AI_SLOP]: { model: LIVE_MODEL, timeoutMs: LIVE_TIMEOUT_MS, maxMatchesPerFile: 100 },
+          [AI_SLOP]: { model: LIVE_MODEL, timeoutMs: LIVE_TIMEOUT_MS },
         },
       }),
     });

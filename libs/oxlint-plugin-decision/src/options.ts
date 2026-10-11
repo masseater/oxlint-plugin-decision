@@ -61,7 +61,6 @@ const snippetNodeFor = (node: AstNode): AstNode =>
 const DEFAULTS = {
   ci: "fail",
   timeoutMs: 10_000,
-  maxMatchesPerFile: 25,
   maxSnippetChars: 4000,
   model: "openrouter/~typesafe/jev-latest",
   env: {},
@@ -113,7 +112,6 @@ const ExplainSetting = Schema.Union([Schema.Boolean, Schema.Literals(["text", "j
 const OptionsSchema = Schema.Struct({
   ci: Schema.optionalKey(Schema.Literals(["skip", "fail"])),
   timeoutMs: Schema.optionalKey(PositiveInt),
-  maxMatchesPerFile: Schema.optionalKey(PositiveInt),
   maxSnippetChars: Schema.optionalKey(PositiveInt),
   model: Schema.optionalKey(ModelSpecSchema),
   env: Schema.optionalKey(Schema.Record(Schema.NonEmptyString, Schema.NonEmptyString)),
@@ -250,7 +248,6 @@ const resolveOptions = (
   return {
     ci: merged.ci,
     timeoutMs: merged.timeoutMs,
-    maxMatchesPerFile: merged.maxMatchesPerFile,
     maxSnippetChars: merged.maxSnippetChars,
     env: merged.env,
     explain: merged.explain,

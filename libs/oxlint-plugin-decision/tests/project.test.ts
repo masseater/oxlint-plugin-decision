@@ -24,7 +24,6 @@ import type { Services } from "./oxlint.ts";
 const ONE = 1;
 const TWO = 2;
 const THREE = 3;
-const CAP = 25;
 const ROWS = 30;
 const LOG_LINE = "console.log(user.email, user.phone);\n";
 const AROUND =
@@ -43,21 +42,19 @@ const askedTwins = Effect.gen(function* test() {
   deepStrictEqual(Arr.sort(counts, Order.Number), [TWO, THREE]);
 });
 
-const capped = Effect.gen(function* test() {
+const uncapped = Effect.gen(function* test() {
   const rows = Arr.replicate('console.log("row", user.email, user.phone);', ROWS).join("\n");
   const env = yield* mockEnv("test-key");
   const run = yield* lintProject({
     files: { "rows.js": `${rows}\n` },
-    options: { maxMatchesPerFile: CAP, rules: [callRule] },
+    options: { rules: [callRule] },
     env,
   });
   deepStrictEqual(
     (yield* loggedRequests).map((request) => questionCount(request)),
-    [CAP],
+    [ROWS],
   );
-  assertInclude(run.stderr, "30 matches exceeded maxMatchesPerFile=25, 5 not checked");
-  assertInclude(run.stderr, "rows.js");
-  strictEqual(decisionLines(run).length, CAP);
+  strictEqual(decisionLines(run).length, ROWS);
   strictEqual(run.status, FAILED);
 });
 
@@ -190,11 +187,7 @@ layer(NodeServices.layer, { excludeTestServices: true })("linting a project", (i
     () => withMock(askedTwins),
     TIMEOUT,
   );
-  it.effect(
-    "caps a file at maxMatchesPerFile and names the dropped tail",
-    () => withMock(capped),
-    TIMEOUT,
-  );
+  it.effect("sends every match in a file without a cap", () => withMock(uncapped), TIMEOUT);
   it.effect(
     "reports each model's yes as its own diagnostic, one request per model",
     () => withMock(perModel),
