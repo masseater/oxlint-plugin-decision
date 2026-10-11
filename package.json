@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "verify": "vp run -r build && vp check && vp run -r test && vp run actions-lint && vp run fallow",
     "fallow": "fallow --production --quiet --format compact && fallow dead-code --no-production --quiet --format compact && fallow dupes --quiet --format compact && fallow security --fail-on-issues --quiet",
     "prepare": "vp config"
   },
