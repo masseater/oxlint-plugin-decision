@@ -94,6 +94,20 @@ const ruleModel = Effect.gen(function* test() {
   deepStrictEqual(sortedModels(yield* loggedRequests), ["second"]);
 });
 
+const textState = Effect.gen(function* test() {
+  const env = yield* mockEnv("test-key");
+  const run = yield* lintProject({
+    files: { "log.js": LOG_LINE },
+    options: { model: "openrouter/respan/span-01-lite", rules: [callRule] },
+    env,
+  });
+  deepStrictEqual(
+    (yield* loggedRequests).map(({ sentState }) => sentState),
+    ["state.snippets.s0:\nconsole.log(user.email, user.phone)"],
+  );
+  strictEqual(decisionLines(run).length, ONE);
+});
+
 const contextFor = (
   context: RuleContext,
 ): Effect.Effect<Option.Option<string>, unknown, Services> =>
@@ -140,6 +154,7 @@ layer(NodeServices.layer, { excludeTestServices: true })("linting a project", (i
     () => withMock(perModel),
     TIMEOUT,
   );
+  it.effect("sends Respan models their state as text", () => withMock(textState), TIMEOUT);
   it.effect("lets a rule override the default model", () => withMock(ruleModel), TIMEOUT);
   it.effect("sends the source a rule's context scope asks for", () => contexts, TIMEOUT);
 });

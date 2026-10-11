@@ -7,6 +7,7 @@ import { runAsWorker } from "synckit";
 import { parseVerdicts } from "./request.ts";
 import { messageOf } from "./runtime.ts";
 import type { DecideInput, DecideResult, DecisionRequest } from "./types.ts";
+import { wireStateFor } from "./wire.ts";
 
 const CACHE_VERSION = 5;
 const HEX_RADIX = 16;
@@ -77,7 +78,13 @@ const ask = Effect.fn("ask")(function* ask(endpoint: string, { request, timeoutM
   const response: unknown = yield* Effect.tryPromise({
     try: (signal) =>
       client.alpha.decisions.create(
-        { decisionsRequest: { ...request, questions: { ...request.questions } } },
+        {
+          decisionsRequest: {
+            ...request,
+            state: wireStateFor(request.model, request.state),
+            questions: { ...request.questions },
+          },
+        },
         {
           serverURL: endpoint,
           retries: {

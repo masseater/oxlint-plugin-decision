@@ -2,6 +2,9 @@ import { NodeHttpServer } from "@effect/platform-node";
 import { Array as Arr, Boolean as Bool, Context, Effect, Layer, Option, Ref, Schema } from "effect";
 import { HttpRouter, HttpServer, HttpServerRequest, HttpServerResponse } from "effect/http";
 
+import { LOCATION_SUFFIX, RawBodySchema, badState, normalized, rejectsState } from "./mock-body.ts";
+import type { Body, Question, RawBody } from "./mock-body.ts";
+
 const PII_MARKER = "user.email, user.phone";
 
 const MARKER_BY_QUESTION: Readonly<Record<string, string>> = {
@@ -23,26 +26,10 @@ const UNKNOWN_CHOICE = "unknown";
 const LOCATED_LINE = /^L(?<line>\d+)\|/u;
 const RANGE_KEY = /^L(?<start>\d+)(?:-L(?<end>\d+))?$/u;
 
-const QuestionSchema = Schema.Struct({
-  type: Schema.String,
-  instructions: Schema.String,
-  criteria: Schema.optionalKey(Schema.Record(Schema.String, Schema.Unknown)),
-});
-
-const TextRecord = Schema.Record(Schema.String, Schema.String);
-
-const BodySchema = Schema.Struct({
-  model: Schema.String,
-  state: Schema.Struct({ snippets: TextRecord, contexts: Schema.optionalKey(TextRecord) }),
-  questions: Schema.Record(Schema.String, QuestionSchema),
-});
-
-type Body = typeof BodySchema.Type;
-type Question = typeof QuestionSchema.Type;
-
 interface LoggedRequest {
   readonly authorization: string;
   readonly body: Body;
+  readonly sentState: RawBody["state"];
 }
 
 interface MockState {
@@ -69,8 +56,6 @@ const scoreFor = (question: string, snippet: string): number =>
     Option.filter(([, marker]) => snippet.includes(marker)),
     Option.match({ onNone: () => NO, onSome: () => YES }),
   );
-
-const LOCATION_SUFFIX = "_location";
 
 const isRefinement = (body: Body): boolean =>
   Object.keys(body.questions).every((ref) => ref.endsWith(LOCATION_SUFFIX));
@@ -218,10 +203,14 @@ const handler = (
 > =>
   Effect.gen(function* handle() {
     const request = yield* HttpServerRequest.HttpServerRequest;
-    const body = yield* Schema.decodeUnknownEffect(BodySchema)(yield* request.json);
+    const raw = yield* Schema.decodeUnknownEffect(RawBodySchema)(yield* request.json);
     const authorization = Option.getOrElse(lookup(request.headers, "authorization"), () => "");
     const token = authorization.replace("Bearer ", "");
-    yield* Ref.update(state.log, (log) => [...log, { authorization, body }]);
+    const body = normalized(raw);
+    yield* Ref.update(state.log, (log) => [...log, { authorization, body, sentState: raw.state }]);
+    if (rejectsState(raw)) {
+      return badState;
+    }
     return yield* replyFor(body, token, yield* countHit(state, token));
   });
 
@@ -260,4 +249,4 @@ const loggedRequests: Effect.Effect<readonly LoggedRequest[], never, MockOpenRou
 );
 
 export { MockOpenRouter, MockOpenRouterLayer, loggedRequests };
-export type { Body, LoggedRequest };
+export type { LoggedRequest };
