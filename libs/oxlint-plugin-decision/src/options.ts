@@ -65,6 +65,7 @@ const DEFAULTS = {
   maxSnippetChars: 4000,
   model: "openrouter/~typesafe/jev-latest",
   env: {},
+  explain: false,
 } as const satisfies Required<DecisionOptions>;
 
 const RULE_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
@@ -105,6 +106,8 @@ const RuleContextSchema = Schema.Union([
   }),
 ]);
 
+const ExplainSetting = Schema.Union([Schema.Boolean, Schema.Literals(["text", "json"])]);
+
 const OptionsSchema = Schema.Struct({
   ci: Schema.optionalKey(Schema.Literals(["skip", "fail"])),
   timeoutMs: Schema.optionalKey(PositiveInt),
@@ -112,6 +115,7 @@ const OptionsSchema = Schema.Struct({
   maxSnippetChars: Schema.optionalKey(PositiveInt),
   model: Schema.optionalKey(ModelSpecSchema),
   env: Schema.optionalKey(Schema.Record(Schema.NonEmptyString, Schema.NonEmptyString)),
+  explain: Schema.optionalKey(ExplainSetting),
 });
 
 const RuleSchema = Schema.Struct({
@@ -245,6 +249,7 @@ const resolveOptions = (
     maxMatchesPerFile: merged.maxMatchesPerFile,
     maxSnippetChars: merged.maxSnippetChars,
     env: merged.env,
+    explain: merged.explain,
     rules: checkRules(rules).map((rule) => resolveRule(model, providers)(rule)),
   };
 };
