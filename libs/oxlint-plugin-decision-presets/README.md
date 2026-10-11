@@ -74,6 +74,24 @@ Respan models, such as the free `openrouter/respan/span-01-lite`, answer only ye
 }
 ```
 
+To run one rule on a different model, give that rule a `model` in its options. Options next to the severity override the preset's settings for that rule only.
+
+```json
+{
+  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/strict"],
+  "settings": { "decision-presets": { "model": "openrouter/respan/span-01-lite" } },
+  "rules": {
+    "decision-presets/no-pii-in-logs": "error",
+    "decision-presets/untrusted-input-risk": [
+      "error",
+      { "model": "openrouter/~typesafe/jev-latest" }
+    ]
+  }
+}
+```
+
+Each model is asked only about the rules that use it. See [Rule options](https://github.com/masseater/oxlint-plugin-decision/tree/main/libs/oxlint-plugin-decision#rule-options) in the plugin README.
+
 Every match is a paid request unless its answer is cached. See [Cost and caching](https://github.com/masseater/oxlint-plugin-decision/tree/main/libs/oxlint-plugin-decision#cost-and-caching) in the plugin README.
 
 ## Mix presets with your own rules

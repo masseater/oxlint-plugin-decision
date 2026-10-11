@@ -104,15 +104,24 @@ const writeProject = (
     return dir;
   });
 
+const ruleEntry = (options: object | undefined): unknown =>
+  Option.match(Option.fromUndefinedOr(options), {
+    onNone: () => "error",
+    onSome: (value) => ["error", value],
+  });
+
 const projectFilesFor = (
   setup: DecisionPluginSetup,
+  ruleOptions: Readonly<Record<string, object>> = {},
 ): Effect.Effect<Readonly<Record<string, string>>, never, Path.Path> =>
   pluginPath.pipe(
     Effect.map((plugin) => ({
       "plugin.mjs": `import { createDecisionPlugin } from ${JSON.stringify(plugin)};\n\nexport default createDecisionPlugin(${JSON.stringify(setup)});\n`,
       ".oxlintrc.json": JSON.stringify({
         jsPlugins: ["./plugin.mjs"],
-        rules: Object.fromEntries(setup.rules.map(({ id }) => [`decision/${id}`, "error"])),
+        rules: Object.fromEntries(
+          setup.rules.map(({ id }) => [`decision/${id}`, ruleEntry(ruleOptions[id])]),
+        ),
       }),
     })),
   );

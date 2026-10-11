@@ -41,6 +41,7 @@ interface ProjectRun {
   readonly options: DecisionPluginSetup;
   readonly env: Env;
   readonly format?: string;
+  readonly ruleOptions?: Readonly<Record<string, object>>;
 }
 
 const lintProject = ({
@@ -48,10 +49,11 @@ const lintProject = ({
   options,
   env,
   format = "unix",
+  ruleOptions,
 }: ProjectRun): Effect.Effect<OxlintRun, PlatformError, Services> =>
   Effect.scoped(
     Effect.gen(function* lint() {
-      const project = yield* projectFilesFor(options);
+      const project = yield* projectFilesFor(options, ruleOptions);
       const cwd = yield* writeProject({ ...files, ...project });
       return yield* runOxlint({
         cwd,

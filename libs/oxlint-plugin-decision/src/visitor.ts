@@ -19,12 +19,14 @@ import type {
 interface Collected {
   readonly options: ResolvedOptions;
   readonly contexts: Readonly<Record<string, Context>>;
+  readonly rules: Readonly<Record<string, ResolvedRule>>;
   readonly matches: readonly Match[];
   readonly dropped: readonly string[];
 }
 
 interface FileBatch extends Collected {
   readonly contexts: Record<string, Context>;
+  readonly rules: Record<string, ResolvedRule>;
   readonly matches: Match[];
   readonly dropped: string[];
   exiting: boolean;
@@ -37,11 +39,13 @@ interface RuleFile {
 }
 
 interface SharedFile {
-  readonly join: (context: Context, id: string) => FileBatch;
+  readonly join: (context: Context, id: string) => RuleFile;
   readonly leave: () => void;
 }
 
 type OptionsFor = (settings: Readonly<Record<string, unknown>>) => ResolvedOptions;
+
+type RuleFor = (rule: ResolvedRule, options: unknown) => ResolvedRule;
 
 const raisedMissing = new Set<string>();
 
@@ -68,8 +72,7 @@ const isAvailable = (options: ResolvedOptions, { provider }: ModelRef): boolean 
 const availableModels = (batch: Collected): readonly ModelRef[] =>
   [
     ...new Map(
-      batch.options.rules
-        .filter((rule) => Object.hasOwn(batch.contexts, rule.id))
+      Object.values(batch.rules)
         .flatMap((rule) => rule.models)
         .map((model) => [model.id, model]),
     ).values(),
@@ -145,12 +148,16 @@ const finish = (batch: Collected): void => {
   }
 };
 
-const sharedFile = (optionsFor: OptionsFor): SharedFile => {
+const ruleIn = (batch: Collected, id: string): ResolvedRule =>
+  Option.getOrThrow(Arr.findFirst(batch.options.rules, (rule) => rule.id === id));
+
+const sharedFile = (optionsFor: OptionsFor, ruleFor: RuleFor): SharedFile => {
   let current: Option.Option<FileBatch> = Option.none();
   const start = (context: Context): FileBatch => {
     const batch: FileBatch = {
       options: optionsFor(context.settings),
       contexts: {},
+      rules: {},
       matches: [],
       dropped: [],
       exiting: false,
@@ -170,8 +177,11 @@ const sharedFile = (optionsFor: OptionsFor): SharedFile => {
           return open;
         },
       });
+      const [options] = context.options;
+      const rule = ruleFor(ruleIn(batch, id), options);
       batch.contexts[id] = context;
-      return batch;
+      batch.rules[id] = rule;
+      return { batch, rule };
     },
     leave: () => {
       if (Option.isNone(current)) {
@@ -189,9 +199,6 @@ const sharedFile = (optionsFor: OptionsFor): SharedFile => {
     },
   };
 };
-
-const ruleIn = (batch: Collected, id: string): ResolvedRule =>
-  Option.getOrThrow(Arr.findFirst(batch.options.rules, (rule) => rule.id === id));
 
 const visitorFor =
   (shared: SharedFile, { id, target }: { readonly id: string; readonly target: Target }) =>
@@ -222,8 +229,7 @@ const visitorFor =
         ]),
       ),
       Program: (node: AstNode): void => {
-        const batch = shared.join(context, id);
-        file = Option.some({ batch, rule: ruleIn(batch, id) });
+        file = Option.some(shared.join(context, id));
         if (target === "file") {
           collect(node);
         }
@@ -236,4 +242,4 @@ const visitorFor =
   };
 
 export { sharedFile, visitorFor };
-export type { Collected, FileBatch, OptionsFor, SharedFile };
+export type { Collected, FileBatch, OptionsFor, RuleFile, RuleFor, SharedFile };
