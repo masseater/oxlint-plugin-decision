@@ -1,6 +1,13 @@
 {
   "jsPlugins": ["./plugin.mjs"],
+  "ignorePatterns": ["plugin.mjs"],
+  "settings": {
+    "team": { "ci": "fail" }
+  },
   "rules": {
-    "team/ask": ["error", { "ci": "fail" }]
+    "team/no-pii-in-logs": "error",
+    "team/no-prompt-injection": "error",
+    "team/no-hardcoded-secrets": "error",
+    "team/no-direct-db-in-handlers": "error"
   }
 }

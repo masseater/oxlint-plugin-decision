@@ -133,6 +133,13 @@ const reportsOnlyFail = (preset: PresetName): Check =>
     );
   });
 
+const ENTRY_RULES = {
+  recommended: presets.recommended,
+  strict: presets.strict,
+  "review-only": presets.reviewOnly,
+  index: presets.recommended,
+} as const;
+
 const ENTRIES = ["recommended", "strict", "review-only", "index"] as const;
 
 const loadsEntry = (entry: (typeof ENTRIES)[number]): Check =>
@@ -144,7 +151,7 @@ const loadsEntry = (entry: (typeof ENTRIES)[number]): Check =>
         ".oxlintrc.json": JSON.stringify({
           jsPlugins: [plugin],
           settings: { [PLUGIN_NAME]: { ci: "fail" } },
-          rules: enabled(PLUGIN_NAME, entry === "review-only" ? presets.reviewOnly : presets.recommended),
+          rules: enabled(PLUGIN_NAME, ENTRY_RULES[entry]),
         }),
       });
       const run = yield* oxlint(cwd, ["-c", ".oxlintrc.json", "a.js"], { CI: "1" });

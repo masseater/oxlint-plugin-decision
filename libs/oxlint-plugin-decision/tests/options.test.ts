@@ -20,11 +20,12 @@ const CALL_START = 2;
 const CALL_END = 9;
 const FIRST_LINE = 1;
 const START = 0;
+const TIMEOUT_MS = 5;
 
 const rule: DecisionRule = { id: "a", target: "call", question: "Is it bad?", cutoff: 0.8 };
 const providers = { openrouter: openRouter };
 
-const noSettings = { options: {}, settings: undefined };
+const noSettings = { options: {} };
 
 const resolvesDefaults = Effect.sync(() => {
   const { rules } = resolveOptions(noSettings, [rule], providers);
@@ -44,13 +45,16 @@ const resolvesDefaults = Effect.sync(() => {
 
 const settingsOverrideCode = Effect.sync(() => {
   const resolved = resolveOptions(
-    { options: { model: "openrouter/code", timeoutMs: 5 }, settings: { model: "openrouter/config" } },
+    {
+      options: { model: "openrouter/code", timeoutMs: 5 },
+      settings: { model: "openrouter/config" },
+    },
     [rule],
     providers,
   );
   deepStrictEqual(
     [resolved.timeoutMs, resolved.rules.flatMap(({ models }) => models.map(({ model }) => model))],
-    [5, ["config"]],
+    [TIMEOUT_MS, ["config"]],
   );
 });
 
@@ -62,7 +66,7 @@ const refusesEmpty = Effect.sync(() => {
 
 const dedupesModels = Effect.sync(() => {
   const resolved = resolveOptions(
-    { options: { model: ["openrouter/x", "openrouter/x", "openrouter/y"] }, settings: undefined },
+    { options: { model: ["openrouter/x", "openrouter/x", "openrouter/y"] } },
     [rule],
     providers,
   );

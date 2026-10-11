@@ -125,7 +125,9 @@ const mockEnv = (
   );
 
 const decisionLines = (run: OxlintRun): readonly string[] =>
-  run.stdout.split("\n").filter((line) => DECISION_PLUGINS.some((name) => line.includes(`/${name}(`)));
+  run.stdout
+    .split("\n")
+    .filter((line) => DECISION_PLUGINS.some((name) => line.includes(`/${name}(`)));
 
 const Span = Schema.Struct({
   offset: Schema.Number,

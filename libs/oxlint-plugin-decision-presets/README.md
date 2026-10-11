@@ -18,16 +18,21 @@ The plugin reads the key from the `OPENROUTER_API_KEY` environment variable. Wit
 
 ## Use a preset
 
-Point `jsPlugins` at a preset and turn on `decision/ask`. The options take the same settings as `@r_masseater/oxlint-plugin-decision` (`model`, `ci`, `timeoutMs`, ...), and any `rules` you list are added to the preset's rules.
+Point `jsPlugins` at a preset and turn on its rules. Each rule is its own oxlint rule, named `decision-presets/<id>`, so you choose which ones run and at what severity. Settings such as `model`, `ci` and `timeoutMs` go under `settings["decision-presets"]` and apply to every rule of the preset.
 
 ```json
 {
   "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
+  "settings": { "decision-presets": { "ci": "fail" } },
   "rules": {
-    "decision/ask": ["error", { "ci": "fail" }]
+    "decision-presets/no-pii-in-logs": "error",
+    "decision-presets/no-prompt-injection": "error",
+    "decision-presets/no-hardcoded-secrets": "error"
   }
 }
 ```
+
+A preset decides which rules the plugin registers. A rule turns on only when you list it under `rules`.
 
 | Import path                                               | Rules                                                                                     |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -53,15 +58,18 @@ The package root (`@r_masseater/oxlint-plugin-decision-presets`) is the `recomme
 
 ## Models
 
-The presets use the plugin's default model, `openrouter/~typesafe/jev-latest`, which supports every preset. Set `model` in the options to use another one.
+The presets use the plugin's default model, `openrouter/~typesafe/jev-latest`, which supports every preset. Set `model` under `settings["decision-presets"]` to use another one.
 
 Respan models, such as the free `openrouter/respan/span-01-lite`, answer only yes/no questions. `untrusted-input-risk` (a `severity` rule) and `stale-comment` (a `classify` rule) need a model that answers choice questions, so with Respan models only `recommended` works; `strict` and `review-only` do not.
 
 ```json
 {
   "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
+  "settings": { "decision-presets": { "model": "openrouter/respan/span-01-lite" } },
   "rules": {
-    "decision/ask": ["error", { "model": "openrouter/respan/span-01-lite" }]
+    "decision-presets/no-pii-in-logs": "error",
+    "decision-presets/no-prompt-injection": "error",
+    "decision-presets/no-hardcoded-secrets": "error"
   }
 }
 ```
@@ -95,7 +103,14 @@ export default createDecisionPlugin({
 ```json
 {
   "jsPlugins": ["./decision.mjs"],
-  "rules": { "team/ask": ["error", { "ci": "fail" }] }
+  "settings": { "team": { "ci": "fail" } },
+  "rules": {
+    "team/no-pii-in-logs": "error",
+    "team/no-prompt-injection": "error",
+    "team/no-hardcoded-secrets": "error",
+    "team/stale-comment": "warn",
+    "team/no-direct-db-in-handlers": "error"
+  }
 }
 ```
 

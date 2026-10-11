@@ -1,5 +1,3 @@
-import { pathToFileURL } from "node:url";
-
 import { NodeServices } from "@effect/platform-node";
 import { layer } from "@effect/vitest";
 import { deepStrictEqual, strictEqual } from "@effect/vitest/utils";
@@ -14,8 +12,6 @@ import {
   Redacted,
   Schema,
 } from "effect";
-
-import type { DecisionRule } from "#src/types.ts";
 
 import { TIMEOUT, lintProject, outputOf } from "./fixtures.ts";
 import { decisionLines, packageRoot } from "./oxlint.ts";
@@ -37,17 +33,21 @@ const EXPECTED_REPORTS = Arr.sort(
   Order.String,
 );
 
-const ExamplePlugin = Schema.Struct({
-  rules: Schema.Array(Schema.Record(Schema.String, Schema.Unknown)),
+const ExampleRule = Schema.Struct({
+  id: Schema.String,
+  target: Schema.Literals(["function", "call", "jsx", "file"]),
+  question: Schema.String,
+  cutoff: Schema.Number,
 });
+
+const ExamplePlugin = Schema.Struct({ rules: Schema.Array(ExampleRule) });
 
 const exampleProject = Effect.gen(function* read() {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const root = yield* packageRoot;
-  const plugin: unknown = yield* Effect.promise(
-    () => import(pathToFileURL(path.join(root, "example", "plugin.mjs")).href),
-  );
+  const url = yield* path.toFileUrl(path.join(root, "example", "plugin.mjs"));
+  const plugin = yield* Effect.promise((): Promise<unknown> => import(url.href));
   const { rules } = yield* Schema.decodeUnknownEffect(ExamplePlugin)(plugin);
   const files = {
     "fail.js": yield* fs.readFileString(path.join(root, "example", "fail.js")),
@@ -63,14 +63,14 @@ const reportOf = (line: string): Option.Option<string> =>
   );
 
 const lintLive = (
-  rules: readonly Readonly<Record<string, unknown>>[],
+  rules: readonly (typeof ExampleRule.Type)[],
 ): Effect.Effect<readonly string[], unknown, Services> =>
   Effect.gen(function* lint() {
     const key = yield* Config.Redacted("OPENROUTER_API_KEY");
     const { files } = yield* exampleProject;
     const run = yield* lintProject({
       files,
-      options: { rules: rules as readonly DecisionRule[], model: LIVE_MODEL },
+      options: { rules, model: LIVE_MODEL },
       env: { OPENROUTER_API_KEY: Redacted.value(key) },
     });
     const lines = decisionLines(run);
@@ -94,7 +94,7 @@ const answersLive = Effect.gen(function* test() {
 const probabilitiesLive = Effect.gen(function* test() {
   const { rules } = yield* exampleProject;
   const lines = yield* lintLive(
-    rules.map((rule) => Object.fromEntries([...Object.entries(rule), ["cutoff", EVERY_ANSWER]])),
+    rules.map(({ id, target, question }) => ({ id, target, question, cutoff: EVERY_ANSWER })),
   );
   strictEqual(lines.length, EXAMPLE_MATCHES);
 });

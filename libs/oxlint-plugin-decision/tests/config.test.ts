@@ -79,7 +79,7 @@ const badConfigs: readonly (readonly [string, DecisionPluginSetup, string])[] = 
   [
     "a plugin-level field is unknown",
     { rules: [goodRule], ...JSON.parse('{"foo":1}') },
-    'invalid createDecisionPlugin options: Expected no excess property',
+    "invalid createDecisionPlugin options: Expected no excess property",
   ],
   [
     "two rules share an id",
@@ -115,11 +115,11 @@ const badConfigs: readonly (readonly [string, DecisionPluginSetup, string])[] = 
   ],
 ];
 
-const refuses = ([, options, expected]: readonly [string, DecisionPluginSetup, string]): Effect.Effect<
-  void,
-  unknown,
-  Services
-> =>
+const refuses = ([, options, expected]: readonly [
+  string,
+  DecisionPluginSetup,
+  string,
+]): Effect.Effect<void, unknown, Services> =>
   Effect.gen(function* test() {
     const run = yield* lintProject({
       files: { "pass.js": "ok();\n" },

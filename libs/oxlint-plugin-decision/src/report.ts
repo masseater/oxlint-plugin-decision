@@ -70,9 +70,7 @@ const reportMatches = (pass: ModelPass, answered: Answered): Option.Option<Failu
     if (Option.isSome(verdict) && isReported(match.rule, verdict.value)) {
       const located = locate(answered, match, { ref, failed: Option.isSome(failure) });
       failure = Option.orElse(failure, () =>
-        located.failure.pipe(
-          Option.map((reason) => ({ match, loc: match.loc, reason })),
-        ),
+        located.failure.pipe(Option.map((reason) => ({ match, loc: match.loc, reason }))),
       );
       pass.contextOf(match).report({
         loc: located.loc,

@@ -26,8 +26,11 @@ export OPENROUTER_API_KEY="..."   # https://openrouter.ai/settings/keys
 ```json
 {
   "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
+  "settings": { "decision-presets": { "ci": "fail" } },
   "rules": {
-    "decision/ask": ["error", { "ci": "fail" }]
+    "decision-presets/no-pii-in-logs": "error",
+    "decision-presets/no-prompt-injection": "error",
+    "decision-presets/no-hardcoded-secrets": "error"
   }
 }
 ```
@@ -41,28 +44,36 @@ npm i -D oxlint @r_masseater/oxlint-plugin-decision
 export OPENROUTER_API_KEY="..."
 ```
 
+The plugin itself ships no rules. Write yours in a plugin file:
+
+```js
+// decision-plugin.mjs
+import { createDecisionPlugin, defineDecisionRule } from "@r_masseater/oxlint-plugin-decision";
+
+export default createDecisionPlugin({
+  name: "team",
+  rules: [
+    defineDecisionRule({
+      id: "no-pii-in-logs",
+      target: "call",
+      question:
+        "Does this call write personal data, such as an email or phone number, to a log or console?",
+      cutoff: 0.8,
+    }),
+  ],
+});
+```
+
+Then load it and turn each rule on by its id:
+
 ```json
 {
-  "jsPlugins": ["@r_masseater/oxlint-plugin-decision"],
-  "rules": {
-    "decision/ask": [
-      "error",
-      {
-        "rules": [
-          {
-            "id": "no-pii-in-logs",
-            "target": "call",
-            "question": "Does this call write personal data, such as an email or phone number, to a log or console?",
-            "cutoff": 0.8
-          }
-        ]
-      }
-    ]
-  }
+  "jsPlugins": ["./decision-plugin.mjs"],
+  "rules": { "team/no-pii-in-logs": "error" }
 }
 ```
 
-See the [plugin README](libs/oxlint-plugin-decision/README.md) for rule fields, answer kinds, context, models, settings, rules in code, and cost and caching.
+See the [plugin README](libs/oxlint-plugin-decision/README.md) for rule fields, answer kinds, context, models, settings, providers, and cost and caching.
 
 ## Models
 

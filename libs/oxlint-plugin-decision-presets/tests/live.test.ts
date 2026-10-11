@@ -6,7 +6,15 @@ import { Array as Arr, Config, Effect, FileSystem, Option, Redacted } from "effe
 import { PLUGIN_NAME } from "#src/plugin.ts";
 import { recommended } from "#src/presets.ts";
 
-import { TIMEOUT, enabled, fromRoot, outputOf, oxlint, reportedLines, tempProject } from "./oxlint.ts";
+import {
+  TIMEOUT,
+  enabled,
+  fromRoot,
+  outputOf,
+  oxlint,
+  reportedLines,
+  tempProject,
+} from "./oxlint.ts";
 
 const LIVE_MODEL = "openrouter/respan/span-01-lite";
 

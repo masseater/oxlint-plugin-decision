@@ -16,9 +16,15 @@ import type {
   Target,
 } from "./types.ts";
 
-interface FileBatch {
+interface Collected {
   readonly options: ResolvedOptions;
-  readonly contexts: Map<string, Context>;
+  readonly contexts: Readonly<Record<string, Context>>;
+  readonly matches: readonly Match[];
+  readonly dropped: readonly string[];
+}
+
+interface FileBatch extends Collected {
+  readonly contexts: Record<string, Context>;
   readonly matches: Match[];
   readonly dropped: string[];
   exiting: boolean;
@@ -57,11 +63,11 @@ const isAvailable = (options: ResolvedOptions, { provider }: ModelRef): boolean 
   return false;
 };
 
-const availableModels = (batch: FileBatch): readonly ModelRef[] =>
+const availableModels = (batch: Collected): readonly ModelRef[] =>
   [
     ...new Map(
       batch.options.rules
-        .filter((rule) => batch.contexts.has(rule.id))
+        .filter((rule) => Object.hasOwn(batch.contexts, rule.id))
         .flatMap((rule) => rule.models)
         .map((model) => [model.id, model]),
     ).values(),
@@ -98,22 +104,27 @@ const matchOf = (
   };
 };
 
-const contextOfRule = (batch: FileBatch, id: string): Context =>
-  Option.getOrThrow(Option.fromUndefinedOr(batch.contexts.get(id)));
+const contextOfRule = (batch: Collected, id: string): Context =>
+  Option.getOrThrow(Option.fromUndefinedOr(batch.contexts[id]));
 
-const finish = (batch: FileBatch): void => {
-  const [first] = batch.contexts.values();
+const warnDropped = (batch: Collected, filename: string): void => {
+  if (Arr.isReadonlyArrayEmpty(batch.dropped)) {
+    return;
+  }
+  const dropped = batch.dropped.length;
+  warnOnce(
+    `capped:${filename}`,
+    `${String(batch.matches.length + dropped)} matches exceeded maxMatchesPerFile=${String(batch.options.maxMatchesPerFile)}, ${String(dropped)} not checked (${filename})`,
+  );
+};
+
+const finish = (batch: Collected): void => {
+  const [first] = Object.values(batch.contexts);
   if (Predicate.isUndefined(first)) {
     return;
   }
   const models = availableModels(batch);
-  if (Arr.isReadonlyArrayNonEmpty(batch.dropped)) {
-    const dropped = batch.dropped.length;
-    warnOnce(
-      `capped:${first.filename}`,
-      `${String(batch.matches.length + dropped)} matches exceeded maxMatchesPerFile=${String(batch.options.maxMatchesPerFile)}, ${String(dropped)} not checked (${first.filename})`,
-    );
-  }
+  warnDropped(batch, first.filename);
   const deadline = Date.now() + batch.options.timeoutMs;
   for (const model of models) {
     const matches = batch.matches.filter(({ rule }) =>
@@ -137,7 +148,7 @@ const sharedFile = (optionsFor: OptionsFor): SharedFile => {
   const start = (context: Context): FileBatch => {
     const batch: FileBatch = {
       options: optionsFor(context.settings),
-      contexts: new Map(),
+      contexts: {},
       matches: [],
       dropped: [],
       exiting: false,
@@ -148,11 +159,16 @@ const sharedFile = (optionsFor: OptionsFor): SharedFile => {
   };
   return {
     join: (context, id) => {
-      const batch = Option.getOrElse(
-        Option.filter(current, (open) => !open.exiting),
-        () => start(context),
-      );
-      batch.contexts.set(id, context);
+      const batch = Option.match(current, {
+        onNone: () => start(context),
+        onSome: (open) => {
+          if (open.exiting) {
+            return start(context);
+          }
+          return open;
+        },
+      });
+      batch.contexts[id] = context;
       return batch;
     },
     leave: () => {
@@ -161,7 +177,7 @@ const sharedFile = (optionsFor: OptionsFor): SharedFile => {
       }
       const batch = current.value;
       batch.exits += 1;
-      if (batch.exits >= batch.contexts.size) {
+      if (batch.exits >= Object.keys(batch.contexts).length) {
         current = Option.none();
       }
       if (!batch.exiting) {
@@ -172,7 +188,7 @@ const sharedFile = (optionsFor: OptionsFor): SharedFile => {
   };
 };
 
-const ruleIn = (batch: FileBatch, id: string): ResolvedRule =>
+const ruleIn = (batch: Collected, id: string): ResolvedRule =>
   Option.getOrThrow(Arr.findFirst(batch.options.rules, (rule) => rule.id === id));
 
 const visitorFor =
@@ -218,4 +234,4 @@ const visitorFor =
   };
 
 export { sharedFile, visitorFor };
-export type { OptionsFor, SharedFile };
+export type { Collected, FileBatch, OptionsFor, SharedFile };

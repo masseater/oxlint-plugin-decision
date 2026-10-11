@@ -73,14 +73,30 @@ const ModelSpecSchema = Schema.Union([
   Schema.NonEmptyArray(Schema.NonEmptyString),
 ]);
 
-const Count = (minimum: number) => Schema.Int.check(Schema.isGreaterThanOrEqualTo(minimum));
+const NONE = 0;
+const ONE = 1;
+const EVEN_ODDS = 0.5;
+
+const NonNegativeInt = Schema.Int.check(Schema.isGreaterThanOrEqualTo(NONE));
+
+const PositiveInt = Schema.Int.check(Schema.isGreaterThanOrEqualTo(ONE));
+
+const RuleId = Schema.NonEmptyString.check(
+  Schema.isPattern(RULE_ID, { message: "id must be lowercase words joined by hyphens" }),
+);
+
+const Probability = Schema.Number.check(Schema.isBetween({ minimum: NONE, maximum: ONE }));
+
+const LocationCutoff = Schema.Number.check(
+  Schema.isBetween({ minimum: EVEN_ODDS, maximum: ONE, exclusiveMinimum: true }),
+);
 
 const RuleContextSchema = Schema.Union([
   Schema.Struct({ scope: Schema.Literals(["node", "file"]) }),
   Schema.Struct({
     scope: Schema.Literal("lines"),
-    before: Schema.optionalKey(Count(0)),
-    after: Schema.optionalKey(Count(0)),
+    before: Schema.optionalKey(NonNegativeInt),
+    after: Schema.optionalKey(NonNegativeInt),
   }),
   Schema.Struct({
     scope: Schema.Literal("enclosing"),
@@ -90,26 +106,19 @@ const RuleContextSchema = Schema.Union([
 
 const OptionsSchema = Schema.Struct({
   ci: Schema.optionalKey(Schema.Literals(["skip", "fail"])),
-  timeoutMs: Schema.optionalKey(Count(1)),
-  maxMatchesPerFile: Schema.optionalKey(Count(1)),
-  maxSnippetChars: Schema.optionalKey(Count(1)),
+  timeoutMs: Schema.optionalKey(PositiveInt),
+  maxMatchesPerFile: Schema.optionalKey(PositiveInt),
+  maxSnippetChars: Schema.optionalKey(PositiveInt),
   model: Schema.optionalKey(ModelSpecSchema),
 });
 
 const RuleSchema = Schema.Struct({
-  id: Schema.NonEmptyString.check(
-    Schema.isPattern(RULE_ID, { message: "id must be lowercase words joined by hyphens" }),
-  ),
+  id: RuleId,
   target: Schema.Literals(["function", "call", "jsx", "file"]),
   question: Schema.NonEmptyString,
-  cutoff: Schema.Number.check(Schema.isBetween({ minimum: 0, maximum: 1 })),
+  cutoff: Probability,
   location: Schema.optionalKey(
-    Schema.Struct({
-      question: Schema.NonEmptyString,
-      cutoff: Schema.Number.check(
-        Schema.isBetween({ minimum: 0.5, maximum: 1, exclusiveMinimum: true }),
-      ),
-    }),
+    Schema.Struct({ question: Schema.NonEmptyString, cutoff: LocationCutoff }),
   ),
   model: Schema.optionalKey(ModelSpecSchema),
   context: Schema.optionalKey(RuleContextSchema),
@@ -174,12 +183,16 @@ const answerOf = (rule: DecisionRule): RuleAnswer => {
   );
 };
 
-const checked = <Value>(decoded: Result.Result<Value, Schema.SchemaError>, what: string): Value =>
-  Result.getOrThrowWith(decoded, (error) => new OptionsError(`invalid ${what}: ${error.message}`));
+type Decode<Value> = (input: unknown) => Result.Result<Value, Schema.SchemaError>;
+
+const checked = <Value>(decode: Decode<Value>, input: unknown, what: string): Value =>
+  Result.getOrThrowWith(
+    decode(input),
+    (issue) => new OptionsError(`invalid ${what}: ${issue.message}`),
+  );
 
 const checkRule = (rule: DecisionRule): DecisionRule => {
-  const id = Predicate.isString(rule.id) ? `rule "${rule.id}"` : "rule";
-  checked(decodeRule(rule), id);
+  checked(decodeRule, rule, `rule "${rule.id}"`);
   if (Predicate.isNotUndefined(rule.location) && rule.target !== "file") {
     throw new OptionsError("location is supported only for file rules");
   }
@@ -207,19 +220,23 @@ const resolveRule =
 
 interface Sources {
   readonly options: DecisionOptions;
-  readonly settings: unknown;
+  readonly settings?: unknown;
 }
+
+const settingsFrom = (settings: unknown): DecisionOptions => {
+  if (Predicate.isUndefined(settings)) {
+    return {};
+  }
+  return checked(decodeOptions, settings, "settings");
+};
 
 const resolveOptions = (
   { options, settings }: Sources,
   rules: readonly DecisionRule[],
   providers: Readonly<Record<string, DecisionProvider>>,
 ): ResolvedOptions => {
-  const fromCode = checked(decodeOptions(options), "createDecisionPlugin options");
-  const fromConfig = Predicate.isUndefined(settings)
-    ? {}
-    : checked(decodeOptions(settings), "settings");
-  const { model, ...merged } = { ...DEFAULTS, ...fromCode, ...fromConfig };
+  const fromCode = checked(decodeOptions, options, "createDecisionPlugin options");
+  const { model, ...merged } = { ...DEFAULTS, ...fromCode, ...settingsFrom(settings) };
   return {
     ci: merged.ci,
     timeoutMs: merged.timeoutMs,
@@ -243,6 +260,7 @@ const REPORT_LOC = {
   file: (_node: AstNode, text: string): Location => headOf(text, FIRST_LINE, FIRST_COLUMN),
 } as const satisfies Readonly<Record<Target, (node: AstNode, text: string) => Location>>;
 
+export type { Sources };
 export {
   DEFAULTS,
   checkRules,

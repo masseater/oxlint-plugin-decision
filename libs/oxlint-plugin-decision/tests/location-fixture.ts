@@ -4,7 +4,14 @@ import type { Scope } from "effect";
 import type { DecisionPluginSetup, DecisionRule } from "#src/types.ts";
 
 import type { MockOpenRouter } from "./mock-openrouter.ts";
-import { diagnosticsOf, firstSpan, mockEnv, projectFilesFor, runOxlint, writeProject } from "./oxlint.ts";
+import {
+  diagnosticsOf,
+  firstSpan,
+  mockEnv,
+  projectFilesFor,
+  runOxlint,
+  writeProject,
+} from "./oxlint.ts";
 import type { OxlintDiagnostic, OxlintRun, OxlintSpan, Services } from "./oxlint.ts";
 
 const SOURCE =

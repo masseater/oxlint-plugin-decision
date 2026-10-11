@@ -14,7 +14,6 @@ import type {
 import { sharedFile, visitorFor } from "./visitor.ts";
 
 const DEFAULT_NAME = "decision";
-const NO_SETTINGS = "";
 
 const metaOf = (rule: DecisionRule): RuleMeta => ({
   type: "problem",
@@ -31,6 +30,22 @@ const SETUP_ONLY: ReadonlySet<string> = new Set(["name", "rules", "providers"]);
 const optionsOf = (setup: DecisionPluginSetup): DecisionOptions =>
   Object.fromEntries(Object.entries(setup).filter(([key]) => !SETUP_ONLY.has(key)));
 
+type Resolve = (settings: unknown) => ResolvedOptions;
+
+const memoized = (resolve: Resolve): Resolve => {
+  const resolved = new Map<string, ResolvedOptions>();
+  return (settings) => {
+    const key = JSON.stringify([settings]);
+    const cached = resolved.get(key);
+    if (Predicate.isNotUndefined(cached)) {
+      return cached;
+    }
+    const fresh = resolve(settings);
+    resolved.set(key, fresh);
+    return fresh;
+  };
+};
+
 const createDecisionPlugin = (setup: DecisionPluginSetup): DecisionPlugin => {
   const name = setup.name ?? DEFAULT_NAME;
   const providers: Readonly<Record<string, DecisionProvider>> = Object.fromEntries(
@@ -38,21 +53,9 @@ const createDecisionPlugin = (setup: DecisionPluginSetup): DecisionPlugin => {
   );
   const rules = checkRules(setup.rules);
   const options = optionsOf(setup);
-  const resolve = (settings: unknown): ResolvedOptions =>
-    resolveOptions({ options, settings }, rules, providers);
-  const resolved = new Map<string, ResolvedOptions>([[NO_SETTINGS, resolve(undefined)]]);
-  const optionsFor = (settings: Readonly<Record<string, unknown>>): ResolvedOptions => {
-    const own = settings[name];
-    const key = Predicate.isUndefined(own) ? NO_SETTINGS : JSON.stringify(own);
-    const cached = resolved.get(key);
-    if (Predicate.isNotUndefined(cached)) {
-      return cached;
-    }
-    const fresh = resolve(own);
-    resolved.set(key, fresh);
-    return fresh;
-  };
-  const shared = sharedFile(optionsFor);
+  const resolve = memoized((settings) => resolveOptions({ options, settings }, rules, providers));
+  resolve({});
+  const shared = sharedFile((settings) => resolve(settings[name]));
 
   return {
     meta: { name },
