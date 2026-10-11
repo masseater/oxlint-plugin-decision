@@ -71,6 +71,31 @@ const MODEL_SCHEMA = {
   ],
 } satisfies RuleOptionsSchema;
 
+const LINE_COUNT = { type: "integer", minimum: 0 } satisfies RuleOptionsSchema;
+
+const CONTEXT_SCHEMA = {
+  oneOf: [
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["scope"],
+      properties: { scope: { enum: ["node", "file"] } },
+    },
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["scope"],
+      properties: { scope: { enum: ["lines"] }, before: LINE_COUNT, after: LINE_COUNT },
+    },
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["scope", "kind"],
+      properties: { scope: { enum: ["enclosing"] }, kind: { enum: ["function", "class", "block"] } },
+    },
+  ],
+} satisfies RuleOptionsSchema;
+
 const SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -101,6 +126,7 @@ const SCHEMA = {
           },
           cutoff: { type: "number", minimum: 0, maximum: 1 },
           model: MODEL_SCHEMA,
+          context: CONTEXT_SCHEMA,
         },
       },
     },

@@ -156,11 +156,18 @@ const numbered = (snippet: string): string =>
     .map(({ text, line }) => `L${String(line)}| ${text}`)
     .join("\n");
 
+const contextNote = (match: RequestMatch, ref: string): string => {
+  if (Predicate.isUndefined(match.context)) {
+    return "";
+  }
+  return ` state.contexts.${ref} shows the source around it; use it only to understand the snippet.`;
+};
+
 const noulFor = (match: RequestMatch, ref: string): readonly [string, Question] => [
   ref,
   {
     type: "noul",
-    instructions: `Consider only snippet "${ref}" in state.snippets. ${match.rule.question}`,
+    instructions: `Consider only snippet "${ref}" in state.snippets.${contextNote(match, ref)} ${match.rule.question}`,
   },
 ];
 
@@ -184,12 +191,27 @@ const snippetFor = (match: RequestMatch): string => {
   return match.snippet;
 };
 
+const contextsOf = (
+  matches: readonly RequestMatch[],
+): Readonly<{ contexts?: Readonly<Record<string, string>> }> => {
+  const contexts = matches.flatMap((match, index) =>
+    Option.toArray(
+      Option.map(Option.fromUndefinedOr(match.context), (text) => [refAt(index), text] as const),
+    ),
+  );
+  if (Arr.isReadonlyArrayEmpty(contexts)) {
+    return {};
+  }
+  return { contexts: Object.fromEntries(contexts) };
+};
+
 const buildRequest = (model: string, matches: readonly RequestMatch[]): DecisionRequest => ({
   model,
   state: {
     snippets: Object.fromEntries(
       matches.map((match, index) => [refAt(index), snippetFor(match)]),
     ),
+    ...contextsOf(matches),
   },
   questions: Object.fromEntries(
     matches.flatMap((match, index) => questionsFor(match, refAt(index))),

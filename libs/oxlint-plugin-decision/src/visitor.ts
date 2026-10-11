@@ -1,6 +1,7 @@
 import type { Context, VisitorWithHooks } from "@oxlint/plugins";
 import { Array as Arr, Option } from "effect";
 
+import { contextOf } from "./context.ts";
 import { OptionsError, REPORT_LOC, TARGET_NODE_TYPES, snippetNodeFor } from "./options.ts";
 import { reportModel } from "./report.ts";
 import { truncateSnippet } from "./request.ts";
@@ -85,7 +86,9 @@ const matchOf = (
   { rule, options }: { readonly rule: ResolvedRule; readonly options: ResolvedOptions },
 ): Match => {
   const text = namedSnippetOf(context, node);
+  const surrounding = contextOf(context, node, rule.context ?? { scope: "node" });
   return {
+    ...Option.match(surrounding, { onNone: () => ({}), onSome: (value) => ({ context: value }) }),
     rule,
     loc: REPORT_LOC[rule.target](node, snippetOf(context, node)),
     snippet: truncateSnippet(text, options.maxSnippetChars),

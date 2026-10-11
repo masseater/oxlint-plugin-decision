@@ -10,6 +10,7 @@ catalog:
   "@oxlint/plugins": 1.87.0
   "@types/node": 26.6.5
   "@effect/platform-node": 4.0.0
+  "@effect/vitest": 4.0.0
   "@openrouter/sdk": 1.4.25
   eslint-plugin-no-comments: 1.2.1
   oxlint: 1.87.0
@@ -25,6 +26,7 @@ catalogs:
 overrides:
   effect: "catalog:stack"
   "@effect/platform-node-shared": 4.0.0
+  "@effect/vitest": 4.0.0
   vite@*: "catalog:"
 peerDependencyRules:
   allowAny:

@@ -4,7 +4,7 @@ import type { DecisionPlugin } from "./types.ts";
 const plugin: DecisionPlugin = createDecisionPlugin();
 
 export default plugin;
-export { defineProvider, defineRule } from "./define.ts";
+export { defineDecisionRule, defineProvider } from "./define.ts";
 export { openRouter } from "./openrouter.ts";
 export { createDecisionPlugin } from "./plugin.ts";
 export type {
@@ -18,9 +18,11 @@ export type {
   DecisionProvider,
   DecisionRequest,
   DecisionRule,
+  EnclosingKind,
   ModelSpec,
   NoulQuestion,
   Question,
+  RuleContext,
   RuleLocation,
   Target,
 } from "./types.ts";

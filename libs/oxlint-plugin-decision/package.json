@@ -37,6 +37,7 @@
   },
   "devDependencies": {
     "@effect/tsgo": "catalog:stack",
+    "@effect/vitest": "catalog:",
     "@oxlint/plugins": "catalog:",
     "@types/node": "catalog:",
     "oxlint": "catalog:",

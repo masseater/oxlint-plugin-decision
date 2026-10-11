@@ -11,6 +11,14 @@ interface RuleLocation {
   readonly cutoff: number;
 }
 
+type EnclosingKind = "function" | "class" | "block";
+
+type RuleContext =
+  | { readonly scope: "node" }
+  | { readonly scope: "lines"; readonly before?: number; readonly after?: number }
+  | { readonly scope: "enclosing"; readonly kind: EnclosingKind }
+  | { readonly scope: "file" };
+
 interface DecisionRule {
   readonly id: string;
   readonly target: Target;
@@ -18,6 +26,7 @@ interface DecisionRule {
   readonly cutoff: number;
   readonly location?: RuleLocation;
   readonly model?: ModelSpec;
+  readonly context?: RuleContext;
 }
 
 interface DecisionOptions {
@@ -44,7 +53,10 @@ type Question = NoulQuestion | ChoiceQuestion;
 
 interface DecisionRequest {
   readonly model: string;
-  readonly state: { readonly snippets: Readonly<Record<string, string>> };
+  readonly state: {
+    readonly snippets: Readonly<Record<string, string>>;
+    readonly contexts?: Readonly<Record<string, string>>;
+  };
   readonly questions: Readonly<Record<string, Question>>;
 }
 
@@ -96,6 +108,7 @@ interface RequestMatch {
   readonly rule: Pick<DecisionRule, "question" | "location">;
   readonly snippet: string;
   readonly truncated: boolean;
+  readonly context?: string;
 }
 
 interface Match extends RequestMatch {
@@ -137,6 +150,7 @@ export type {
   DecisionProvider,
   DecisionRequest,
   DecisionRule,
+  EnclosingKind,
   LineRange,
   Match,
   ModelRef,
@@ -146,6 +160,7 @@ export type {
   RequestMatch,
   ResolvedOptions,
   ResolvedRule,
+  RuleContext,
   RuleLocation,
   Target,
   Verdicts,
