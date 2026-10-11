@@ -10,7 +10,16 @@
     "oxlint-plugin",
     "preset"
   ],
+  "homepage": "https://github.com/masseater/oxlint-plugin-decision/tree/main/libs/oxlint-plugin-decision-presets#readme",
+  "bugs": {
+    "url": "https://github.com/masseater/oxlint-plugin-decision/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/masseater/oxlint-plugin-decision.git",
+    "directory": "libs/oxlint-plugin-decision-presets"
+  },
   "files": [
     "dist"
   ],
@@ -36,6 +45,10 @@
       "default": "./dist/review-only.mjs"
     },
     "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "build": "vp pack",
