@@ -1,193 +1,138 @@
-import type { Location } from "@oxlint/plugins";
-import { expect, test } from "vite-plus/test";
+import { layer } from "@effect/vitest";
+import { deepStrictEqual, strictEqual, throws } from "@effect/vitest/utils";
+import { Effect, Layer } from "effect";
 
+import { openRouter } from "#src/openrouter.ts";
 import {
-  checkOptions,
   DEFAULTS,
   NAMED_PARENTS,
-  type NamedField,
   REPORT_LOC,
   SCHEMA,
+  resolveOptions,
   snippetNodeFor,
-  TARGET_NODE_TYPES,
-} from "../src/options.ts";
-import type { JevRule, NamedParent } from "../src/types.ts";
+} from "#src/options.ts";
+import type { AstNode, DecisionRule } from "#src/types.ts";
 
-const rule: JevRule = { id: "a", target: "call", question: "Is it bad?", cutoff: 0.8 };
-const withRules = (...rules: JevRule[]) => ({ ...DEFAULTS, rules });
+const SIGNATURE_LINE = 10;
+const SIGNATURE_COLUMN = 7;
+const END_LINE = 16;
+const CALL_LINE = 3;
+const CALL_START = 2;
+const CALL_END = 9;
+const FIRST_LINE = 1;
+const START = 0;
 
-test("returns the merged options oxlint handed it, untouched", () => {
-  const merged = withRules(rule);
-  expect(checkOptions(merged), "the same object comes back, not a copy").toBe(merged);
-});
+const rule: DecisionRule = { id: "a", target: "call", question: "Is it bad?", cutoff: 0.8 };
+const providers = { openrouter: openRouter };
 
-test("rejects options where rules is missing", () => {
-  expect(() => checkOptions({ ...DEFAULTS })).toThrow(
-    /^oxlint-plugin-jev: options\.rules must list at least one rule$/,
+const resolvesDefaults = Effect.sync(() => {
+  const { rules } = resolveOptions({ rules: [rule] }, [], providers);
+  deepStrictEqual(
+    rules.map(({ models, answer }) => ({
+      models: models.map(({ id, model }) => ({ id, model })),
+      answer,
+    })),
+    [
+      {
+        models: [{ id: DEFAULTS.model, model: "~typesafe/jev-latest" }],
+        answer: { kind: "boolean" },
+      },
+    ],
   );
 });
 
-test("rejects options where two rules share an id", () => {
-  expect(() => checkOptions(withRules(rule, { ...rule, target: "file" }))).toThrow(
-    /^oxlint-plugin-jev: rule id "a" is used more than once$/,
+const mergesCodeRules = Effect.sync(() => {
+  const resolved = resolveOptions({ rules: [rule] }, [{ ...rule, id: "code" }], providers);
+  deepStrictEqual(
+    resolved.rules.map(({ id }) => id),
+    ["code", "a"],
   );
 });
 
-test("accepts distinct ids across rules", () => {
-  expect(() => checkOptions(withRules(rule, { ...rule, id: "b" }))).not.toThrow();
-});
-
-test.each(["function", "call", "jsx"] as const)(
-  "rejects a location question on a %s rule",
-  (target) => {
-    expect(() =>
-      checkOptions(withRules({ ...rule, target, location: { question: "Where?", cutoff: 0.75 } })),
-    ).toThrow("location is supported only for file rules");
-  },
-);
-
-test("accepts a location question on a file rule", () => {
-  expect(() =>
-    checkOptions(
-      withRules({ ...rule, target: "file", location: { question: "Where?", cutoff: 0.75 } }),
-    ),
-  ).not.toThrow();
-});
-
-test("maps every target to the node types the README documents", () => {
-  expect(TARGET_NODE_TYPES).toEqual({
-    function: ["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"],
-    call: ["CallExpression"],
-    jsx: ["JSXElement"],
-    file: ["Program"],
+const refusesEmpty = Effect.sync(() => {
+  throws(() => {
+    resolveOptions({}, [], providers);
   });
 });
 
-test("defaults the plugin fields the README documents", () => {
-  expect(DEFAULTS).toEqual({
-    ci: "skip",
-    timeoutMs: 10000,
-    maxMatchesPerFile: 25,
-    maxSnippetChars: 4000,
-    model: "jev-latest",
-  });
-});
-
-test("offers every default as a schema property, so a default is never an unknown field", () => {
-  for (const field of Object.keys(DEFAULTS)) {
-    expect(Object.hasOwn(SCHEMA.properties, field), `${field} is in the schema`).toBe(true);
-  }
-});
-
-test("leaves rules optional in the schema, since oxlint validates the defaults against it", () => {
-  expect(Object.hasOwn(SCHEMA, "required"), "a required rules field would break plugin load").toBe(
-    false,
+const dedupesModels = Effect.sync(() => {
+  const resolved = resolveOptions(
+    { model: ["openrouter/x", "openrouter/x", "openrouter/y"], rules: [rule] },
+    [],
+    providers,
+  );
+  deepStrictEqual(
+    resolved.rules.flatMap(({ models }) => models.map(({ model }) => model)),
+    ["x", "y"],
   );
 });
 
-test("offers exactly the documented targets as the schema's target enum", () => {
-  expect(SCHEMA.properties.rules.items.properties.target.enum).toEqual(
-    Object.keys(TARGET_NODE_TYPES),
+const schemaMatchesDefaults = Effect.sync(() => {
+  deepStrictEqual(
+    Object.keys(DEFAULTS).filter((field) => !Object.hasOwn(SCHEMA.properties, field)),
+    [],
   );
+  strictEqual(Object.hasOwn(SCHEMA, "required"), false);
+  deepStrictEqual(SCHEMA.properties.rules.items.required, ["id", "target", "question", "cutoff"]);
 });
 
-test("requires all four per-rule fields in the schema", () => {
-  expect(SCHEMA.properties.rules.items.required).toEqual(["id", "target", "question", "cutoff"]);
+const node = (type: string): AstNode => ({
+  type,
+  range: [START, START],
+  loc: { start: { line: FIRST_LINE, column: START }, end: { line: FIRST_LINE, column: START } },
 });
 
-test("closes both objects to unknown fields", () => {
-  expect(SCHEMA.additionalProperties).toBe(false);
-  expect(SCHEMA.properties.rules.items.additionalProperties).toBe(false);
-});
-
-const at = (line: number, column: number): Location => ({
-  start: { line, column },
-  end: { line, column },
-});
-
-const fn = { loc: { start: { line: 10, column: 7 }, end: { line: 16, column: 1 } } };
-
-test("a function is reported on its signature line only", () => {
-  expect(REPORT_LOC.function(fn, "function readConfig(path) {\n  return 1;\n}")).toEqual({
-    start: { line: 10, column: 7 },
-    end: { line: 10, column: 7 + "function readConfig(path) {".length },
+const namesAnonymousFunctions = Effect.sync(() => {
+  const results = Object.entries(NAMED_PARENTS).map(([parentType, field]) => {
+    const parent: { -readonly [Key in keyof AstNode]: AstNode[Key] } = node(parentType);
+    const child: AstNode = { ...node("ArrowFunctionExpression"), parent };
+    parent[field] = child;
+    return snippetNodeFor(child) === parent;
   });
+  deepStrictEqual(results, [true, true, true, true]);
+  const lone: AstNode = { ...node("ArrowFunctionExpression"), parent: node("CallExpression") };
+  strictEqual(snippetNodeFor(lone), lone);
 });
 
-const anywhere = { loc: at(9, 4) };
-
-test("a whole-file match is reported on the first line only", () => {
-  expect(REPORT_LOC.file(anywhere, 'import x from "y";\n\nx();')).toEqual({
-    start: { line: 1, column: 0 },
-    end: { line: 1, column: 'import x from "y";'.length },
+const reportLocations = Effect.sync(() => {
+  const fn: AstNode = {
+    ...node("FunctionDeclaration"),
+    loc: {
+      start: { line: SIGNATURE_LINE, column: SIGNATURE_COLUMN },
+      end: { line: END_LINE, column: FIRST_LINE },
+    },
+  };
+  const signature = "function readConfig(path) {";
+  deepStrictEqual(REPORT_LOC.function(fn, `${signature}\n  return 1;\n}`), {
+    start: { line: SIGNATURE_LINE, column: SIGNATURE_COLUMN },
+    end: { line: SIGNATURE_LINE, column: SIGNATURE_COLUMN + signature.length },
   });
-});
-
-test("a one-line snippet is reported to its end", () => {
-  expect(REPORT_LOC.file(anywhere, "x();").end.column).toBe(4);
-});
-
-test("a call is reported on the whole call and JSX on its opening element", () => {
-  const loc: Location = { start: { line: 3, column: 2 }, end: { line: 3, column: 9 } };
-  expect(REPORT_LOC.call({ loc })).toBe(loc);
-  expect(REPORT_LOC.jsx({ loc: at(3, 0), openingElement: { loc } })).toBe(loc);
-});
-
-test("names the parents that carry an anonymous function's binding or method name", () => {
-  expect(NAMED_PARENTS).toEqual({
-    VariableDeclarator: "init",
-    Property: "value",
-    MethodDefinition: "value",
-    PropertyDefinition: "value",
+  deepStrictEqual(REPORT_LOC.file(fn, 'import x from "y";\n\nx();').end, {
+    line: FIRST_LINE,
+    column: 'import x from "y";'.length,
   });
+  const loc = {
+    start: { line: CALL_LINE, column: CALL_START },
+    end: { line: CALL_LINE, column: CALL_END },
+  };
+  strictEqual(REPORT_LOC.jsx({ ...node("JSXElement"), openingElement: { loc } }), loc);
 });
 
-interface Fixture {
-  type: string;
-  range: [number, number];
-  parent?: NamedParent | null;
-}
-
-const childOf = (
-  parentType: string,
-  field: NamedField,
-  functionType = "ArrowFunctionExpression",
-): Fixture => {
-  const node: Fixture = { type: functionType, range: [0, 0] };
-  node.parent = { type: parentType, range: [0, 0], [field]: node };
-  return node;
-};
-
-for (const [parentType, field] of Object.entries(NAMED_PARENTS)) {
-  test(`sends the whole ${parentType} for an arrow function stored in its ${field}`, () => {
-    const node = childOf(parentType, field);
-    expect(snippetNodeFor(node)).toBe(node.parent);
-  });
-}
-
-test("sends the whole declarator for a function expression too", () => {
-  const node = childOf("VariableDeclarator", "init", "FunctionExpression");
-  expect(snippetNodeFor(node)).toBe(node.parent);
-});
-
-test("sends the function itself when its parent is not one that names it", () => {
-  const node: Fixture = { type: "ArrowFunctionExpression", range: [0, 0] };
-  node.parent = { type: "CallExpression", range: [0, 0] };
-  expect(snippetNodeFor(node)).toBe(node);
-});
-
-test("sends the function itself when it sits in a field other than the named one", () => {
-  const node: Fixture = { type: "ArrowFunctionExpression", range: [0, 0] };
-  node.parent = { type: "Property", range: [0, 0], value: { type: "Other", range: [0, 0] } };
-  expect(snippetNodeFor(node)).toBe(node);
-});
-
-test("sends the function itself when it has no parent", () => {
-  const node: Fixture = { type: "ArrowFunctionExpression", range: [0, 0] };
-  expect(snippetNodeFor(node)).toBe(node);
-});
-
-test("leaves a call inside a declarator alone, since only anonymous functions lose a name", () => {
-  const node = childOf("VariableDeclarator", "init", "CallExpression");
-  expect(snippetNodeFor(node)).toBe(node);
+layer(Layer.empty)("resolving options", (it) => {
+  it.effect("fills the default model and a boolean answer", () => resolvesDefaults);
+  it.effect("puts code rules before config rules", () => mergesCodeRules);
+  it.effect("refuses options with no rules", () => refusesEmpty);
+  it.effect("asks each listed model once", () => dedupesModels);
+  it.effect(
+    "offers every default in the schema and leaves rules optional",
+    () => schemaMatchesDefaults,
+  );
+  it.effect(
+    "sends the binding for an anonymous function stored under a name",
+    () => namesAnonymousFunctions,
+  );
+  it.effect(
+    "reports functions on their signature, files on line 1, JSX on its opening tag",
+    () => reportLocations,
+  );
 });

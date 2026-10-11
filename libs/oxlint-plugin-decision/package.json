@@ -14,6 +14,9 @@
     "dist"
   ],
   "type": "module",
+  "imports": {
+    "#src/*": "./src/*"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",
@@ -21,13 +24,11 @@
     },
     "./package.json": "./package.json"
   },
-  "imports": {
-    "#src/*": "./src/*"
-  },
   "scripts": {
     "build": "vp pack",
     "dev": "vp pack --watch",
-    "test": "vp test",
+    "test": "vp test --project=mock",
+    "test:live": "vp run build && vp test --project=live",
     "example": "vp run build && ./node_modules/oxlint/bin/oxlint -c example/.oxlintrc.json example/",
     "prepublishOnly": "vp run build",
     "prepare": "effect-tsgo patch --typescript --oxlint"

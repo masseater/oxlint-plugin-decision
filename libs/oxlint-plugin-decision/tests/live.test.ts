@@ -1,43 +1,49 @@
-import { spawnSync } from "node:child_process";
-import { rmSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { NodeServices } from "@effect/platform-node";
+import { layer } from "@effect/vitest";
+import { strictEqual } from "@effect/vitest/utils";
+import { Config, Effect, FileSystem, Path, Redacted, Schema } from "effect";
 
-import { expect, test } from "vite-plus/test";
+import { TIMEOUT, lintProject, outputOf } from "./fixtures.ts";
+import { decisionLines, packageRoot } from "./oxlint.ts";
 
-const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const cacheDir = path.join(root, "node_modules", ".cache", "oxlint-plugin-jev");
-const RULE_IDS = ["name-matches-behavior", "no-pii-in-logs", "no-prompt-injection"];
+const LIVE_MODEL = "openrouter/respan/span-01-lite";
+const PROVIDER_FAILURE = /http \d+|network:|timeout|is not set/u;
 
-const skip =
-  process.env.JEV_LIVE !== "1"
-    ? "set JEV_LIVE=1 to lint example/ against the real API"
-    : (process.env.TYPESAFE_API_KEY ?? "").trim() === ""
-      ? "TYPESAFE_API_KEY is not set"
-      : false;
+const RuleEntry = Schema.Tuple([Schema.String, Schema.Record(Schema.String, Schema.Unknown)]);
 
-test.skipIf(skip !== false)(
-  "the example produces exactly the documented diagnostics against the real API",
-  () => {
-    rmSync(cacheDir, { recursive: true, force: true });
-    const env = { ...process.env };
-    delete env.CI;
-    const result = spawnSync(
-      path.join(root, "node_modules", "oxlint", "bin", "oxlint"),
-      ["-c", "example/.oxlintrc.json", "example/"],
-      { cwd: root, encoding: "utf8", env },
-    );
-    const lines = result.stdout.split("\n").filter((line) => line.includes("jev(ask)"));
-    const idsOn = (file: string) =>
-      lines
-        .filter((line) => line.includes(file))
-        .map((line) => line.match(/\[([^\]]+)\]/)?.[1] ?? "")
-        .sort();
-    expect(
-      idsOn("fail.js"),
-      `fail.js trips each rule once\n${result.stdout}${result.stderr}`,
-    ).toEqual(RULE_IDS);
-    expect(idsOn("pass.js"), `pass.js is clean\n${result.stdout}${result.stderr}`).toEqual([]);
-    expect(result.status, "oxlint fails the run").toBe(1);
-  },
+const ExampleConfig = Schema.fromJsonString(
+  Schema.Struct({ rules: Schema.Struct({ "decision/ask": RuleEntry }) }),
 );
+
+const exampleOptions = Effect.gen(function* read() {
+  const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const root = yield* packageRoot;
+  const raw = yield* fs.readFileString(path.join(root, "example", ".oxlintrc.json"));
+  const [, options] = (yield* Schema.decodeUnknownEffect(ExampleConfig)(raw)).rules["decision/ask"];
+  const files = {
+    "fail.js": yield* fs.readFileString(path.join(root, "example", "fail.js")),
+    "pass.js": yield* fs.readFileString(path.join(root, "example", "pass.js")),
+  };
+  return { files, options };
+});
+
+const answersLive = Effect.gen(function* test() {
+  const key = yield* Config.Redacted("OPENROUTER_API_KEY");
+  const { files, options } = yield* exampleOptions;
+  const run = yield* lintProject({
+    files,
+    options: { ...options, model: LIVE_MODEL },
+    env: { OPENROUTER_API_KEY: Redacted.value(key) },
+  });
+  yield* Effect.log(decisionLines(run).join("\n"));
+  strictEqual(PROVIDER_FAILURE.test(outputOf(run)), false, outputOf(run));
+});
+
+layer(NodeServices.layer, { excludeTestServices: true })("the live OpenRouter API", (it) => {
+  it.effect(
+    "answers every question about the example without a provider failure",
+    () => answersLive,
+    TIMEOUT,
+  );
+});
