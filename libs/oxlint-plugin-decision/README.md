@@ -260,15 +260,14 @@ export default defineConfig({
 });
 ```
 
-| Setting             | Default                             | Meaning                                                                                                                                                |
-| ------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ci`                | `"fail"`                            | What happens when a model can't be asked and `CI` is set. `"fail"` fails the run. `"skip"` warns once and reports nothing. Outside CI it always skips. |
-| `timeoutMs`         | `10000`                             | Per-file budget shared by every model's request, retries and location refinements.                                                                     |
-| `maxMatchesPerFile` | `25`                                | Matches sent per file across all rules. Extra matches are dropped in source order and the file is named on stderr.                                     |
-| `maxSnippetChars`   | `4000`                              | Longer snippets are cut and end with `/* ...truncated */`.                                                                                             |
-| `model`             | `"openrouter/~typesafe/jev-latest"` | The default model id or list of ids.                                                                                                                   |
-| `env`               | `{}`                                | Renames the environment variables providers read, such as `{ "OPENROUTER_API_KEY": "TEAM_OPENROUTER_KEY" }`. Values are variable names, not keys.      |
-| `explain`           | `false`                             | `true` or `"text"` prints why each match was or wasn't reported, `"json"` prints the same as JSON Lines. See [Explain mode](#explain-mode).            |
+| Setting           | Default                             | Meaning                                                                                                                                                |
+| ----------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ci`              | `"fail"`                            | What happens when a model can't be asked and `CI` is set. `"fail"` fails the run. `"skip"` warns once and reports nothing. Outside CI it always skips. |
+| `timeoutMs`       | `10000`                             | Per-file budget shared by every model's request, retries and location refinements.                                                                     |
+| `maxSnippetChars` | `4000`                              | Longer snippets are cut and end with `/* ...truncated */`.                                                                                             |
+| `model`           | `"openrouter/~typesafe/jev-latest"` | The default model id or list of ids.                                                                                                                   |
+| `env`             | `{}`                                | Renames the environment variables providers read, such as `{ "OPENROUTER_API_KEY": "TEAM_OPENROUTER_KEY" }`. Values are variable names, not keys.      |
+| `explain`         | `false`                             | `true` or `"text"` prints why each match was or wasn't reported, `"json"` prints the same as JSON Lines. See [Explain mode](#explain-mode).            |
 
 ## Explain mode
 
@@ -411,7 +410,7 @@ If only a location refinement fails, confirmed violations are still reported at 
 
 Every match is a paid model request unless its answer is already cached, so keep an eye on what your rules match.
 
-- A broad target, such as `"call"` on a large codebase, sends many matches. `maxMatchesPerFile` caps how many are sent per file.
+- Every match is sent; the plugin has no per-file cap, so a broad target, such as `"call"` on a large codebase, sends many requests. Control the volume with oxlint itself: narrow files and rules with `overrides`, and lint only changed files by passing their paths.
 - Wider `context` and longer snippets cost more tokens. `maxSnippetChars` caps each snippet.
 - A list of models multiplies the requests: each model answers every match.
 - Answers are cached on disk under `node_modules/.cache/oxlint-plugin-decision`. Unchanged code is not asked again, so a second run over the same files is free. Editing a snippet, its context, a question or an answer kind re-asks that file; changing a cutoff or an `id` does not.

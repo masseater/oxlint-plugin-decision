@@ -12,7 +12,6 @@ const options: ResolvedOptions = {
   ci: "fail",
   explain: false,
   timeoutMs: TIMEOUT_MS,
-  maxMatchesPerFile: 1,
   maxSnippetChars: 1,
   env: { OPENROUTER_API_KEY: "TEAM_KEY" },
   rules: [],

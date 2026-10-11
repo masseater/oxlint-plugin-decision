@@ -15,9 +15,4 @@ export default defineConfig({
     "decision-ai-slop/suppression-instead-of-fix": "error",
     "decision-ai-slop/reinvents-builtin": "error",
   },
-  settings: {
-    "decision-ai-slop": {
-      maxMatchesPerFile: 100,
-    },
-  },
 });
