@@ -280,6 +280,33 @@ importers:
         specifier: catalog:stack
         version: 1.1.0(@types/node@26.6.5)(@vitest/ui@5.0.3)(jiti@2.6.1)(typescript@7.0.2)
 
+  libs/oxlint-plugin-decision-presets:
+    devDependencies:
+      '@effect/platform-node':
+        specifier: 'catalog:'
+        version: 4.0.0(effect@4.0.0)(redis@6.3.0)
+      '@effect/vitest':
+        specifier: 4.0.0
+        version: 4.0.0(effect@4.0.0)(vitest@5.0.3)
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.5
+      effect:
+        specifier: 4.0.0
+        version: 4.0.0
+      oxlint:
+        specifier: 'catalog:'
+        version: 1.87.0(oxlint-tsgolint@7.0.2003)(vite-plus@1.1.0(@types/node@26.6.5)(@vitest/ui@5.0.3)(jiti@2.6.1)(typescript@7.0.2))
+      oxlint-plugin-decision:
+        specifier: workspace:*
+        version: link:../oxlint-plugin-decision
+      typescript:
+        specifier: catalog:stack
+        version: 7.0.2
+      vite-plus:
+        specifier: catalog:stack
+        version: 1.1.0(@types/node@26.6.5)(@vitest/ui@5.0.3)(jiti@2.6.1)(typescript@7.0.2)
+
 packages:
 
   '@ast-grep/cli-darwin-arm64@0.45.3':

@@ -18,7 +18,7 @@ export default defineConfig({
     sortPackageJson: true,
   },
   lint: {
-    ignorePatterns: ["libs/oxlint-plugin-decision/example/**"],
+    ignorePatterns: ["libs/*/example/**"],
     plugins: [
       "eslint",
       "typescript",
@@ -82,7 +82,11 @@ export default defineConfig({
     },
     overrides: [
       {
-        files: ["**/*.config.ts", "libs/oxlint-plugin-decision/src/index.ts"],
+        files: [
+          "**/*.config.ts",
+          "libs/oxlint-plugin-decision/src/index.ts",
+          "libs/oxlint-plugin-decision-presets/src/*.ts",
+        ],
         rules: { "import/no-default-export": "off" },
       },
     ],

@@ -1,0 +1,6 @@
+{
+  "jsPlugins": ["./plugin.mjs"],
+  "rules": {
+    "team/ask": ["error", { "ci": "fail" }]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "jsPlugins": ["../dist/strict.mjs"],
+  "rules": {
+    "decision/ask": ["error", { "ci": "fail" }]
+  }
+}

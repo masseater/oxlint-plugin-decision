@@ -1,0 +1,64 @@
+{
+  "name": "oxlint-plugin-decision-presets",
+  "version": "0.0.1",
+  "description": "Ready-made plain-English rule presets for oxlint-plugin-decision.",
+  "keywords": [
+    "decision-model",
+    "lint",
+    "openrouter",
+    "oxlint",
+    "oxlint-plugin",
+    "preset"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "imports": {
+    "#src/*": "./src/*"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./recommended": {
+      "types": "./dist/recommended.d.mts",
+      "default": "./dist/recommended.mjs"
+    },
+    "./strict": {
+      "types": "./dist/strict.d.mts",
+      "default": "./dist/strict.mjs"
+    },
+    "./review-only": {
+      "types": "./dist/review-only.d.mts",
+      "default": "./dist/review-only.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "test": "vp test --project=mock",
+    "example": "vp run build && ./node_modules/oxlint/bin/oxlint -c example/.oxlintrc.json example/",
+    "prepublishOnly": "vp run build"
+  },
+  "devDependencies": {
+    "@effect/platform-node": "catalog:",
+    "@effect/vitest": "catalog:",
+    "@types/node": "catalog:",
+    "effect": "catalog:stack",
+    "oxlint": "catalog:",
+    "oxlint-plugin-decision": "workspace:*",
+    "typescript": "catalog:stack",
+    "vite-plus": "catalog:stack"
+  },
+  "peerDependencies": {
+    "oxlint": ">=1.87.0",
+    "oxlint-plugin-decision": "workspace:^"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
