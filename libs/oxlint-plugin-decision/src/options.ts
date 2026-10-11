@@ -268,14 +268,19 @@ const REPORT_LOC = {
   file: (_node: AstNode, text: string): Location => headOf(text, FIRST_LINE, FIRST_COLUMN),
 } as const satisfies Readonly<Record<Target, (node: AstNode, text: string) => Location>>;
 
-export type { Sources };
+export type { Decode, Sources };
 export {
   checkRules,
   NAMED_PARENTS,
   OptionsError,
   PREFIX,
   REPORT_LOC,
+  ModelSpecSchema,
+  STRICT,
   TARGET_NODE_TYPES,
+  checked,
+  modelIdsOf,
+  resolveModel,
   resolveOptions,
   snippetNodeFor,
 };
