@@ -1,0 +1,154 @@
+import { NodeServices } from "@effect/platform-node";
+import { OpenRouter } from "@openrouter/sdk";
+import { OpenRouterError } from "@openrouter/sdk/models/errors";
+import { Config, Crypto, Effect, FileSystem, Option, Path, Redacted } from "effect";
+import { runAsWorker } from "synckit";
+
+import { parseVerdicts } from "./request.ts";
+import { messageOf } from "./runtime.ts";
+import type { DecideInput, DecideResult, DecisionRequest } from "./types.ts";
+import { wireStateFor } from "./wire.ts";
+
+const CACHE_VERSION = 5;
+const HEX_RADIX = 16;
+const HEX_BYTE_WIDTH = 2;
+const RETRY_INITIAL_MS = 10;
+const RETRY_EXPONENT = 2;
+const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
+const API_SUFFIX = /\/api\/v1\/*$|\/+$/u;
+const CACHE_DIR = ["node_modules", ".cache", "oxlint-plugin-decision"] as const;
+
+const reasonFor = (error: unknown): string => {
+  if (error instanceof OpenRouterError) {
+    return `http ${String(error.statusCode)}: ${error.message}`;
+  }
+  return `network: ${messageOf(error)}`;
+};
+
+const serverUrl = Config.String("OPENROUTER_BASE_URL").pipe(
+  Config.withDefault(DEFAULT_BASE_URL),
+  Config.map((url) => url.trim().replace(API_SUFFIX, "")),
+);
+
+const toHex = (bytes: readonly number[]): string =>
+  bytes.map((byte) => byte.toString(HEX_RADIX).padStart(HEX_BYTE_WIDTH, "0")).join("");
+
+const cacheFile = Effect.fn("cacheFile")(function* cacheFile(
+  endpoint: string,
+  request: DecisionRequest,
+) {
+  const crypto = yield* Crypto.Crypto;
+  const path = yield* Path.Path;
+  const payload = new TextEncoder().encode(
+    JSON.stringify({ version: CACHE_VERSION, endpoint, request }),
+  );
+  const digest = yield* crypto.digest("SHA-256", payload);
+  return path.resolve(...CACHE_DIR, `${toHex([...digest])}.json`);
+});
+
+const isComplete = (json: unknown, request: DecisionRequest): boolean =>
+  Option.liftThrowable(() => parseVerdicts(json, request).complete)().pipe(
+    Option.getOrElse(() => false),
+  );
+
+const readCache = Effect.fn("readCache")(function* readCache(
+  file: string,
+  request: DecisionRequest,
+) {
+  const fs = yield* FileSystem.FileSystem;
+  const text = yield* fs.readFileString(file).pipe(Effect.option);
+  return text.pipe(
+    Option.flatMap((raw) => Option.liftThrowable((): unknown => JSON.parse(raw))()),
+    Option.filter((json) => isComplete(json, request)),
+  );
+});
+
+const writeCache = Effect.fn("writeCache")(function* writeCache(file: string, json: unknown) {
+  const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const temp = `${file}.tmp-${String(Date.now())}`;
+  yield* fs.makeDirectory(path.dirname(file), { recursive: true });
+  yield* fs.writeFileString(temp, JSON.stringify(json));
+  yield* fs.rename(temp, file);
+});
+
+const ask = Effect.fn("ask")(function* ask(endpoint: string, { request, timeoutMs }: DecideInput) {
+  const apiKey = yield* Config.Redacted("OPENROUTER_API_KEY");
+  const client = new OpenRouter({ apiKey: Redacted.value(apiKey) });
+  const response: unknown = yield* Effect.tryPromise({
+    try: (signal) =>
+      client.alpha.decisions.create(
+        {
+          decisionsRequest: {
+            ...request,
+            state: wireStateFor(request.model, request.state),
+            questions: { ...request.questions },
+          },
+        },
+        {
+          serverURL: endpoint,
+          retries: {
+            strategy: "backoff",
+            backoff: {
+              initialInterval: RETRY_INITIAL_MS,
+              maxInterval: timeoutMs,
+              exponent: RETRY_EXPONENT,
+              maxElapsedTime: timeoutMs,
+            },
+            retryConnectionErrors: false,
+          },
+          retryCodes: ["429", "5XX"],
+          signal,
+        },
+      ),
+    catch: reasonFor,
+  }).pipe(
+    Effect.timeoutOrElse({
+      duration: timeoutMs,
+      orElse: () => Effect.fail("timeout"),
+    }),
+  );
+  return response;
+});
+
+const askAndStore = Effect.fn("askAndStore")(function* askAndStore(
+  endpoint: string,
+  file: string,
+  input: DecideInput,
+) {
+  const response = yield* ask(endpoint, input);
+  if (isComplete(response, input.request)) {
+    yield* writeCache(file, response).pipe(Effect.ignore);
+  }
+  return response;
+});
+
+const decide = Effect.fn("decide")(function* decide(input: DecideInput) {
+  const endpoint = yield* serverUrl;
+  const file = yield* cacheFile(endpoint, input.request);
+  const cached = yield* readCache(file, input.request);
+  if (Option.isSome(cached)) {
+    return cached.value;
+  }
+  return yield* askAndStore(endpoint, file, input);
+});
+
+const reasonOf = (error: unknown): string => {
+  if (typeof error === "string") {
+    return error;
+  }
+  return messageOf(error);
+};
+
+const run = (input: DecideInput): Promise<DecideResult> =>
+  Effect.runPromise(
+    decide(input).pipe(
+      Effect.match({
+        onSuccess: (response): DecideResult => ({ ok: true, response }),
+        onFailure: (error): DecideResult => ({ ok: false, reason: reasonOf(error) }),
+      }),
+      Effect.provide(NodeServices.layer),
+    ),
+  );
+
+runAsWorker(run);

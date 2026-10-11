@@ -1,0 +1,37 @@
+packages:
+  - libs/*
+
+catalogMode: prefer
+
+catalog:
+  "@ast-grep/cli": 0.45.3
+  "@commitlint/cli": 21.2.3
+  "@commitlint/config-conventional": 21.2.3
+  "@oxlint/plugins": 1.87.0
+  "@types/node": 26.6.5
+  "@effect/platform-node": 4.0.0
+  "@effect/vitest": 4.0.0
+  "@openrouter/sdk": 1.4.25
+  eslint-plugin-no-comments: 1.2.1
+  oxlint: 1.87.0
+  synckit: 0.12.1
+catalogs:
+  stack:
+    "@effect/tsgo": 0.50.0
+    effect: 4.0.0
+    fallow: 3.32.0
+    typescript: 7.0.2
+    vite-plus: 1.1.0
+overrides:
+  effect: "catalog:stack"
+  "@effect/platform-node-shared": 4.0.0
+  "@effect/vitest": 4.0.0
+  vite@*: npm:@voidzero-dev/vite-plus-core@1.1.0
+peerDependencyRules:
+  allowAny:
+    - vite
+  allowedVersions:
+    vite: "*"
+allowBuilds:
+  "@ast-grep/cli": true
+  "@openrouter/sdk": false
