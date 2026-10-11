@@ -95,7 +95,7 @@ const lintWithFake = (preset: PresetName): Effect.Effect<Run, PlatformError, Ser
         ...(yield* exampleFiles),
         "oxlint.config.ts": configSource({
           jsPlugins: ["./plugin.mjs"],
-          settings: { decision: { model: "fake/any", ci: "fail", maxMatchesPerFile: 100 } },
+          settings: { decision: { model: "fake/any", ci: "fail" } },
           rules: enabled("decision", presets[preset]),
         }),
       });

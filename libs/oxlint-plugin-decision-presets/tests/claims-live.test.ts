@@ -87,7 +87,6 @@ const claimsLive = (entry: Entry): Effect.Effect<void, unknown, Services> =>
           jsPlugins: [yield* fromRoot("dist", `${entry}.mjs`)],
           settings: {
             [PLUGIN_NAME]: {
-              maxMatchesPerFile: 100,
               model: LIVE_MODEL,
               timeoutMs: LIVE_TIMEOUT_MS,
             },

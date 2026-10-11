@@ -23,14 +23,12 @@ interface Collected {
   readonly contexts: Readonly<Record<string, Context>>;
   readonly rules: Readonly<Record<string, ResolvedRule>>;
   readonly matches: readonly Match[];
-  readonly dropped: readonly string[];
 }
 
 interface FileBatch extends Collected {
   readonly contexts: Record<string, Context>;
   readonly rules: Record<string, ResolvedRule>;
   readonly matches: Match[];
-  readonly dropped: string[];
   exiting: boolean;
   exits: number;
 }
@@ -116,24 +114,12 @@ const matchOf = (
 const contextOfRule = (batch: Collected, id: string): Context =>
   Option.getOrThrow(Option.fromUndefinedOr(batch.contexts[id]));
 
-const warnDropped = (batch: Collected, filename: string): void => {
-  if (Arr.isReadonlyArrayEmpty(batch.dropped)) {
-    return;
-  }
-  const dropped = batch.dropped.length;
-  warnOnce(
-    `capped:${filename}`,
-    `${String(batch.matches.length + dropped)} matches exceeded maxMatchesPerFile=${String(batch.options.maxMatchesPerFile)}, ${String(dropped)} not checked (${filename})`,
-  );
-};
-
 const finish = (batch: Collected): void => {
   const [first] = Object.values(batch.contexts);
   if (Predicate.isUndefined(first)) {
     return;
   }
   const models = availableModels(batch);
-  warnDropped(batch, first.filename);
   const deadline = Date.now() + batch.options.timeoutMs;
   for (const model of models) {
     const matches = batch.matches.filter(({ rule }) =>
@@ -163,7 +149,6 @@ const sharedFile = (optionsFor: OptionsFor, ruleFor: RuleFor): SharedFile => {
       contexts: {},
       rules: {},
       matches: [],
-      dropped: [],
       exiting: false,
       exits: 0,
     };
@@ -222,11 +207,7 @@ const visitorFor =
       if (isSkipped(context, node, rule)) {
         return;
       }
-      if (batch.matches.length >= batch.options.maxMatchesPerFile) {
-        batch.dropped.push(rule.id);
-      } else {
-        batch.matches.push(matchOf(context, node, { rule, options: batch.options }));
-      }
+      batch.matches.push(matchOf(context, node, { rule, options: batch.options }));
     };
 
     const nodeTypes: readonly string[] = TARGET_NODE_TYPES[target];

@@ -138,7 +138,7 @@ const askedWhere = (preset: Preset): Effect.Effect<void, unknown, Services> =>
         "oxlint.config.ts": configSource({
           ...EXAMPLES[preset].config,
           jsPlugins: ["./plugin.mjs"],
-          settings: { [PLUGIN_NAME]: { model: "fake/any", maxMatchesPerFile: 100 } },
+          settings: { [PLUGIN_NAME]: { model: "fake/any" } },
         }),
       });
       const run = yield* oxlint(
