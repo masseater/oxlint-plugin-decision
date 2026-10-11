@@ -1,5 +1,5 @@
-import { createDecisionPlugin } from "oxlint-plugin-decision";
-import type { DecisionPlugin } from "oxlint-plugin-decision";
+import { createDecisionPlugin } from "@r_masseater/oxlint-plugin-decision";
+import type { DecisionPlugin } from "@r_masseater/oxlint-plugin-decision";
 
 import type { Preset } from "./presets.ts";
 

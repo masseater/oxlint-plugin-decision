@@ -76,7 +76,13 @@ const lintWithFake = (preset: PresetName): Effect.Effect<Run, PlatformError, Ser
   Effect.scoped(
     Effect.gen(function* lint() {
       const fs = yield* FileSystem.FileSystem;
-      const core = yield* fromRoot("node_modules", "oxlint-plugin-decision", "dist", "index.mjs");
+      const core = yield* fromRoot(
+        "node_modules",
+        "@r_masseater",
+        "oxlint-plugin-decision",
+        "dist",
+        "index.mjs",
+      );
       const entry = yield* fromRoot("dist", "index.mjs");
       const cwd = yield* tempProject({
         "plugin.mjs": fakePlugin(core, entry, preset),
