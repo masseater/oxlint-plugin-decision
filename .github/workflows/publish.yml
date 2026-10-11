@@ -21,8 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: npm
     permissions:
-      contents: write
+      contents: read
       id-token: write
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      sha: ${{ steps.version.outputs.sha }}
     env:
       PACKAGES: >-
         libs/oxlint-plugin-decision
@@ -96,7 +99,7 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
-      - name: Tag the release
+      - name: Check the release tag is free
         if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -104,15 +107,9 @@ jobs:
           TAG: ${{ steps.version.outputs.tag }}
           SHA: ${{ steps.version.outputs.sha }}
         run: |
-          if existing="$(gh api "repos/$REPO/git/ref/tags/$TAG" --jq .object.sha 2>/dev/null)"; then
-            if [ "$existing" = "$SHA" ]; then
-              echo "$TAG already points to $SHA"
-            else
-              echo "::error::$TAG already points to $existing, not $SHA"
-              exit 1
-            fi
-          else
-            gh api "repos/$REPO/git/refs" -f ref="refs/tags/$TAG" -f sha="$SHA"
+          if existing="$(gh api "repos/$REPO/git/ref/tags/$TAG" --jq .object.sha 2>/dev/null)" && [ "$existing" != "$SHA" ]; then
+            echo "::error::$TAG already points to $existing, not $SHA"
+            exit 1
           fi
       - name: Publish
         working-directory: ${{ runner.temp }}
@@ -128,3 +125,28 @@ jobs:
             fi
             npm publish "$RUNNER_TEMP/packages/$(basename "$dir").tgz" --provenance --access public
           done
+
+  tag:
+    needs: publish
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Tag the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ needs.publish.outputs.tag }}
+          SHA: ${{ needs.publish.outputs.sha }}
+        run: |
+          if existing="$(gh api "repos/$REPO/git/ref/tags/$TAG" --jq .object.sha 2>/dev/null)"; then
+            if [ "$existing" = "$SHA" ]; then
+              echo "$TAG already points to $SHA"
+            else
+              echo "::error::$TAG already points to $existing, not $SHA"
+              exit 1
+            fi
+          else
+            gh api "repos/$REPO/git/refs" -f ref="refs/tags/$TAG" -f sha="$SHA"
+          fi
