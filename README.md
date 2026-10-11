@@ -3,6 +3,9 @@
 > [!WARNING]
 > These packages are experimental. Use at your own risk.
 
+> [!CAUTION]
+> Every match is a paid model request. Run the plugin only with the answer cache kept, lint only changed files, and exclude files you don't need, such as `node_modules` and `dist`. The authors take no responsibility for any cost incurred by running it as is over every file of a codebase. See [Cost and caching](libs/oxlint-plugin-decision/README.md#cost-and-caching).
+
 [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) rules written in plain English, answered by decision models on [OpenRouter](https://openrouter.ai).
 
 A rule is a question, such as "Does this call write personal data to a log?". The plugin sends each matching function, call, JSX element or file to a decision model through the OpenRouter Decisions API, gets back the probability of each answer, and reports a lint error when the answer clears the rule's cutoff.

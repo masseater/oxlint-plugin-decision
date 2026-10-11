@@ -3,6 +3,9 @@
 > [!WARNING]
 > This package is experimental. Use at your own risk.
 
+> [!CAUTION]
+> Every match is a paid model request. Run the plugin only with the answer cache kept, lint only changed files, and exclude files you don't need, such as `node_modules` and `dist`. The authors take no responsibility for any cost incurred by running it as is over every file of a codebase. See [Cost and caching](https://github.com/masseater/oxlint-plugin-decision/tree/main/libs/oxlint-plugin-decision#cost-and-caching).
+
 Ready-made [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) rules for [@r_masseater/oxlint-plugin-decision](https://www.npmjs.com/package/@r_masseater/oxlint-plugin-decision), answered by decision models on [OpenRouter](https://openrouter.ai).
 
 Each preset is a list of plain-English questions about your code. The plugin asks a decision model each question for every match and reports an error when the answer clears the rule's cutoff. Pick a preset to start linting without writing any rules, and add your own rules when you need them.
