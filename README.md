@@ -12,10 +12,10 @@ A rule is a question, such as "Does this call write personal data to a log?". Th
 
 ## Packages
 
-| Package                                                                              | Use it when                                                                                                                     |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| [`@r_masseater/oxlint-plugin-decision-presets`](libs/oxlint-plugin-decision-presets) | You want to start linting right away. It ships ready-made rules for logs, secrets, prompt injection and more, in three presets. |
-| [`@r_masseater/oxlint-plugin-decision`](libs/oxlint-plugin-decision)                 | You want to write your own rules. It is the plugin itself: the rule format, answer kinds, context, models and providers.        |
+| Package                                                                              | Use it when                                                                                                                    |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| [`@r_masseater/oxlint-plugin-decision-presets`](libs/oxlint-plugin-decision-presets) | You want to start linting right away. It ships ready-made rules for logs, secrets, prompt injection and more, in four presets. |
+| [`@r_masseater/oxlint-plugin-decision`](libs/oxlint-plugin-decision)                 | You want to write your own rules. It is the plugin itself: the rule format, answer kinds, context, models and providers.       |
 
 The presets package runs on top of `@r_masseater/oxlint-plugin-decision`, so you can start with a preset and add your own rules to it later.
 

@@ -48,27 +48,6 @@ A preset decides which rules the plugin registers. A rule turns on only when you
 
 The package root (`@r_masseater/oxlint-plugin-decision-presets`) is the `recommended` preset.
 
-To run `strict` and `review-only` together, load `review-only` under another name. Its rules are then `<name>/<id>`, and both read their settings from `settings["decision-presets"]`.
-
-```ts
-// oxlint.config.ts
-import { defineConfig } from "oxlint";
-
-export default defineConfig({
-  jsPlugins: [
-    "@r_masseater/oxlint-plugin-decision-presets/strict",
-    {
-      name: "decision-review",
-      specifier: "@r_masseater/oxlint-plugin-decision-presets/review-only",
-    },
-  ],
-  rules: {
-    "decision-presets/catch-hides-failure": "error",
-    "decision-review/comment-describes-declaration": "warn",
-  },
-});
-```
-
 ## Presets
 
 Every rule asks a yes/no question (answer kind `boolean`) unless its row says otherwise. "Asks about" is what each rule sends to the model, so it is also what each rule costs.
@@ -185,6 +164,31 @@ export default defineConfig({
 | `reinvents-builtin`           | Every function that is not an inline callback                            | A hand-written loop that re-implements a standard built-in.                              |
 
 The rules are also exported one by one, and as the list `aiSlopRules`, for your own plugin.
+
+## Run several presets together
+
+`recommended`, `strict` and `review-only` are one plugin, `decision-presets`, so only one of them can be loaded under that name. To run `strict` and `review-only` together, load `review-only` under another name. Its rules are then `<name>/<id>`, and both read their settings from `settings["decision-presets"]`. `ai-slop` has its own plugin name and loads next to any of them.
+
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: [
+    "@r_masseater/oxlint-plugin-decision-presets/strict",
+    {
+      name: "decision-review",
+      specifier: "@r_masseater/oxlint-plugin-decision-presets/review-only",
+    },
+    "@r_masseater/oxlint-plugin-decision-presets/ai-slop",
+  ],
+  rules: {
+    "decision-presets/catch-hides-failure": "error",
+    "decision-review/comment-describes-declaration": "warn",
+    "decision-ai-slop/placeholder-implementation": "error",
+  },
+});
+```
 
 ## Models
 
