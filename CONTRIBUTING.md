@@ -21,7 +21,7 @@ Inside the package:
 ```sh
 vp run build
 vp check            # format, lint, typecheck
-vp run test         # against a mock OpenRouter server
+vp run test         # against a mock OpenRouter server, with coverage (fails under 80% lines, branches, functions or statements)
 OPENROUTER_API_KEY=... vp run test:live   # the example against Span-01 Lite, a free model; checks it reports exactly fail.js's three violations and logs every answer's probability
 ```
 

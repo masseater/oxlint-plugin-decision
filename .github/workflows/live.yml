@@ -22,3 +22,6 @@ jobs:
       - run: vp run --filter @r_masseater/oxlint-plugin-decision test:live
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - run: vp run --filter @r_masseater/oxlint-plugin-decision-presets test:live
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
