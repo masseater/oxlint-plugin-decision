@@ -1,4 +1,4 @@
-import { Config, Effect, FileSystem, Option, Path, Stream } from "effect";
+import { Array as Arr, Config, Effect, FileSystem, Option, Path, Stream } from "effect";
 import type { Scope } from "effect";
 import type { PlatformError } from "effect/PlatformError";
 import { ChildProcess } from "effect/process";
@@ -73,6 +73,18 @@ const tempProject = (files: Env): Effect.Effect<string, PlatformError, Services 
 
 const PLUGIN_NAME = "decision-presets";
 
+const EXAMPLE_FILES = ["fail.js", "pass.js"] as const;
+
+const exampleFiles: Effect.Effect<Env, PlatformError, Services> = Effect.gen(function* read() {
+  const fs = yield* FileSystem.FileSystem;
+  const contents = yield* Effect.all(
+    EXAMPLE_FILES.map((name) =>
+      Effect.flatMap(fromRoot("example", name), (file) => fs.readFileString(file)),
+    ),
+  );
+  return Object.fromEntries(Arr.zip(EXAMPLE_FILES, contents));
+});
+
 const reportedLines = (run: Run, plugin: string): readonly string[] =>
   run.stdout.split("\n").filter((line) => line.includes(`/${plugin}(`));
 
@@ -85,11 +97,13 @@ const enabled = (
 const outputOf = (run: Run): string => `${run.stdout}${run.stderr}`;
 
 export {
+  EXAMPLE_FILES,
   FAILED,
   PASSED,
   PLUGIN_NAME,
   TIMEOUT,
   enabled,
+  exampleFiles,
   fromRoot,
   outputOf,
   oxlint,
