@@ -10,6 +10,8 @@ import type { OxlintRun, Services } from "./oxlint.ts";
 
 type Env = Readonly<Record<string, string>>;
 
+type MockTest<Value = void> = Effect.Effect<Value, unknown, Services | MockOpenRouter>;
+
 const TIMEOUT = 120_000;
 const PASSED = 0;
 const FAILED = 1;
@@ -82,4 +84,4 @@ export {
   questionCount,
   withMock,
 };
-export type { Env };
+export type { Env, MockTest };
