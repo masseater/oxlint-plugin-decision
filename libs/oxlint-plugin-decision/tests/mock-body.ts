@@ -1,4 +1,4 @@
-import { Schema } from "effect";
+import { Array as Arr, Option, Schema } from "effect";
 import { HttpServerResponse } from "effect/http";
 
 const BAD_REQUEST = 400;
@@ -44,13 +44,30 @@ const badState = HttpServerResponse.jsonUnsafe(
   { status: BAD_REQUEST },
 );
 
+const SECTION = /^state\.(?<kind>snippets|contexts)\.(?<ref>[^:\n]+):\n(?<text>[\s\S]*)$/u;
+
+const sectionsOf = (text: string, kind: string): Readonly<Record<string, string>> =>
+  Object.fromEntries(
+    text.split(/\n\n(?=state\.(?:snippets|contexts)\.)/u).flatMap((section) =>
+      Option.fromNullishOr(SECTION.exec(section)).pipe(
+        Option.flatMap((found) => Option.fromUndefinedOr(found.groups)),
+        Option.filter((groups) => groups["kind"] === kind),
+        Option.map((groups) => [String(groups["ref"]), String(groups["text"])] as const),
+        Option.toArray,
+      ),
+    ),
+  );
+
 const normalized = (raw: RawBody): Body => {
   if (typeof raw.state !== "string") {
     return { ...raw, state: raw.state };
   }
-  const text = raw.state;
-  const refs = Object.keys(raw.questions).filter((ref) => !ref.endsWith(LOCATION_SUFFIX));
-  return { ...raw, state: { snippets: Object.fromEntries(refs.map((ref) => [ref, text])) } };
+  const contexts = sectionsOf(raw.state, "contexts");
+  const snippets = sectionsOf(raw.state, "snippets");
+  if (Arr.isReadonlyArrayEmpty(Object.keys(contexts))) {
+    return { ...raw, state: { snippets } };
+  }
+  return { ...raw, state: { snippets, contexts } };
 };
 
 type Question = typeof QuestionSchema.Type;

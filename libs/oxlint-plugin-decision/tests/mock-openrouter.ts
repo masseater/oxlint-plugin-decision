@@ -9,7 +9,7 @@ const PII_MARKER = "user.email, user.phone";
 
 const MARKER_BY_QUESTION: Readonly<Record<string, string>> = {
   "personal data": PII_MARKER,
-  "only reads data": "loaded",
+  "reading or fetching data": "loaded",
   "language model": String.raw`refunds.\n\n`,
 };
 

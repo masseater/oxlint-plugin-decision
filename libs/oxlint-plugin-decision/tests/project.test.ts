@@ -108,6 +108,26 @@ const textState = Effect.gen(function* test() {
   strictEqual(decisionLines(run).length, ONE);
 });
 
+const textStatePerSnippet = Effect.gen(function* test() {
+  const env = yield* mockEnv("test-key");
+  const run = yield* lintProject({
+    files: { "log.js": `${LOG_LINE}console.log("done");\n` },
+    options: { model: "openrouter/respan/span-01-lite", rules: [callRule] },
+    env,
+  });
+  deepStrictEqual(
+    Arr.sort(
+      (yield* loggedRequests).map(({ sentState }) => JSON.stringify(sentState)),
+      Order.String,
+    ),
+    [
+      JSON.stringify("state.snippets.s0:\nconsole.log(user.email, user.phone)"),
+      JSON.stringify('state.snippets.s1:\nconsole.log("done")'),
+    ],
+  );
+  strictEqual(decisionLines(run).length, ONE);
+});
+
 const contextFor = (
   context: RuleContext,
   source = AROUND,
@@ -160,6 +180,11 @@ layer(NodeServices.layer, { excludeTestServices: true })("linting a project", (i
     TIMEOUT,
   );
   it.effect("sends Respan models their state as text", () => withMock(textState), TIMEOUT);
+  it.effect(
+    "asks Respan models about one snippet per request",
+    () => withMock(textStatePerSnippet),
+    TIMEOUT,
+  );
   it.effect("lets a rule override the default model", () => withMock(ruleModel), TIMEOUT);
   it.effect("sends the source a rule's context scope asks for", () => contexts, TIMEOUT);
 });
