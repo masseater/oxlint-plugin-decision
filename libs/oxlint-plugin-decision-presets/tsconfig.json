@@ -5,7 +5,7 @@
     "types": ["node"],
     "declaration": true,
     "paths": {
-      "oxlint-plugin-decision": ["../oxlint-plugin-decision/src/index.ts"]
+      "@r_masseater/oxlint-plugin-decision": ["../oxlint-plugin-decision/src/index.ts"]
     }
   }
 }

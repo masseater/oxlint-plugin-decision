@@ -1,4 +1,4 @@
-import { defineDecisionRule } from "oxlint-plugin-decision";
+import { defineDecisionRule } from "@r_masseater/oxlint-plugin-decision";
 
 const noPiiInLogs = defineDecisionRule({
   id: "no-pii-in-logs",
