@@ -21,6 +21,9 @@
     },
     "./package.json": "./package.json"
   },
+  "imports": {
+    "#src/*": "./src/*"
+  },
   "scripts": {
     "build": "vp pack",
     "dev": "vp pack --watch",

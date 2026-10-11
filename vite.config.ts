@@ -68,7 +68,7 @@ export default defineConfig({
             {
               from: "package",
               package: "effect",
-              name: ["Cause", "Context", "Effect", "Exit", "Layer", "Option"],
+              name: ["Cause", "Context", "Effect", "Exit", "Layer", "Option", "Ref", "Stream"],
             },
           ],
         },
@@ -78,7 +78,7 @@ export default defineConfig({
         "error",
         { capIsNewExceptionPattern: "^(Config|Context|Data|Schema)\\." },
       ],
-      "vitest/require-hook": ["error", { allowedFunctionCalls: ["runAsWorker"] }],
+      "vitest/require-hook": ["error", { allowedFunctionCalls: ["runAsWorker", "layer"] }],
       "typescript/no-empty-interface": ["error", { allowSingleExtends: true }],
       "typescript/no-empty-object-type": ["error", { allowInterfaces: "with-single-extends" }],
     },
