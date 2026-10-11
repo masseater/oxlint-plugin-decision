@@ -182,6 +182,9 @@ catalogs:
     '@oxlint/plugins':
       specifier: 1.87.0
       version: 1.87.0
+    '@tanstack/intent':
+      specifier: 0.5.5
+      version: 0.5.5
     '@types/node':
       specifier: 26.6.5
       version: 26.6.5
@@ -233,6 +236,9 @@ importers:
       '@effect/tsgo':
         specifier: catalog:stack
         version: 0.50.0
+      '@tanstack/intent':
+        specifier: 'catalog:'
+        version: 0.5.5
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.5
@@ -1002,6 +1008,11 @@ packages:
   '@simple-libs/stream-utils@2.0.0':
     resolution: {integrity: sha512-fCTuZK4QBa+39Oz9l4OGfJfz+GpwCp3AqO7Zch3to99xHPgstVsRFpeQ8LNd2o1Gv8raL2mCFwiaHh7bFSp5DQ==}
     engines: {node: '>=22'}
+
+  '@tanstack/intent@0.5.5':
+    resolution: {integrity: sha512-Ei5RqUWgV96HrezTEyDbScy0wZN+17dNo59Am8/3ncv0YIaIxApkiX5LkM488wxe4a1Imdi09nhjFxblxwLMSQ==}
+    engines: {node: '>=20.12.0'}
+    hasBin: true
 
   '@testing-library/dom@10.4.2':
     resolution: {integrity: sha512-yzr2S9HyAIdhz2/6qHgbs665Q7PKVcDF05vsOlHPxG1mo36gKVesdYVeDLnXgfjJ03CrKRk08knc6+E/9m8v2Q==}
@@ -2784,6 +2795,8 @@ snapshots:
       '@simple-libs/stream-utils': 2.0.0
 
   '@simple-libs/stream-utils@2.0.0': {}
+
+  '@tanstack/intent@0.5.5': {}
 
   '@testing-library/dom@10.4.2':
     dependencies:

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "baseline": "57a674a2d3ff7174b2c7de2390f3cfbccde0a50d",
+  "items": {
+    "skill:libs/oxlint-plugin-decision/skills/write-decision-rules/SKILL.md": {
+      "fingerprint": "f379a6baa3c53d0a95a665a3a9585351e561399aeb17964a729b54e2a4614102",
+      "snapshot": {
+        "libs/oxlint-plugin-decision/README.md": "475d940674a5d463da55e577fa3b69e244ad703fd77c3c6b5033961b37b96d6c",
+        "libs/oxlint-plugin-decision/example/fail.js": "6910d18929369823ec98c8ec67aa8b9a94b7e67415beea3b32fc8028535ec69a",
+        "libs/oxlint-plugin-decision/example/oxlint.config.ts": "0e3274a3e1b23100a00b6a5c973fbec1088758c15312a71859225fcac2ee35e9",
+        "libs/oxlint-plugin-decision/example/pass.js": "b5970e8765445185aed18f3e9780ab9b799de7fe925d003015d695ef47f2298a",
+        "libs/oxlint-plugin-decision/example/plugin.mjs": "8abae9d5a2421774c4c21e48c3751bb4fc1c0f25459de755a2ae6578b2f398bc",
+        "libs/oxlint-plugin-decision/skills/write-decision-rules/SKILL.md": "bfc3a1fbf971197561c4d6f4a7cbd925c1eeeb9b4dc4d9ed8f3d363771d3691a",
+        "libs/oxlint-plugin-decision/skills/write-decision-rules/references/providers.md": "7ee37751a7bc1bea65b5805e778219d2d805a954cf0cd66af482ef01f37819e7",
+        "libs/oxlint-plugin-decision/skills/write-decision-rules/references/tuning.md": "1022d90e2e54cd680084c7c18c7cd8ed6775d9772819a0ed77752f8d20874fc2",
+        "libs/oxlint-plugin-decision/src/answer.ts": "d30c3ab2abf52b58862e869984209aa4e3a3018519fb9ee0c2f62cdc465d0d07",
+        "libs/oxlint-plugin-decision/src/context.ts": "50e6dfce04ffba4bbeade8307b691070490f78758be8f8e51de4ddc4afe5c1ba",
+        "libs/oxlint-plugin-decision/src/define.ts": "55d06ec57d1599324215b5a229879b900442eb49343636e28531cf0903556d8a",
+        "libs/oxlint-plugin-decision/src/explain.ts": "cbf53d4fccfe61c32251a9672d2a7dd63648cd7e88c0a472d4dbde069656711d",
+        "libs/oxlint-plugin-decision/src/index.ts": "b695bd7a56ccc377cd7add2c0fd1b96240b192b28687d1de28d77e926d977700",
+        "libs/oxlint-plugin-decision/src/locate.ts": "f2bebbff776bc2f916beb41baf14d0533ec9415e41ef9e1820394fb3e5fb74ee",
+        "libs/oxlint-plugin-decision/src/name.ts": "ac2676740047dd4005a093aca2c6e90dfdf534eb236b5fe14754d3064285b5d3",
+        "libs/oxlint-plugin-decision/src/openrouter-worker.ts": "3cb3526c238b537a99acdd629ebd476a3a1ef8125f0d1150f25e44cd9e0c6897",
+        "libs/oxlint-plugin-decision/src/openrouter.ts": "52318e236534608b88d7e79ce29e2da1ffe0a988fe2b37433478ba16f0643cf7",
+        "libs/oxlint-plugin-decision/src/options.ts": "6d300dcf78bbe1698b2d6cd5008afa09f2181052d20e6cf77330906f6e3157ad",
+        "libs/oxlint-plugin-decision/src/override.ts": "1e249fddf660690b742fd3f75ee7aff98dbe6b3cee635ba38d8d860ea5fe0a1f",
+        "libs/oxlint-plugin-decision/src/plugin.ts": "05564167235a2dce6dcefd78da3337f3f3cbe5b93b8a0df357ff3297b01a8f9e",
+        "libs/oxlint-plugin-decision/src/report.ts": "6309d012d799dc28c0d30d24d052bcdda918d6aa70762a959190cdb58ccecd41",
+        "libs/oxlint-plugin-decision/src/request.ts": "f2109f00c89d57041f9478b7d697606a60cb5b1f1af108453b4c4b49ca6fbad8",
+        "libs/oxlint-plugin-decision/src/runtime.ts": "162aacca75fea5865b64922a87410c9141bc82a2a49e01b8068d80ba347f8d36",
+        "libs/oxlint-plugin-decision/src/types.ts": "39d6e3edd5b4b192feebfd47ea2c0e2e7b42a6c41d90f9d372b7b8161e315ab4",
+        "libs/oxlint-plugin-decision/src/visitor.ts": "6f91a5541504a166b1053ce51fb748d4a224419d9091d182deaf045599512937",
+        "libs/oxlint-plugin-decision/src/wire.ts": "c0b07ba291560e3f3b813d63aeaa2cbdcabe9fcb978ef4d6b13ef98fc4c0eabd"
+      },
+      "head": "57a674a2d3ff7174b2c7de2390f3cfbccde0a50d",
+      "outcome": "updated",
+      "reason": "First skill batch for the API package: write-decision-rules authored from src/, README.md and example/ at 57a674a, and the three planning records created for it. intent validate passed; a fresh-consumer task run was not performed and is recorded as unverified in skill_spec.md.",
+      "evidence": [
+        "Changed: libs/oxlint-plugin-decision/skills/write-decision-rules/SKILL.md, libs/oxlint-plugin-decision/skills/write-decision-rules/references/providers.md, libs/oxlint-plugin-decision/skills/write-decision-rules/references/tuning.md at 57a674a2d3ff7174b2c7de2390f3cfbccde0a50d"
+      ]
+    },
+    "planning:_artifacts": {
+      "fingerprint": "e78d6922427bbe11fcc8780a1fa3276e11e99994aa0143b54b189afab487024d",
+      "snapshot": {
+        "_artifacts/domain_map.yaml": "d1c7cdca6a60533883c966f71bd7708c34af2f9066baa8807a819b40b3e7498f",
+        "_artifacts/skill_spec.md": "6303c26d5697da70545e68c522b9f7613633f18e8f428ea231f1a41d436cdd6e",
+        "_artifacts/skill_tree.yaml": "715650f7320f338d006b856310ff9f32549488ad4c792c5f7e579cb08a1bb935",
+        "libs/oxlint-plugin-decision/README.md": "475d940674a5d463da55e577fa3b69e244ad703fd77c3c6b5033961b37b96d6c",
+        "libs/oxlint-plugin-decision/example/fail.js": "6910d18929369823ec98c8ec67aa8b9a94b7e67415beea3b32fc8028535ec69a",
+        "libs/oxlint-plugin-decision/example/oxlint.config.ts": "0e3274a3e1b23100a00b6a5c973fbec1088758c15312a71859225fcac2ee35e9",
+        "libs/oxlint-plugin-decision/example/pass.js": "b5970e8765445185aed18f3e9780ab9b799de7fe925d003015d695ef47f2298a",
+        "libs/oxlint-plugin-decision/example/plugin.mjs": "8abae9d5a2421774c4c21e48c3751bb4fc1c0f25459de755a2ae6578b2f398bc",
+        "libs/oxlint-plugin-decision/skills/write-decision-rules/SKILL.md": "bfc3a1fbf971197561c4d6f4a7cbd925c1eeeb9b4dc4d9ed8f3d363771d3691a",
+        "libs/oxlint-plugin-decision/skills/write-decision-rules/references/providers.md": "7ee37751a7bc1bea65b5805e778219d2d805a954cf0cd66af482ef01f37819e7",
+        "libs/oxlint-plugin-decision/skills/write-decision-rules/references/tuning.md": "1022d90e2e54cd680084c7c18c7cd8ed6775d9772819a0ed77752f8d20874fc2",
+        "libs/oxlint-plugin-decision/src/answer.ts": "d30c3ab2abf52b58862e869984209aa4e3a3018519fb9ee0c2f62cdc465d0d07",
+        "libs/oxlint-plugin-decision/src/context.ts": "50e6dfce04ffba4bbeade8307b691070490f78758be8f8e51de4ddc4afe5c1ba",
+        "libs/oxlint-plugin-decision/src/define.ts": "55d06ec57d1599324215b5a229879b900442eb49343636e28531cf0903556d8a",
+        "libs/oxlint-plugin-decision/src/explain.ts": "cbf53d4fccfe61c32251a9672d2a7dd63648cd7e88c0a472d4dbde069656711d",
+        "libs/oxlint-plugin-decision/src/index.ts": "b695bd7a56ccc377cd7add2c0fd1b96240b192b28687d1de28d77e926d977700",
+        "libs/oxlint-plugin-decision/src/locate.ts": "f2bebbff776bc2f916beb41baf14d0533ec9415e41ef9e1820394fb3e5fb74ee",
+        "libs/oxlint-plugin-decision/src/name.ts": "ac2676740047dd4005a093aca2c6e90dfdf534eb236b5fe14754d3064285b5d3",
+        "libs/oxlint-plugin-decision/src/openrouter-worker.ts": "3cb3526c238b537a99acdd629ebd476a3a1ef8125f0d1150f25e44cd9e0c6897",
+        "libs/oxlint-plugin-decision/src/openrouter.ts": "52318e236534608b88d7e79ce29e2da1ffe0a988fe2b37433478ba16f0643cf7",
+        "libs/oxlint-plugin-decision/src/options.ts": "6d300dcf78bbe1698b2d6cd5008afa09f2181052d20e6cf77330906f6e3157ad",
+        "libs/oxlint-plugin-decision/src/override.ts": "1e249fddf660690b742fd3f75ee7aff98dbe6b3cee635ba38d8d860ea5fe0a1f",
+        "libs/oxlint-plugin-decision/src/plugin.ts": "05564167235a2dce6dcefd78da3337f3f3cbe5b93b8a0df357ff3297b01a8f9e",
+        "libs/oxlint-plugin-decision/src/report.ts": "6309d012d799dc28c0d30d24d052bcdda918d6aa70762a959190cdb58ccecd41",
+        "libs/oxlint-plugin-decision/src/request.ts": "f2109f00c89d57041f9478b7d697606a60cb5b1f1af108453b4c4b49ca6fbad8",
+        "libs/oxlint-plugin-decision/src/runtime.ts": "162aacca75fea5865b64922a87410c9141bc82a2a49e01b8068d80ba347f8d36",
+        "libs/oxlint-plugin-decision/src/types.ts": "39d6e3edd5b4b192feebfd47ea2c0e2e7b42a6c41d90f9d372b7b8161e315ab4",
+        "libs/oxlint-plugin-decision/src/visitor.ts": "6f91a5541504a166b1053ce51fb748d4a224419d9091d182deaf045599512937",
+        "libs/oxlint-plugin-decision/src/wire.ts": "c0b07ba291560e3f3b813d63aeaa2cbdcabe9fcb978ef4d6b13ef98fc4c0eabd"
+      },
+      "head": "0aa6a0f11a50ece561b2353529dc3b73a39c5a64",
+      "outcome": "updated",
+      "reason": "Planning records now scope source review to the API package and record that the check runs inside vp run verify.",
+      "evidence": [
+        "Changed: _artifacts/skill_spec.md, _artifacts/skill_tree.yaml at 0aa6a0f11a50ece561b2353529dc3b73a39c5a64"
+      ]
+    }
+  }
+}

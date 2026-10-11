@@ -1,0 +1,59 @@
+library:
+  name: oxlint-plugin-decision-workspace
+  version: 0.0.0
+generated_from:
+  domain_map: _artifacts/domain_map.yaml
+  skill_spec: _artifacts/skill_spec.md
+review:
+  ignore:
+    [
+      pnpm-workspace.yaml,
+      .github/**,
+      .claude/**,
+      .vite-hooks/**,
+      .fallowrc.jsonc,
+      .gitignore,
+      .env.example,
+      vite.config.ts,
+      tsconfig.json,
+      tsconfig.base.json,
+      README.md,
+      CONTRIBUTING.md,
+      LICENSE,
+      NOTICE,
+      libs/oxlint-plugin-decision-presets/**,
+      libs/oxlint-plugin-decision/tests/**,
+      libs/oxlint-plugin-decision/vite.config.ts,
+      libs/oxlint-plugin-decision/tsconfig.json,
+      libs/oxlint-plugin-decision/LICENSE,
+      libs/oxlint-plugin-decision/NOTICE,
+    ]
+skills:
+  [
+    {
+      name: write-decision-rules,
+      slug: write-decision-rules,
+      domain: rule-authoring,
+      package: libs/oxlint-plugin-decision,
+      path: skills/write-decision-rules/SKILL.md,
+      description: "Use when writing, wiring up, or debugging lint rules for
+        @r_masseater/oxlint-plugin-decision: rules phrased as plain-English
+        questions that OpenRouter decision models answer about functions,
+        calls, JSX elements, or whole files in an Oxlint run. Covers
+        defineDecisionRule, createDecisionPlugin, enabling the rules in
+        oxlint.config.ts, select, answer kinds, context, per-rule models,
+        settings, explain mode, and keeping request cost under control. Also
+        use when someone wants a lint check that a pattern-based linter cannot
+        express. Not for choosing or enabling the ready-made rules in
+        @r_masseater/oxlint-plugin-decision-presets.\n",
+      sources: [src/**, README.md, example/**],
+      requires: [],
+      references: [references/providers.md, references/tuning.md],
+      purpose: "Teach an agent to author decision rules with
+        @r_masseater/oxlint-plugin-decision, load them into Oxlint, tune their
+        questions and cutoffs, and avoid the mistakes that silently report
+        nothing or send far more paid requests than intended.\n",
+    },
+  ]
+distribution:
+  mode: none

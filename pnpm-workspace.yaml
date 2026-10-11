@@ -12,6 +12,7 @@ catalog:
   "@effect/platform-node": 4.0.0
   "@effect/vitest": 4.0.0
   "@openrouter/sdk": 1.4.25
+  "@tanstack/intent": 0.5.5
   eslint-plugin-no-comments: 1.2.1
   oxlint: 1.87.0
   synckit: 0.12.1

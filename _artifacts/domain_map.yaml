@@ -1,0 +1,98 @@
+library:
+  name: oxlint-plugin-decision-workspace
+  version: 0.0.0
+  repository: https://github.com/masseater/oxlint-plugin-decision
+  description: Oxlint JS plugin that lints code with plain-English rules answered by decision models on OpenRouter.
+  primary_framework: framework-agnostic
+
+domains:
+  - name: Rule authoring
+    slug: rule-authoring
+    description: Writing decision rules, loading them into Oxlint, and tuning what they report and what they cost.
+
+skills:
+  - name: write-decision-rules
+    slug: write-decision-rules
+    domain: rule-authoring
+    description: Write decision rules with @r_masseater/oxlint-plugin-decision, enable them in oxlint.config.ts, and tune their questions, cutoffs and models.
+    type: core
+    packages:
+      - "@r_masseater/oxlint-plugin-decision"
+    covers:
+      - defineDecisionRule
+      - createDecisionPlugin
+      - defineProvider
+      - select
+      - answer kinds (boolean, classify, severity)
+      - context scopes
+      - file rule location
+      - plugin settings and per-rule model options
+      - explain mode
+      - cache and request cost
+    tasks:
+      - Define a decision rule and enable it in oxlint.config.ts
+      - Narrow matches, pick an answer kind and context
+      - Tune a question, cutoff or model with explain mode
+      - Ask a decision service other than OpenRouter through a custom provider
+    reference_candidates:
+      - topic: custom providers
+        reason: Only needed when a rule asks a service other than OpenRouter.
+      - topic: tuning and explain mode
+        reason: Only needed when a rule reports too much or too little, or when switching models.
+    failure_modes:
+      - mistake: API key passed in code or config
+        mechanism: Settings are decoded strictly and keys are read only from environment variables, so an apiKey setting throws at load.
+        wrong_pattern: |
+          createDecisionPlugin({ name: "team", apiKey: process.env.KEY, rules });
+        correct_pattern: |
+          createDecisionPlugin({ name: "team", env: { OPENROUTER_API_KEY: "TEAM_OPENROUTER_KEY" }, rules });
+        source: libs/oxlint-plugin-decision/src/options.ts
+        priority: HIGH
+        status: active
+      - mistake: Broad target without select on a whole codebase
+        mechanism: Every match is a paid request and the plugin has no cap, budget or include/exclude.
+        wrong_pattern: |
+          defineDecisionRule({ id: "x", target: "call", question: "...", cutoff: 0.8 });
+        correct_pattern: |
+          defineDecisionRule({ id: "x", target: "call", select: (node, { name }) => name === "fetch", question: "...", cutoff: 0.8 });
+        source: libs/oxlint-plugin-decision/README.md#cost-and-caching
+        priority: HIGH
+        status: active
+      - mistake: Decision rules enabled in the editor config
+        mechanism: The editor extension lints on every keystroke and each request blocks the language server.
+        wrong_pattern: |
+          // oxlint.config.ts read by the editor
+          rules: { "team/no-pii-in-logs": "error" }
+        correct_pattern: |
+          // oxlint.ci.config.ts
+          export default defineConfig({ extends: [base], rules: { "team/no-pii-in-logs": "error" } });
+        source: libs/oxlint-plugin-decision/README.md#in-the-editor
+        priority: HIGH
+        status: active
+      - mistake: Question where yes means the code is fine
+        mechanism: With the boolean answer a yes at or above cutoff is reported.
+        wrong_pattern: |
+          question: "Is this function named well?"
+        correct_pattern: |
+          question: "Does this function's name describe only reading data while its body also writes or sends something?"
+        source: libs/oxlint-plugin-decision/README.md#rules
+        priority: MEDIUM
+        status: active
+      - mistake: Rule id not lowercase-hyphenated or repeated
+        mechanism: The id is validated against a pattern and duplicates throw at load.
+        wrong_pattern: |
+          defineDecisionRule({ id: "noPII", ... });
+        correct_pattern: |
+          defineDecisionRule({ id: "no-pii", ... });
+        source: libs/oxlint-plugin-decision/src/options.ts
+        priority: MEDIUM
+        status: active
+
+tensions: []
+cross_references: []
+
+gaps:
+  - skill: presets
+    question: Whether @r_masseater/oxlint-plugin-decision-presets should ship its own skill.
+    context: The maintainer asked for skills on the API package only, so the presets package is out of scope for now.
+    status: open

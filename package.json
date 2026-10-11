@@ -4,15 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "verify": "vp check && vp run -r build && vp run -r test && vp run actions-lint && vp run fallow",
+    "verify": "vp check && vp run -r build && vp run -r test && vp run skills:check && vp run actions-lint && vp run fallow",
     "fallow": "fallow --production --quiet --format compact && fallow dead-code --no-production --quiet --format compact && fallow dupes --quiet --format compact && fallow security --fail-on-issues --quiet",
-    "prepare": "vp config"
+    "prepare": "vp config",
+    "skills:check": "intent validate libs/oxlint-plugin-decision/skills && intent maintainer check"
   },
   "devDependencies": {
     "@ast-grep/cli": "catalog:",
     "@commitlint/cli": "catalog:",
     "@commitlint/config-conventional": "catalog:",
     "@effect/tsgo": "catalog:stack",
+    "@tanstack/intent": "catalog:",
     "@types/node": "catalog:",
     "eslint-plugin-no-comments": "catalog:",
     "fallow": "catalog:stack",
