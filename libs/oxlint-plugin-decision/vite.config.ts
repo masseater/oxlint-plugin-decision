@@ -17,4 +17,13 @@ export default defineConfig({
       { extends: true, test: { name: "live", include: ["tests/live.test.ts"] } },
     ],
   },
+  run: {
+    tasks: {
+      "test:live": {
+        command: "vp test --project=live",
+        dependsOn: ["build"],
+        cache: false,
+      },
+    },
+  },
 });

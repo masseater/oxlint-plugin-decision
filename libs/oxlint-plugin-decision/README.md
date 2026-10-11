@@ -273,7 +273,7 @@ TypeScript and [Effect](https://effect.website), built with [Vite+](https://vite
 vp run build
 vp check            # format, lint, typecheck
 vp run test         # against a mock OpenRouter server
-OPENROUTER_API_KEY=... vp run test:live   # the example against Span-01 Lite, a free model
+OPENROUTER_API_KEY=... vp run test:live   # the example against Span-01 Lite, a free model; checks the API round trip, not answer quality
 ```
 
 ## License
