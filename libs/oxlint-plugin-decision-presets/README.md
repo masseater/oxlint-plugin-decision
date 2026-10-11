@@ -20,15 +20,18 @@ The plugin reads the key from the `OPENROUTER_API_KEY` environment variable; set
 
 Point `jsPlugins` at a preset and turn on its rules. Each rule is its own oxlint rule, named `decision-presets/<id>`, so you choose which ones run and at what severity. Settings such as `model`, `ci` and `timeoutMs` go under `settings["decision-presets"]` and apply to every rule of the preset.
 
-```json
-{
-  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
-  "rules": {
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
+  rules: {
     "decision-presets/no-pii-in-logs": "error",
     "decision-presets/no-prompt-injection": "error",
-    "decision-presets/no-hardcoded-secrets": "error"
-  }
-}
+    "decision-presets/no-hardcoded-secrets": "error",
+  },
+});
 ```
 
 A preset decides which rules the plugin registers. A rule turns on only when you list it under `rules`.
@@ -63,32 +66,48 @@ The presets use the plugin's default model, `openrouter/~typesafe/jev-latest`, w
 
 Respan models, such as the free `openrouter/respan/span-01-lite`, answer only yes/no questions. The plugin asks them `untrusted-input-risk` (a `severity` rule) and `stale-comment` (a `classify` rule) as one yes/no question per level or label, so every preset works with them.
 
-```json
-{
-  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
-  "settings": { "decision-presets": { "model": "openrouter/respan/span-01-lite" } },
-  "rules": {
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["@r_masseater/oxlint-plugin-decision-presets/recommended"],
+  settings: {
+    "decision-presets": {
+      model: "openrouter/respan/span-01-lite",
+    },
+  },
+  rules: {
     "decision-presets/no-pii-in-logs": "error",
     "decision-presets/no-prompt-injection": "error",
-    "decision-presets/no-hardcoded-secrets": "error"
-  }
-}
+    "decision-presets/no-hardcoded-secrets": "error",
+  },
+});
 ```
 
 To run one rule on a different model, give that rule a `model` in its options. Options next to the severity override the preset's settings for that rule only.
 
-```json
-{
-  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/strict"],
-  "settings": { "decision-presets": { "model": "openrouter/respan/span-01-lite" } },
-  "rules": {
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["@r_masseater/oxlint-plugin-decision-presets/strict"],
+  settings: {
+    "decision-presets": {
+      model: "openrouter/respan/span-01-lite",
+    },
+  },
+  rules: {
     "decision-presets/no-pii-in-logs": "error",
     "decision-presets/untrusted-input-risk": [
       "error",
-      { "model": "openrouter/~typesafe/jev-latest" }
-    ]
-  }
-}
+      {
+        model: "openrouter/~typesafe/jev-latest",
+      },
+    ],
+  },
+});
 ```
 
 Each model is asked only about the rules that use it. See [Rule options](https://github.com/masseater/oxlint-plugin-decision/tree/main/libs/oxlint-plugin-decision#rule-options) in the plugin README.
@@ -156,11 +175,18 @@ jev-lint also has rules that look across files (module naming, failure paths no 
 
 This entry is its own plugin, named `decision-ai-slop`, so its rules are `decision-ai-slop/<id>` and its settings go under `settings["decision-ai-slop"]`.
 
-```json
-{
-  "jsPlugins": ["@r_masseater/oxlint-plugin-decision-presets/ai-slop"],
-  "settings": { "decision-ai-slop": { "maxMatchesPerFile": 100 } },
-  "rules": {
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["@r_masseater/oxlint-plugin-decision-presets/ai-slop"],
+  settings: {
+    "decision-ai-slop": {
+      maxMatchesPerFile: 100,
+    },
+  },
+  rules: {
     "decision-ai-slop/redundant-guard": "warn",
     "decision-ai-slop/default-masks-missing-value": "warn",
     "decision-ai-slop/pass-through-wrapper": "warn",
@@ -170,9 +196,9 @@ This entry is its own plugin, named `decision-ai-slop`, so its rules are `decisi
     "decision-ai-slop/doc-restates-signature": "warn",
     "decision-ai-slop/cast-instead-of-narrowing": "warn",
     "decision-ai-slop/suppression-instead-of-fix": "warn",
-    "decision-ai-slop/reinvents-builtin": "warn"
-  }
-}
+    "decision-ai-slop/reinvents-builtin": "warn",
+  },
+});
 ```
 
 | Id                            | Asks about                                                               | Reports                                                                                  |
@@ -214,17 +240,20 @@ export default createDecisionPlugin({
 });
 ```
 
-```json
-{
-  "jsPlugins": ["./decision.mjs"],
-  "rules": {
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["./decision.mjs"],
+  rules: {
     "team/no-pii-in-logs": "error",
     "team/no-prompt-injection": "error",
     "team/no-hardcoded-secrets": "error",
     "team/stale-comment": "warn",
-    "team/no-direct-db-in-handlers": "error"
-  }
-}
+    "team/no-direct-db-in-handlers": "error",
+  },
+});
 ```
 
 ## License

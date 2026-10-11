@@ -115,6 +115,8 @@ const writeProject = (
     return dir;
   });
 
+const configSource = (config: object): string => `export default ${JSON.stringify(config)};\n`;
+
 const ruleEntry = (options: object | undefined): unknown =>
   Option.match(Option.fromUndefinedOr(options), {
     onNone: () => "error",
@@ -143,7 +145,7 @@ const projectFilesFor = (
   pluginPath.pipe(
     Effect.map((plugin) => ({
       "plugin.mjs": `import { createDecisionPlugin } from ${JSON.stringify(plugin)};\n\nexport default createDecisionPlugin(${setupSource(setup)});\n`,
-      ".oxlintrc.json": JSON.stringify({
+      "oxlint.config.ts": configSource({
         jsPlugins: ["./plugin.mjs"],
         rules: Object.fromEntries(
           setup.rules.map(({ id }) => [`decision/${id}`, ruleEntry(ruleOptions[id])]),
@@ -198,6 +200,7 @@ const firstSpan = (diagnostic: OxlintDiagnostic): OxlintSpan =>
 
 export {
   cacheDirOf,
+  configSource,
   decisionLines,
   diagnosticsOf,
   firstSpan,

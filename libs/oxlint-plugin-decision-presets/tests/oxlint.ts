@@ -71,6 +71,8 @@ const tempProject = (files: Env): Effect.Effect<string, PlatformError, Services 
     return dir;
   });
 
+const configSource = (config: object): string => `export default ${JSON.stringify(config)};\n`;
+
 const PLUGIN_NAME = "decision-presets";
 
 const EXAMPLE_FILES = ["fail.js", "pass.js"] as const;
@@ -102,6 +104,7 @@ export {
   PASSED,
   PLUGIN_NAME,
   TIMEOUT,
+  configSource,
   enabled,
   exampleFiles,
   fromRoot,

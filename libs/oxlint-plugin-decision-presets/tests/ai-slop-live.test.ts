@@ -7,6 +7,7 @@ import { aiSlopRules } from "#src/ai-slop.ts";
 
 import {
   TIMEOUT,
+  configSource,
   enabled,
   fromRoot,
   outputOf,
@@ -79,7 +80,7 @@ const aiSlopLive = Effect.scoped(
     const cwd = yield* tempProject({
       "fail.ts": yield* fs.readFileString(`${example}/fail.ts`),
       "pass.ts": yield* fs.readFileString(`${example}/pass.ts`),
-      ".oxlintrc.json": JSON.stringify({
+      "oxlint.config.ts": configSource({
         jsPlugins: [yield* fromRoot("dist", "ai-slop.mjs")],
         rules: enabled(AI_SLOP, aiSlopRules),
         settings: {
@@ -89,7 +90,7 @@ const aiSlopLive = Effect.scoped(
     });
     const run = yield* oxlint(
       cwd,
-      ["--format", "unix", "-c", ".oxlintrc.json", "fail.ts", "pass.ts"],
+      ["--format", "unix", "-c", "oxlint.config.ts", "fail.ts", "pass.ts"],
       { ...(yield* forwardedEnv), OPENROUTER_API_KEY: Redacted.value(key) },
     );
     yield* Effect.log(outputOf(run));

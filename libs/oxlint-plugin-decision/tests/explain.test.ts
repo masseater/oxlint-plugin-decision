@@ -141,7 +141,7 @@ const cachedOnSecondRun = Effect.scoped(
     });
     const lint = runOxlint({
       cwd,
-      args: ["--format", "unix", "-c", ".oxlintrc.json", "log.js"],
+      args: ["--format", "unix", "-c", "oxlint.config.ts", "log.js"],
       env,
     });
     const first = yield* lint;

@@ -56,7 +56,7 @@ const badRuleOptions = Effect.gen(function* test() {
   assertInclude(outputOf(run), 'model "nowhere" must be "<provider>/<model>"');
 });
 
-layer(NodeServices.layer)("rule options in .oxlintrc.json", (it) => {
+layer(NodeServices.layer)("rule options in the oxlint config", (it) => {
   it.effect(
     "override one rule's model and keep the others on the plugin model",
     () => withMock(perRuleModel),
