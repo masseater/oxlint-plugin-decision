@@ -28,7 +28,7 @@ const nameMatchesBehavior = defineDecisionRule({
   id: "name-matches-behavior",
   target: "function",
   question:
-    "Does this function's name imply it only reads data, while its body also writes or sends something?",
+    "Does this function's name describe only reading or fetching data (for example get, find, load or fetch), while its body also writes, logs or sends something?",
   cutoff: 0.6,
 });
 

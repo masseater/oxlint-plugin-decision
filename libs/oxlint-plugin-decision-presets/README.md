@@ -37,15 +37,15 @@ The package root (`oxlint-plugin-decision-presets`) is the `recommended` preset.
 
 ## Rules
 
-| Id                      | Target     | Asks                                                                                    |
-| ----------------------- | ---------- | --------------------------------------------------------------------------------------- |
-| `no-pii-in-logs`        | `call`     | Does this call write personal data to a log or console?                                 |
-| `no-prompt-injection`   | `function` | Does this function concatenate untrusted user input into a language model prompt?       |
-| `no-hardcoded-secrets`  | `file`     | Does this file contain a hard-coded secret as a literal value?                          |
-| `name-matches-behavior` | `function` | Does the name imply a read-only function while the body also writes or sends something? |
-| `no-swallowed-errors`   | `function` | Does this function catch an error and drop it?                                          |
-| `untrusted-input-risk`  | `function` | How severe is the way this function handles untrusted input? Reports `warn` and above.  |
-| `stale-comment`         | `function` | Does the comment above the function describe behavior the code no longer has?           |
+| Id                      | Target     | Asks                                                                                         |
+| ----------------------- | ---------- | -------------------------------------------------------------------------------------------- |
+| `no-pii-in-logs`        | `call`     | Does this call write personal data to a log or console?                                      |
+| `no-prompt-injection`   | `function` | Does this function concatenate untrusted user input into a language model prompt?            |
+| `no-hardcoded-secrets`  | `file`     | Does this file contain a hard-coded secret as a literal value?                               |
+| `name-matches-behavior` | `function` | Does a read-only name (get, find, load, fetch) hide a body that also writes, logs, or sends? |
+| `no-swallowed-errors`   | `function` | Does this function catch an error and drop it?                                               |
+| `untrusted-input-risk`  | `function` | How severe is the way this function handles untrusted input? Reports `warn` and above.       |
+| `stale-comment`         | `function` | Does the comment above the function describe behavior the code no longer has?                |
 
 ## Mix presets with your own rules
 

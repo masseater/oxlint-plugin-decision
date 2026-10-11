@@ -29,7 +29,7 @@ const MARKERS = {
   "personal data": "user.email, user.phone",
   "language model prompt": "complete(`",
   "hard-coded secret": "sk_live_",
-  "only reads data": '"loaded"',
+  "only reading or fetching": '"loaded"',
   "drop it": "catch {}",
   "untrusted input": "complete(`",
 } as const;
