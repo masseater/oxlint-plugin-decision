@@ -18,7 +18,7 @@ export default defineConfig({
       include: ["src/**", "dist/**/*.mjs"],
       excludeAfterRemap: true,
       autoAttachSubprocess: true,
-      reporter: ["text-summary", "text"],
+      reporter: ["text-summary", "json"],
     },
     projects: [
       {

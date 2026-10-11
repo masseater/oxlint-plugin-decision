@@ -10,6 +10,7 @@ const TIMEOUT_MS = 5;
 
 const options: ResolvedOptions = {
   ci: "fail",
+  explain: false,
   timeoutMs: TIMEOUT_MS,
   maxMatchesPerFile: 1,
   maxSnippetChars: 1,

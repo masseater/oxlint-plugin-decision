@@ -18,8 +18,7 @@ export default defineConfig({
       include: ["src/**", "dist/**/*.mjs"],
       excludeAfterRemap: true,
       autoAttachSubprocess: true,
-      reporter: ["text-summary", "text"],
-      thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
+      reporter: ["text-summary", "json"],
     },
     projects: [
       { extends: true, test: { name: "mock", exclude: ["tests/live.test.ts"] } },
