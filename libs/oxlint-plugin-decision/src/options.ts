@@ -2,7 +2,6 @@ import type { Location } from "@oxlint/plugins";
 import { Array as Arr, Option, Predicate, Result, Schema, String as Str } from "effect";
 
 import { BOOLEAN_ANSWER, decodeRuleAnswer } from "./answer.ts";
-import { nameProblemOf } from "./name.ts";
 import type {
   AstNode,
   DecisionOptions,
@@ -69,6 +68,8 @@ const DEFAULTS = {
   explain: false,
 } as const satisfies Required<DecisionOptions>;
 
+const isSelector = (input: unknown): input is DecisionRule["select"] => Predicate.isFunction(input);
+
 const RULE_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 
 const ModelSpecSchema = Schema.Union([
@@ -125,7 +126,7 @@ const RuleSchema = Schema.Struct({
   question: Schema.NonEmptyString,
   cutoff: Probability,
   message: Schema.optionalKey(Schema.NonEmptyString),
-  nameMatches: Schema.optionalKey(Schema.instanceOf(RegExp)),
+  select: Schema.optionalKey(Schema.declare(isSelector)),
   location: Schema.optionalKey(
     Schema.Struct({ question: Schema.NonEmptyString, cutoff: LocationCutoff }),
   ),
@@ -205,9 +206,6 @@ const checkRule = (rule: DecisionRule): DecisionRule => {
   if (Predicate.isNotUndefined(rule.location) && rule.target !== "file") {
     throw new OptionsError("location is supported only for file rules");
   }
-  Option.map(nameProblemOf(rule), (problem) => {
-    throw new OptionsError(problem);
-  });
   answerOf(rule);
   return rule;
 };

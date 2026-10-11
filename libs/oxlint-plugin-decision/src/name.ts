@@ -1,63 +1,46 @@
 import type { Context } from "@oxlint/plugins";
-import { Option } from "effect";
+import { Match, Option } from "effect";
 
-import type { AstNode, DecisionRule, Target } from "./types.ts";
+import type { DecisionRule, SelectedNode } from "./types.ts";
 
-const HOLDERS: Readonly<Record<string, readonly ["init" | "value", "id" | "key"]>> = {
-  VariableDeclarator: ["init", "id"],
-  Property: ["value", "key"],
-  MethodDefinition: ["value", "key"],
-  PropertyDefinition: ["value", "key"],
-};
+const none = (): Option.Option<SelectedNode> => Option.none();
 
-const holderNameOf = (node: AstNode): Option.Option<AstNode> =>
-  Option.fromNullishOr(node.parent).pipe(
-    Option.flatMap((parent) =>
-      Option.flatMap(Option.fromUndefinedOr(HOLDERS[parent.type]), ([held, name]) =>
-        Option.filter(Option.fromNullishOr(parent[name]), () => parent[held] === node),
+const heldName = (node: SelectedNode): Option.Option<SelectedNode> =>
+  Option.flatMap(Option.fromNullishOr(node.parent), (parent) =>
+    Match.value(parent).pipe(
+      Match.when({ type: "VariableDeclarator" }, (holder) =>
+        Option.liftPredicate(holder.id, () => holder.init === node),
       ),
+      Match.when(
+        { type: Match.is("Property", "MethodDefinition", "PropertyDefinition") },
+        (holder) => Option.liftPredicate(holder.key, () => holder.value === node),
+      ),
+      Match.orElse(none),
     ),
   );
 
-const NAME_NODES = {
-  function: (node: AstNode) =>
-    Option.orElse(Option.fromNullishOr(node.id), () => holderNameOf(node)),
-  call: (node: AstNode) => Option.fromUndefinedOr(node.callee),
-  jsx: (node: AstNode) =>
-    Option.flatMap(Option.fromNullishOr(node.openingElement), (opening) =>
-      Option.fromUndefinedOr(opening.name),
+const nameNodeOf = (node: SelectedNode): Option.Option<SelectedNode> =>
+  Match.value(node).pipe(
+    Match.when({ type: Match.is("FunctionDeclaration", "FunctionExpression") }, (fn) =>
+      Option.orElse(Option.fromNullishOr(fn.id), () => heldName(fn)),
     ),
-  file: () => Option.none(),
-} as const satisfies Readonly<Record<Target, (node: AstNode) => Option.Option<AstNode>>>;
+    Match.when({ type: "ArrowFunctionExpression" }, heldName),
+    Match.when({ type: Match.is("CallExpression", "NewExpression") }, (call) =>
+      Option.some(call.callee),
+    ),
+    Match.when({ type: "JSXElement" }, (element) => Option.some(element.openingElement.name)),
+    Match.orElse(none),
+  );
 
-const STATEFUL_FLAGS = /[gy]/u;
+const nameOf = (node: SelectedNode, context: Context): string | undefined =>
+  Option.getOrUndefined(
+    Option.map(nameNodeOf(node), (name) => context.sourceCode.text.slice(name.start, name.end)),
+  );
 
-const nameProblemOf = ({
-  id,
-  target,
-  nameMatches,
-}: Pick<DecisionRule, "id" | "target" | "nameMatches">): Option.Option<string> =>
-  Option.flatMap(Option.fromUndefinedOr(nameMatches), ({ flags }) => {
-    if (target === "file") {
-      return Option.some("nameMatches is not supported for file rules");
-    }
-    return Option.liftPredicate(
-      `rule "${id}" has a nameMatches with the g or y flag, which makes repeated tests disagree`,
-      () => STATEFUL_FLAGS.test(flags),
-    );
-  });
-
-const isNamedMatch = (
-  context: Context,
-  node: AstNode,
-  { target, nameMatches }: Pick<DecisionRule, "target" | "nameMatches">,
-): boolean =>
-  Option.match(Option.fromUndefinedOr(nameMatches), {
+const isSelected = (context: Context, node: SelectedNode, { select }: DecisionRule): boolean =>
+  Option.match(Option.fromUndefinedOr(select), {
     onNone: () => true,
-    onSome: (pattern) =>
-      Option.exists(NAME_NODES[target](node), (name) =>
-        pattern.test(context.sourceCode.getText(name)),
-      ),
+    onSome: (selects) => selects(node, { name: nameOf(node, context), context }),
   });
 
-export { isNamedMatch, nameProblemOf };
+export { isSelected };

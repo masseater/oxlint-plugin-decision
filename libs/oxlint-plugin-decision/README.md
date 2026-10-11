@@ -70,20 +70,20 @@ The rules you turn on share one request per file and model, so turning on more r
 
 ### Rules
 
-| Field         | What it is                                                                                            |
-| ------------- | ----------------------------------------------------------------------------------------------------- |
-| `id`          | The oxlint rule name after `<plugin name>/`. Lowercase words joined by hyphens, unique in the plugin. |
-| `target`      | `"function"`, `"call"`, `"jsx"`, or `"file"`.                                                         |
-| `question`    | The question, in English. With the default answer kind, "yes" means "report this".                    |
-| `cutoff`      | 0 to 1. The probability the reported answer needs, at or above.                                       |
-| `message`     | Optional. A short sentence the error shows instead of the question.                                   |
-| `nameMatches` | Optional. A `RegExp` the match's name must satisfy. See [Names](#names).                              |
-| `answer`      | Optional. What kind of answer to ask for. See [Answers](#answers). Defaults to `{ kind: "boolean" }`. |
-| `context`     | Optional. Extra source the model reads around the match. See [Context](#context).                     |
-| `model`       | Optional. Overrides the plugin's `model` for this rule. See [Rule options](#rule-options).            |
-| `location`    | Optional for file rules: a source-location `question` and a `cutoff` greater than 0.5 and at most 1.  |
+| Field      | What it is                                                                                                           |
+| ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| `id`       | The oxlint rule name after `<plugin name>/`. Lowercase words joined by hyphens, unique in the plugin.                |
+| `target`   | `"function"`, `"call"`, `"jsx"`, or `"file"`.                                                                        |
+| `question` | The question, in English. With the default answer kind, "yes" means "report this".                                   |
+| `cutoff`   | 0 to 1. The probability the reported answer needs, at or above.                                                      |
+| `message`  | Optional. A short sentence the error shows instead of the question.                                                  |
+| `select`   | Optional. A function of the AST node that says whether to ask about it. See [Selecting matches](#selecting-matches). |
+| `answer`   | Optional. What kind of answer to ask for. See [Answers](#answers). Defaults to `{ kind: "boolean" }`.                |
+| `context`  | Optional. Extra source the model reads around the match. See [Context](#context).                                    |
+| `model`    | Optional. Overrides the plugin's `model` for this rule. See [Rule options](#rule-options).                           |
+| `location` | Optional for file rules: a source-location `question` and a `cutoff` greater than 0.5 and at most 1.                 |
 
-`target` decides what the model gets to read. There is no selector syntax and no other target; `nameMatches` narrows a target down by name.
+`target` decides what the model gets to read. There is no selector syntax and no other target; `select` narrows a target down by looking at the AST.
 
 | Target       | The model sees                                                                                               | The error underlines |
 | ------------ | ------------------------------------------------------------------------------------------------------------ | -------------------- |
@@ -94,27 +94,39 @@ The rules you turn on share one request per file and model, so turning on more r
 
 The wording of the question is the rule, so be precise about what counts. "Does this send personal data" also fires on a legitimate `mailer.send(user.email, ...)`. "To a log or console" does not.
 
-### Names
+### Selecting matches
 
-`nameMatches` asks only about matches whose name satisfies a `RegExp` (without the `g` or `y` flag). The name is plain source text, so a parser decides which code is worth a question before any request is sent.
+`select` decides from the AST which matches are worth a question, before any request is sent. It gets the matched ESTree node, as oxlint parsed it, and returns `true` to ask about it. Matches it rejects cost nothing.
 
-| Target       | The name tested                                                                                         |
-| ------------ | ------------------------------------------------------------------------------------------------------- |
-| `"function"` | The function's own name, or the binding, property, or method that holds it. Anonymous ones never match. |
-| `"call"`     | The callee as written, such as `console.error` or `it.only`.                                            |
-| `"jsx"`      | The tag name, such as `Button` or `motion.div`.                                                         |
+The second argument carries `context`, the oxlint rule context, and `name`, the match's name as source text, or `undefined` when it has none:
 
-File rules have no name and refuse `nameMatches`.
+| Target       | `name`                                                                      |
+| ------------ | --------------------------------------------------------------------------- |
+| `"function"` | The function's own name, or the binding, property, or method that holds it. |
+| `"call"`     | The callee as written, such as `console.error` or `it.only`.                |
+| `"jsx"`      | The tag name, such as `Button` or `motion.div`.                             |
+| `"file"`     | Always `undefined`.                                                         |
 
 ```js
 defineDecisionRule({
   id: "pure-name-is-pure",
   target: "function",
-  nameMatches: /^(compute|calculate|derive|format|to|parse)([A-Z0-9_]|$)/u,
+  select: (node, { name }) => name !== undefined && name.startsWith("compute"),
   question:
     "This function's name presents it as a pure computation, but its body changes state outside itself or performs I/O.",
   message: "The name promises a pure computation, but the body has side effects.",
   cutoff: 0.54,
+});
+
+defineDecisionRule({
+  id: "test-proves-its-name",
+  target: "call",
+  select: (node) =>
+    node.type === "CallExpression" &&
+    node.callee.type === "Identifier" &&
+    ["it", "test"].includes(node.callee.name),
+  question: "Would this test still pass if the behaviour its name claims were broken?",
+  cutoff: 0.7,
 });
 ```
 

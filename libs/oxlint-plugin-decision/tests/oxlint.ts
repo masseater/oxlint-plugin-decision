@@ -121,18 +121,20 @@ const ruleEntry = (options: object | undefined): unknown =>
     onSome: (value) => ["error", value],
   });
 
-const REGEXP_KEY = "\u0000regexp";
-const SERIALIZED_REGEXP = /\{"\\u0000regexp":\[(?<source>"(?:[^"\\]|\\.)*"),"(?<flags>\w*)"\]\}/gu;
+const FUNCTION_KEY = "\u0000function";
+const SERIALIZED_FUNCTION = /\{"\\u0000function":(?<source>"(?:[^"\\]|\\.)*")\}/gu;
 
-const withRegExps = (_key: string, value: unknown): unknown => {
-  if (Predicate.isRegExp(value)) {
-    return { [REGEXP_KEY]: [value.source, value.flags] };
+const withFunctions = (_key: string, value: unknown): unknown => {
+  if (Predicate.isFunction(value)) {
+    return { [FUNCTION_KEY]: String(value) };
   }
   return value;
 };
 
 const setupSource = (setup: DecisionPluginSetup): string =>
-  JSON.stringify(setup, withRegExps).replaceAll(SERIALIZED_REGEXP, 'new RegExp($1, "$2")');
+  JSON.stringify(setup, withFunctions).replaceAll(SERIALIZED_FUNCTION, (_match, source: string) =>
+    String(JSON.parse(source)),
+  );
 
 const projectFilesFor = (
   setup: DecisionPluginSetup,

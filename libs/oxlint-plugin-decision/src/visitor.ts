@@ -2,7 +2,7 @@ import type { Context, VisitorWithHooks } from "@oxlint/plugins";
 import { Array as Arr, Option, Predicate } from "effect";
 
 import { commentedSnippetOf, contextOf, lacksComment } from "./context.ts";
-import { isNamedMatch } from "./name.ts";
+import { isSelected } from "./name.ts";
 import { OptionsError, REPORT_LOC, TARGET_NODE_TYPES, snippetNodeFor } from "./options.ts";
 import { reportModel } from "./report.ts";
 import { truncateSnippet } from "./request.ts";
@@ -14,6 +14,7 @@ import type {
   ModelRef,
   ResolvedOptions,
   ResolvedRule,
+  SelectedNode,
   Target,
 } from "./types.ts";
 
@@ -203,15 +204,17 @@ const sharedFile = (optionsFor: OptionsFor, ruleFor: RuleFor): SharedFile => {
   };
 };
 
-const isSkipped = (context: Context, node: AstNode, rule: ResolvedRule): boolean =>
-  !isNamedMatch(context, node, rule) || lacksComment(context, node, rule);
+type Visited = SelectedNode & AstNode;
+
+const isSkipped = (context: Context, node: Visited, rule: ResolvedRule): boolean =>
+  !isSelected(context, node, rule) || lacksComment(context, node, rule);
 
 const visitorFor =
   (shared: SharedFile, { id, target }: { readonly id: string; readonly target: Target }) =>
   (context: Context): VisitorWithHooks => {
     let file: Option.Option<RuleFile> = Option.none();
 
-    const collect = (node: AstNode): void => {
+    const collect = (node: Visited): void => {
       if (Option.isNone(file)) {
         return;
       }
@@ -232,12 +235,12 @@ const visitorFor =
       ...Object.fromEntries(
         nodeTypes.map((type) => [
           type,
-          (node: AstNode): void => {
+          (node: Visited): void => {
             collect(node);
           },
         ]),
       ),
-      Program: (node: AstNode): void => {
+      Program: (node: Visited): void => {
         file = Option.some(shared.join(context, id));
         if (target === "file") {
           collect(node);
