@@ -37,6 +37,7 @@ const RANGE_KEY = /^L(?<start>\d+)(?:-L(?<end>\d+))?$/u;
 
 interface LoggedRequest {
   readonly authorization: string;
+  readonly app: Readonly<Record<"referer" | "title" | "visibility", string>>;
   readonly body: Body;
   readonly sentState: RawBody["state"];
 }
@@ -231,7 +232,17 @@ const handler = (
     const authorization = Option.getOrElse(lookup(request.headers, "authorization"), () => "");
     const token = authorization.replace("Bearer ", "");
     const body = normalized(raw);
-    yield* Ref.update(state.log, (log) => [...log, { authorization, body, sentState: raw.state }]);
+    const header = (name: string): string =>
+      Option.getOrElse(lookup(request.headers, name), () => "");
+    const app = {
+      referer: header("http-referer"),
+      title: header("x-openrouter-title"),
+      visibility: header("x-openrouter-app-visibility"),
+    };
+    yield* Ref.update(state.log, (log) => [
+      ...log,
+      { authorization, app, body, sentState: raw.state },
+    ]);
     return yield* Option.match(rejectionOf(raw), {
       onSome: Effect.succeed,
       onNone: () => Effect.flatMap(countHit(state, token), (hits) => replyFor(body, token, hits)),

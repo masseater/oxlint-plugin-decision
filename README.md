@@ -143,6 +143,7 @@ More on what drives the cost:
 - A list of models multiplies the requests: each model answers every match.
 - Answers are cached on disk under `node_modules/.cache/oxlint-plugin-decision`. Unchanged code is not asked again, so a second run over the same files is free. Editing a snippet, its context, a question or an answer kind re-asks that file; changing a cutoff or an `id` does not.
 - Free models such as `openrouter/respan/span-01-lite` are a cheap way to try rules before switching to a paid model.
+- Every request names the repository and where it runs as a hidden OpenRouter app, so the activity page splits spend by both. The repository comes from `GITHUB_REPOSITORY`, else the `origin` remote of the git repository around the working directory. Where it runs is `github-actions` when `GITHUB_ACTIONS` is set, `claude-code-cloud` when `CLAUDE_CODE_REMOTE` is set, `claude-code` when `CLAUDECODE` is set, and `local` otherwise. A task runner that clears the environment, such as `vp run`, must pass these variables through to the lint.
 
 ## Models
 

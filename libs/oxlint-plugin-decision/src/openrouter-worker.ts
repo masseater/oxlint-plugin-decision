@@ -1,4 +1,3 @@
-import { OpenRouter } from "@openrouter/sdk";
 import { OpenRouterError } from "@openrouter/sdk/models/errors";
 import {
   Array as Arr,
@@ -15,6 +14,8 @@ import {
 import { runAsWorker } from "synckit";
 
 import { AnswerSchema } from "./answer.ts";
+import { clientFor } from "./client.ts";
+import type { ClientServices } from "./client.ts";
 import { parseVerdicts } from "./request.ts";
 import { envNameOf, messageOf } from "./runtime.ts";
 import { workerServices } from "./services.ts";
@@ -30,8 +31,6 @@ const RETRY_EXPONENT = 2;
 const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
 const API_SUFFIX = /\/api\/v1\/*$|\/+$/u;
 const CACHE_DIR = ["node_modules", ".cache", "oxlint-plugin-decision"] as const;
-const APP_URL = "https://github.com/masseater/oxlint-plugin-decision";
-const APP_TITLE = "oxlint-plugin-decision";
 
 const reasonFor = (error: unknown): string => {
   if (error instanceof OpenRouterError) {
@@ -104,11 +103,7 @@ const send = Effect.fn("send")(function* send(
   { timeoutMs, env }: Pick<DecideInput, "timeoutMs" | "env">,
 ) {
   const apiKey = yield* Config.Redacted(envNameOf(env, "OPENROUTER_API_KEY"));
-  const client = new OpenRouter({
-    apiKey: Redacted.value(apiKey),
-    httpReferer: APP_URL,
-    appTitle: APP_TITLE,
-  });
+  const client = yield* clientFor(Redacted.value(apiKey));
   return yield* Effect.tryPromise({
     try: (signal) =>
       client.alpha.decisions.create(
@@ -183,7 +178,11 @@ const reasonOf = (error: unknown): string => {
 
 const decideOne = (
   input: DecideInput,
-): Effect.Effect<DecideResult, never, Crypto.Crypto | FileSystem.FileSystem | Path.Path> =>
+): Effect.Effect<
+  DecideResult,
+  never,
+  ClientServices | Crypto.Crypto | FileSystem.FileSystem | Path.Path
+> =>
   decide(input).pipe(
     Effect.match({
       onSuccess: ({ response, cached }): DecideResult => ({ ok: true, response, cached }),
