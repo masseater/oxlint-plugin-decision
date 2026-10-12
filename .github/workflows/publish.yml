@@ -87,6 +87,7 @@ jobs:
       - run: vp run verify
         env:
           GH_TOKEN: ${{ github.token }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       - name: Pack
         run: |
           mkdir -p "$RUNNER_TEMP/packages"
