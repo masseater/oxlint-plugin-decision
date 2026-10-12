@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Array as Arr, Effect, pipe } from "effect";
 import { createSyncFn } from "synckit";
 import type { Syncify } from "synckit";
 
@@ -8,7 +8,11 @@ import type { DecideInput, DecideResult, DecisionProvider } from "./types.ts";
 const BACKSTOP_MS = 60_000;
 const SYNCKIT_TIMEOUT = "Internal error: Atomics.wait() failed: timed-out";
 
-type Worker = (input: DecideInput) => Promise<DecideResult>;
+type Inputs = Arr.NonEmptyReadonlyArray<DecideInput>;
+
+type Results = Arr.NonEmptyReadonlyArray<DecideResult>;
+
+type Worker = (inputs: Inputs) => Promise<Results>;
 
 const workers = new Map<"openrouter", Syncify<Worker>>();
 
@@ -32,17 +36,21 @@ const reasonOf = (error: unknown): string => {
   return `network: ${message}`;
 };
 
+const ask = (inputs: Inputs): Results =>
+  runOrElse(
+    Effect.sync(() => workerCall()(inputs)),
+    (cause) =>
+      pipe(
+        inputs,
+        Arr.map((): DecideResult => ({ ok: false, reason: reasonOf(cause) })),
+      ),
+  );
+
 const openRouter: DecisionProvider = {
   name: "openrouter",
   requiredEnv: ["OPENROUTER_API_KEY"],
-  decide: (input) =>
-    runOrElse(
-      Effect.sync(() => workerCall()(input)),
-      (cause) => ({
-        ok: false,
-        reason: reasonOf(cause),
-      }),
-    ),
+  decide: (input) => Arr.headNonEmpty(ask([input])),
+  decideAll: (inputs) => Arr.match(inputs, { onEmpty: () => [], onNonEmpty: (some) => ask(some) }),
 };
 
 export { openRouter };

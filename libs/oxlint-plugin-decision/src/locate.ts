@@ -12,7 +12,15 @@ import {
 } from "./request.ts";
 import type { LocatedMatch } from "./request.ts";
 import { messageOf, runOrElse } from "./runtime.ts";
-import type { DecisionRequest, LineRange, Match, ModelRef, Verdicts } from "./types.ts";
+import type {
+  DecideInput,
+  DecideResult,
+  DecisionRequest,
+  LineRange,
+  Match,
+  ModelRef,
+  Verdicts,
+} from "./types.ts";
 
 type VerdictResult =
   | { readonly ok: true; readonly verdicts: Verdicts; readonly cached: boolean | undefined }
@@ -41,12 +49,7 @@ const MINIMUM_TIMEOUT_MS = 1;
 const remainingMs = (deadline: number): number =>
   Math.max(MINIMUM_TIMEOUT_MS, deadline - Date.now());
 
-const fetchVerdicts = (asking: Asking, request: DecisionRequest): VerdictResult => {
-  const result = asking.model.provider.decide({
-    request,
-    timeoutMs: remainingMs(asking.deadline),
-    env: asking.env,
-  });
+const verdictsOf = (result: DecideResult, request: DecisionRequest): VerdictResult => {
   if (!result.ok) {
     return result;
   }
@@ -59,6 +62,15 @@ const fetchVerdicts = (asking: Asking, request: DecisionRequest): VerdictResult 
     (cause) => ({ ok: false, reason: messageOf(cause) }),
   );
 };
+
+const inputOf = (asking: Asking, request: DecisionRequest): DecideInput => ({
+  request,
+  timeoutMs: remainingMs(asking.deadline),
+  env: asking.env,
+});
+
+const fetchVerdicts = (asking: Asking, request: DecisionRequest): VerdictResult =>
+  verdictsOf(asking.model.provider.decide(inputOf(asking, request)), request);
 
 const isRange = (location: Option.Option<LineRange>): location is Option.Some<LineRange> =>
   Option.exists(location, ({ start, end }) => start !== end);
@@ -125,5 +137,5 @@ const locateMatch = (
   return refine({ asking, match, ref, state: request.state }, first);
 };
 
-export { fetchVerdicts, locateMatch };
+export { inputOf, locateMatch, verdictsOf };
 export type { Asking, Located, VerdictResult };

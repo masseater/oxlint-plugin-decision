@@ -1,15 +1,23 @@
 import type { Context, Location } from "@oxlint/plugins";
-import { Array as Arr, Option } from "effect";
+import { Array as Arr, Boolean as Bool, Option } from "effect";
 
 import { isReported } from "./answer.ts";
 import { explainerFor } from "./explain.ts";
 import type { ExplainPass, Explainer, Outcome, Placed } from "./explain.ts";
-import { fetchVerdicts, locateMatch } from "./locate.ts";
+import { inputOf, locateMatch, verdictsOf } from "./locate.ts";
 import type { Asking, Located } from "./locate.ts";
 import { OptionsError } from "./options.ts";
 import { buildRequest, refAt } from "./request.ts";
 import { failsInCi, warnOnce } from "./runtime.ts";
-import type { DecisionRequest, Match, ModelRef, ResolvedOptions, Verdicts } from "./types.ts";
+import type {
+  DecideResult,
+  DecisionProvider,
+  DecisionRequest,
+  Match,
+  ModelRef,
+  ResolvedOptions,
+  Verdicts,
+} from "./types.ts";
 
 interface ModelPass {
   readonly contextOf: (match: Match) => Context;
@@ -121,7 +129,10 @@ const reportMatches = (pass: ModelPass, answered: Answered): Option.Option<Failu
   return failure;
 };
 
-const explainPassOf = (pass: ModelPass, request: DecisionRequest): ExplainPass => ({
+const explainPassOf = (
+  pass: ModelPass,
+  { request, durationMs }: Pick<ExplainPass, "request" | "durationMs">,
+): ExplainPass => ({
   setting: pass.options.explain,
   cwd: Option.match(Arr.head(pass.matches), {
     onNone: () => "",
@@ -130,16 +141,32 @@ const explainPassOf = (pass: ModelPass, request: DecisionRequest): ExplainPass =
   filename: pass.filename,
   model: pass.model.id,
   request,
+  durationMs,
 });
 
-const explainerOf = (pass: ModelPass, request: DecisionRequest): Explainer =>
-  explainerFor(explainPassOf(pass, request));
+const explainerOf = (
+  pass: ModelPass,
+  timed: Pick<ExplainPass, "request" | "durationMs">,
+): Explainer => explainerFor(explainPassOf(pass, timed));
 
-const reportModel = (pass: ModelPass): void => {
-  const asking: Asking = { model: pass.model, deadline: pass.deadline, env: pass.options.env };
-  const request = buildRequest(pass.model.model, pass.matches);
-  const explainer = explainerOf(pass, request);
-  const result = fetchVerdicts(asking, request);
+interface Prepared {
+  readonly pass: ModelPass;
+  readonly asking: Asking;
+  readonly request: DecisionRequest;
+}
+
+const prepare = (pass: ModelPass): Prepared => ({
+  pass,
+  asking: { model: pass.model, deadline: pass.deadline, env: pass.options.env },
+  request: buildRequest(pass.model.model, pass.matches),
+});
+
+const reportAnswer = (
+  { pass, asking, request }: Prepared,
+  { decided, durationMs }: { readonly decided: DecideResult; readonly durationMs: number },
+): void => {
+  const explainer = explainerOf(pass, { request, durationMs });
+  const result = verdictsOf(decided, request);
   if (!result.ok) {
     explainer.failure(pass.matches, result.reason);
     degrade(pass, result.reason);
@@ -150,5 +177,44 @@ const reportModel = (pass: ModelPass): void => {
   });
 };
 
-export { reportModel };
+const decideWith = (
+  provider: DecisionProvider,
+  prepared: readonly Prepared[],
+): readonly DecideResult[] => {
+  const inputs = prepared.map(({ asking, request }) => inputOf(asking, request));
+  return Option.match(Option.fromUndefinedOr(provider.decideAll), {
+    onNone: () => inputs.map((input) => provider.decide(input)),
+    onSome: (decideAll) => decideAll(inputs),
+  });
+};
+
+const reportProvider = (prepared: Arr.NonEmptyReadonlyArray<Prepared>): void => {
+  const { provider } = Arr.headNonEmpty(prepared).pass.model;
+  const started = performance.now();
+  const results = decideWith(provider, prepared);
+  const durationMs = Math.round(performance.now() - started);
+  const answers = Bool.match(results.length === prepared.length, {
+    onTrue: () => results,
+    onFalse: () =>
+      prepared.map((): DecideResult => ({
+        ok: false,
+        reason: `provider ${provider.name} returned ${String(results.length)} results for ${String(prepared.length)} requests`,
+      })),
+  });
+  for (const [one, decided] of Arr.zip(prepared, answers)) {
+    reportAnswer(one, { decided, durationMs });
+  }
+};
+
+const reportModels = (passes: readonly ModelPass[]): void => {
+  const byProvider = Arr.groupBy(
+    passes.map((pass) => prepare(pass)),
+    ({ pass }) => pass.model.provider.name,
+  );
+  for (const prepared of Object.values(byProvider)) {
+    reportProvider(prepared);
+  }
+};
+
+export { reportModels };
 export type { ModelPass };

@@ -11,7 +11,6 @@ export default defineConfig({
     },
   },
   test: {
-    fileParallelism: false,
     testTimeout: 120_000,
     coverage: {
       provider: "v8",

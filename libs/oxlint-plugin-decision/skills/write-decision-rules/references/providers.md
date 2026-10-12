@@ -46,5 +46,6 @@ export default createDecisionPlugin({
 - Input: `{ request, timeoutMs, env }`. `request` is an OpenRouter Decisions request: `model`, `state` (`snippets` keyed by match id, optional `contexts`), and `questions`, each `{ type: "noul", instructions }` or `{ type: "choice", instructions, criteria }`.
 - Output: `{ ok: true, response }` with a Decisions response body, or `{ ok: false, reason }`. A failure is a warning (or a CI failure), never an exception; do not throw from `decide`.
 - Respect `timeoutMs`; it is the remaining per-file budget.
+- Optional `decideAll(inputs)` gets every model of one file for this provider at once and returns one result per input, in the same order. Send them concurrently there; without it the plugin calls `decide` once per model, one after another. A result count that differs from the input count fails every input of that call.
 
 Check: run oxlint with `OXLINT_DECISION_EXPLAIN=1`. Each match should show your model id and a probability, not an `error` line.
