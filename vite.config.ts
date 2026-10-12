@@ -149,7 +149,11 @@ export default defineConfig({
     tasks: {
       verify: {
         command:
-          "vp run -r build && vp check && vp run -r test && vp run actions-lint && vp run fallow",
+          "vp run -r build && vp check && vp run -r test && vp run actions-lint && vp run fallow && vp run audit",
+        cache: false,
+      },
+      audit: {
+        command: "vp pm audit",
         cache: false,
       },
       "actions-lint": {
