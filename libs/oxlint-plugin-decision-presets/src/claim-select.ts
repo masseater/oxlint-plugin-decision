@@ -1,8 +1,8 @@
 import type { SelectedNode } from "@r_masseater/oxlint-plugin-decision";
 import { Array as Arr, Match, Option, Predicate } from "effect";
 
-import { identifierOf } from "./ai-slop-select.ts";
-import type { Select } from "./ai-slop-select.ts";
+import { containing, identifierOf } from "./select.ts";
+import type { NodeTest, Select } from "./select.ts";
 
 const WORD_STARTS: ReadonlySet<string> = new Set([
   "",
@@ -99,8 +99,26 @@ const isLogCall: Select = (node) =>
     )(node),
   );
 
+const isCatchName = (name: SelectedNode): boolean =>
+  Match.value(name).pipe(
+    Match.when({ type: "Identifier" }, (identifier) => identifier.name.startsWith("catch")),
+    Match.orElse(() => false),
+  );
+
+const isCatch: NodeTest = (node) =>
+  Match.value(node).pipe(
+    Match.when({ type: "CatchClause" }, () => true),
+    Match.when({ type: "MemberExpression", computed: false }, (member) =>
+      isCatchName(member.property),
+    ),
+    Match.when({ type: "Property", computed: false }, (property) => isCatchName(property.key)),
+    Match.orElse(() => false),
+  );
+
+const hasCatch: Select = containing(isCatch);
+
 const isTestCall = callingAny(["it", "test"]);
 const isDescribeCall = callingAny(["describe"]);
 
-export { isDescribeCall, isLogCall, isTestCall, namedLike };
+export { hasCatch, isDescribeCall, isLogCall, isTestCall, namedLike };
 export type { NameWords };

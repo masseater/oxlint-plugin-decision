@@ -9,12 +9,8 @@ interface Judgement {
   readonly note?: string | undefined;
 }
 
-interface ClaimRule extends Judgement {
-  readonly id: string;
-  readonly target?: "function" | "call";
-  readonly cutoff: number;
-  readonly select?: NonNullable<DecisionRule["select"]>;
-  readonly context?: RuleContext;
+interface ClaimRule extends Judgement, Pick<DecisionRule, "id" | "cutoff" | "select" | "context"> {
+  readonly target?: Extract<DecisionRule["target"], "function" | "call">;
 }
 
 const questionOf = ({ ask, yes, no, note }: Judgement): string =>

@@ -1,32 +1,8 @@
-import type { DecisionRule, SelectMatch, SelectedNode } from "@r_masseater/oxlint-plugin-decision";
+import type { SelectMatch, SelectedNode } from "@r_masseater/oxlint-plugin-decision";
 import { Array as Arr, Match, Option, Predicate } from "effect";
 
-type Select = NonNullable<DecisionRule["select"]>;
-
-type NodeTest = Predicate.Predicate<SelectedNode>;
-
-const isNode = (value: unknown): value is SelectedNode => Predicate.hasProperty(value, "type");
-
-const childrenOf = (node: SelectedNode): readonly SelectedNode[] =>
-  Object.entries(node)
-    .filter(([key]) => key !== "parent")
-    .flatMap(([, value]: readonly [string, unknown]) => [value].flat())
-    .filter((value) => isNode(value));
-
-const descendantsOf = (node: SelectedNode): readonly SelectedNode[] => [
-  node,
-  ...childrenOf(node).flatMap((child) => descendantsOf(child)),
-];
-
-const containing =
-  (test: NodeTest): NodeTest =>
-  (node) =>
-    descendantsOf(node).some((found) => test(found));
-
-const ofType =
-  (...types: readonly string[]): NodeTest =>
-  (node) =>
-    types.includes(node.type);
+import { containing, identifierOf, ofType } from "./select.ts";
+import type { NodeTest, Select } from "./select.ts";
 
 const isPlaceholderValue = ofType(
   "Literal",
@@ -177,12 +153,6 @@ const isGenericParameter = (node: SelectedNode, param: SelectedNode): boolean =>
     typeParameterNamesOf(node).includes(name),
   );
 
-const identifierOf = (node: SelectedNode): Option.Option<string> =>
-  Match.value(node).pipe(
-    Match.when({ type: "Identifier" }, (identifier) => Option.some(identifier.name)),
-    Match.orElse(() => Option.none()),
-  );
-
 const returnedOf = (node: SelectedNode): Option.Option<SelectedNode> =>
   Option.flatMap(bodyOf(node), (body) =>
     Option.flatMap(Arr.head(statementsOf(body)), expressionOf),
@@ -252,34 +222,13 @@ const hasFallback: Select = containing(
 
 const hasCast: Select = containing(isCast);
 
-const isCatchName = (name: SelectedNode): boolean =>
-  Match.value(name).pipe(
-    Match.when({ type: "Identifier" }, (identifier) => identifier.name.startsWith("catch")),
-    Match.orElse(() => false),
-  );
-
-const isCatch: NodeTest = (node) =>
-  Match.value(node).pipe(
-    Match.when({ type: "CatchClause" }, () => true),
-    Match.when({ type: "MemberExpression", computed: false }, (member) =>
-      isCatchName(member.property),
-    ),
-    Match.when({ type: "Property", computed: false }, (property) => isCatchName(property.key)),
-    Match.orElse(() => false),
-  );
-
-const hasCatch: Select = containing(isCatch);
-
 export {
-  identifierOf,
   forwardsOneCall,
   mayBePlaceholder,
   isDeclared,
   hasCast,
-  hasCatch,
   hasCommentInside,
   hasFallback,
   hasGuard,
   hasSuppression,
 };
-export type { NodeTest, Select };
