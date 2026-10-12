@@ -3,7 +3,7 @@
   "baseline": "57a674a2d3ff7174b2c7de2390f3cfbccde0a50d",
   "items": {
     "skill:libs/oxlint-plugin-decision/skills/write-decision-rules/SKILL.md": {
-      "fingerprint": "3eae9517cd1a13ed244e5be80b71dbea3aaf089f8886cd9bcdca1583567abdba",
+      "fingerprint": "7baa5b7e0ee9d6acb58af4c9b836a7f8c76505f9873c6b33274c26dfc2423428",
       "snapshot": {
         "libs/oxlint-plugin-decision/README.md": "753784db1ef224456361d2fea31931a247aa7c4efcbcef8cd0064519bcba59a0",
         "libs/oxlint-plugin-decision/example/fail.js": "6910d18929369823ec98c8ec67aa8b9a94b7e67415beea3b32fc8028535ec69a",
@@ -21,8 +21,8 @@
         "libs/oxlint-plugin-decision/src/locate.ts": "f2bebbff776bc2f916beb41baf14d0533ec9415e41ef9e1820394fb3e5fb74ee",
         "libs/oxlint-plugin-decision/src/name.ts": "ac2676740047dd4005a093aca2c6e90dfdf534eb236b5fe14754d3064285b5d3",
         "libs/oxlint-plugin-decision/src/openrouter-worker.ts": "3cb3526c238b537a99acdd629ebd476a3a1ef8125f0d1150f25e44cd9e0c6897",
-        "libs/oxlint-plugin-decision/src/openrouter.ts": "52318e236534608b88d7e79ce29e2da1ffe0a988fe2b37433478ba16f0643cf7",
-        "libs/oxlint-plugin-decision/src/options.ts": "6d300dcf78bbe1698b2d6cd5008afa09f2181052d20e6cf77330906f6e3157ad",
+        "libs/oxlint-plugin-decision/src/openrouter.ts": "6e8bbfce2d48ef88a64457f94e8a1b55e3d4febbfa56a6ef3d5f624819bd9956",
+        "libs/oxlint-plugin-decision/src/options.ts": "203be1cee51596fbe11a00584cd8d63333b756bd51f8e7412d6c458343030342",
         "libs/oxlint-plugin-decision/src/override.ts": "1e249fddf660690b742fd3f75ee7aff98dbe6b3cee635ba38d8d860ea5fe0a1f",
         "libs/oxlint-plugin-decision/src/plugin.ts": "05564167235a2dce6dcefd78da3337f3f3cbe5b93b8a0df357ff3297b01a8f9e",
         "libs/oxlint-plugin-decision/src/report.ts": "6309d012d799dc28c0d30d24d052bcdda918d6aa70762a959190cdb58ccecd41",
@@ -34,17 +34,15 @@
         "libs/oxlint-plugin-decision/tests/skill-write-decision-rules.test.ts": "e4695a9376af5f5481c9b59c53a5032c8557f62363b9cad6776a1852c40ad2c8",
         "libs/oxlint-plugin-decision/tests/skills/write-decision-rules/task.md": "4a3bb7b8f94d6238c152769995fbd40a1df302f9258ef085512ee37296779e44"
       },
-      "head": "43162f7a4fd27dfbbd3f8bcc631135d70c02017f",
+      "head": "bc78e178137dec63e58784c709e279cb0f935dcd",
       "outcome": "no-change",
-      "reason": "Main (#29) moved the Cost and caching section from the package README to the root README and added a link to it; the API behavior the skill teaches did not change, and the skill already states the cost guidance itself.",
+      "reason": "openrouter.ts only stops prefixing a worker crash reason twice and options.ts only replaces internal helpers; the documented options, model id format and failure handling are unchanged",
       "evidence": [
-        "git diff 57a674a origin/main -- libs/oxlint-plugin-decision/README.md",
-        "intent validate passed",
-        "tests/skill-write-decision-rules.test.ts 3 passed"
+        "Changed: libs/oxlint-plugin-decision/src/openrouter.ts, libs/oxlint-plugin-decision/src/options.ts at bc78e178137dec63e58784c709e279cb0f935dcd"
       ]
     },
     "planning:_artifacts": {
-      "fingerprint": "119b1b73efd898d7130522b72a43547e707e8213ab8e87aba6ab146059533b27",
+      "fingerprint": "b86e1ec90c2dda59007f06df44bdd26c11ec33e565ce1e7241772373e03bf52f",
       "snapshot": {
         "_artifacts/domain_map.yaml": "807339acae733333cc8365b6d289f3a072659669e6c4030d9bc50005bc06657e",
         "_artifacts/skill_spec.md": "2885e03eee5f2d42425186ccf1e364151c4408c850d99ae63bd94f0b9c184868",
@@ -65,8 +63,8 @@
         "libs/oxlint-plugin-decision/src/locate.ts": "f2bebbff776bc2f916beb41baf14d0533ec9415e41ef9e1820394fb3e5fb74ee",
         "libs/oxlint-plugin-decision/src/name.ts": "ac2676740047dd4005a093aca2c6e90dfdf534eb236b5fe14754d3064285b5d3",
         "libs/oxlint-plugin-decision/src/openrouter-worker.ts": "3cb3526c238b537a99acdd629ebd476a3a1ef8125f0d1150f25e44cd9e0c6897",
-        "libs/oxlint-plugin-decision/src/openrouter.ts": "52318e236534608b88d7e79ce29e2da1ffe0a988fe2b37433478ba16f0643cf7",
-        "libs/oxlint-plugin-decision/src/options.ts": "6d300dcf78bbe1698b2d6cd5008afa09f2181052d20e6cf77330906f6e3157ad",
+        "libs/oxlint-plugin-decision/src/openrouter.ts": "6e8bbfce2d48ef88a64457f94e8a1b55e3d4febbfa56a6ef3d5f624819bd9956",
+        "libs/oxlint-plugin-decision/src/options.ts": "203be1cee51596fbe11a00584cd8d63333b756bd51f8e7412d6c458343030342",
         "libs/oxlint-plugin-decision/src/override.ts": "1e249fddf660690b742fd3f75ee7aff98dbe6b3cee635ba38d8d860ea5fe0a1f",
         "libs/oxlint-plugin-decision/src/plugin.ts": "05564167235a2dce6dcefd78da3337f3f3cbe5b93b8a0df357ff3297b01a8f9e",
         "libs/oxlint-plugin-decision/src/report.ts": "6309d012d799dc28c0d30d24d052bcdda918d6aa70762a959190cdb58ccecd41",
@@ -78,10 +76,12 @@
         "libs/oxlint-plugin-decision/tests/skill-write-decision-rules.test.ts": "e4695a9376af5f5481c9b59c53a5032c8557f62363b9cad6776a1852c40ad2c8",
         "libs/oxlint-plugin-decision/tests/skills/write-decision-rules/task.md": "4a3bb7b8f94d6238c152769995fbd40a1df302f9258ef085512ee37296779e44"
       },
-      "head": "43162f7a4fd27dfbbd3f8bcc631135d70c02017f",
-      "outcome": "updated",
-      "reason": "domain_map.yaml and skill_spec.md now cite the root README for the cost failure mode, since #29 moved that section there.",
-      "evidence": ["_artifacts/domain_map.yaml", "_artifacts/skill_spec.md"]
+      "head": "bc78e178137dec63e58784c709e279cb0f935dcd",
+      "outcome": "no-change",
+      "reason": "openrouter.ts only stops prefixing a worker crash reason twice and options.ts only replaces internal helpers; the documented options, model id format and failure handling are unchanged",
+      "evidence": [
+        "Changed: libs/oxlint-plugin-decision/src/openrouter.ts, libs/oxlint-plugin-decision/src/options.ts at bc78e178137dec63e58784c709e279cb0f935dcd"
+      ]
     }
   }
 }
