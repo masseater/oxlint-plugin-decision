@@ -27,4 +27,4 @@ Use intent maintainer setup to initialize missing records, maintainer add to reg
 ## マージ
 
 - マージ前に必ず base ブランチを取り込み、手元の `vp run verify` を通してからマージする。コンフリクトしないからといって、取り込まないままマージしない。マージしてよいかは聞かない。
-- release-please のリリースPRは、Secrets の `RELEASE_PLEASE_TOKEN`（Contents と Pull requests を書ける fine-grained PAT）で作る。`GITHUB_TOKEN` で作った PR では `pull_request` のワークフローが動かず、必須の `up-to-date` が付かないためである。ルールセットのバイパスや `--admin` でマージを通さない。トークンが切れると release ジョブがその旨のエラーで落ちるので、発行し直して登録する。
+- release-please のリリースPRは、ほかの PR と同じく Claude が main を取り込み、手元の `vp run verify` を通してからマージする。`GITHUB_TOKEN` で作られたリリースPRの `pull_request` のワークフローは承認待ちになるため、Claude が取り込みを push して動いた `up-to-date` で必須チェックを満たす。取り込むものが無く承認待ちのままなら、ユーザーに承認を頼む。ルールセットのバイパスや `--admin` でマージを通さない。
