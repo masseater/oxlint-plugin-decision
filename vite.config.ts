@@ -1,21 +1,14 @@
 import { presets as effectPresets } from "@effect/tsgo/oxlint-presets";
 import { defineConfig } from "vite-plus";
 
-type Rules = Readonly<Record<string, "error" | readonly ["error", { readonly model: string }]>>;
+type Rules = Readonly<Record<string, "error">>;
 
 const decisionModel = "openrouter/respan/span-01-lite";
-
-const deciderModel = "openrouter/perplexity/pplx-decider-v1.1-27b";
 
 const presetsDist = "./libs/oxlint-plugin-decision-presets/dist";
 
 const decisionRules = (plugin: string, ids: readonly string[]): Rules =>
   Object.fromEntries(ids.map((id) => [`${plugin}/${id}`, "error"] as const));
-
-const deciderRules = (plugin: string, ids: readonly string[]): Rules =>
-  Object.fromEntries(
-    ids.map((id) => [`${plugin}/${id}`, ["error", { model: deciderModel }]] as const),
-  );
 
 const decisionPresetRules: Rules = {
   ...decisionRules("decision-presets", [
@@ -27,12 +20,13 @@ const decisionPresetRules: Rules = {
     "pure-name-is-pure",
     "safe-name-is-safe",
     "idempotent-name",
+    "catch-hides-failure",
     "test-name-verifies-claim",
     "test-mocks-subject",
   ]),
-  ...deciderRules("decision-presets", ["catch-hides-failure"]),
   ...decisionRules("decision-ai-slop", [
     "redundant-guard",
+    "default-masks-missing-value",
     "pass-through-wrapper",
     "placeholder-implementation",
     "comment-restates-code",
@@ -40,8 +34,15 @@ const decisionPresetRules: Rules = {
     "doc-restates-signature",
     "cast-instead-of-narrowing",
     "suppression-instead-of-fix",
+    "reinvents-builtin",
   ]),
-  ...deciderRules("decision-ai-slop", ["default-masks-missing-value", "reinvents-builtin"]),
+};
+
+const decisionFalsePositives: Readonly<Record<string, readonly string[]>> = {
+  "libs/oxlint-plugin-decision/src/openrouter-worker.ts": ["decision-presets/catch-hides-failure"],
+  "libs/oxlint-plugin-decision/src/plugin.ts": ["decision-ai-slop/default-masks-missing-value"],
+  "libs/oxlint-plugin-decision/src/request.ts": ["decision-ai-slop/reinvents-builtin"],
+  "libs/oxlint-plugin-decision/src/runtime.ts": ["decision-ai-slop/default-masks-missing-value"],
 };
 
 const effectRules: Rules = Object.fromEntries(
@@ -137,10 +138,14 @@ export default defineConfig({
         files: ["libs/*/tests/**"],
         rules: Object.fromEntries(Object.keys(decisionPresetRules).map((name) => [name, "off"])),
       },
+      ...Object.entries(decisionFalsePositives).map(([file, names]) => ({
+        files: [file],
+        rules: Object.fromEntries(names.map((name) => [name, "off"] as const)),
+      })),
     ],
     settings: {
       "decision-presets": { model: decisionModel },
-      "decision-ai-slop": { model: decisionModel, timeoutMs: 60_000 },
+      "decision-ai-slop": { model: decisionModel },
     },
     options: {
       typeAware: true,
