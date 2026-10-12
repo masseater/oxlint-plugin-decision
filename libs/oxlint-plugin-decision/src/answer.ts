@@ -1,5 +1,6 @@
 import { Option, Result, Schema } from "effect";
 
+import { Probability, RuleAnswerSchema } from "./schema.ts";
 import type {
   Answer,
   ChoiceAnswer,
@@ -12,7 +13,6 @@ import type {
 
 const YES = "yes";
 const DEFAULT_MINIMUM: Severity = "warn";
-const MINIMUM_LABELS = 2;
 
 const SEVERITY_CRITERIA = {
   none: "No problem",
@@ -22,29 +22,6 @@ const SEVERITY_CRITERIA = {
 } as const;
 
 const SEVERITY_ORDER: readonly string[] = Object.keys(SEVERITY_CRITERIA);
-
-const Probability = Schema.Number.check(Schema.isBetween({ minimum: 0, maximum: 1 }));
-
-const Label = Schema.NonEmptyString;
-
-const BooleanAnswer = Schema.Struct({ kind: Schema.Literal("boolean") });
-
-const ClassifyAnswer = Schema.Struct({
-  kind: Schema.Literal("classify"),
-  labels: Schema.Record(Label, Schema.String).check(Schema.isMinProperties(MINIMUM_LABELS)),
-  report: Schema.NonEmptyArray(Label),
-}).check(
-  Schema.makeFilter(({ labels, report }) => report.every((label) => Object.hasOwn(labels, label)), {
-    message: "every label in report must be one of labels",
-  }),
-);
-
-const SeverityAnswer = Schema.Struct({
-  kind: Schema.Literal("severity"),
-  minimum: Schema.optionalKey(Schema.Literals(["info", "warn", "error"])),
-});
-
-const RuleAnswerSchema = Schema.Union([BooleanAnswer, ClassifyAnswer, SeverityAnswer]);
 
 const BOOLEAN_ANSWER: RuleAnswer = { kind: "boolean" };
 

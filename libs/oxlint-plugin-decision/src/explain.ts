@@ -26,7 +26,9 @@ import type {
 import { wireRequestsFor } from "./wire.ts";
 import type { WireRequest } from "./wire.ts";
 
-type ExplainMode = "off" | "text" | "json";
+type ExplainFormat = Extract<ExplainSetting, string>;
+
+type ExplainMode = "off" | ExplainFormat;
 
 const EXPLAIN_ENV = "OXLINT_DECISION_EXPLAIN";
 const OFF_VALUES: ReadonlySet<string> = new Set(["0", "false", "off", "no"]);
@@ -242,7 +244,7 @@ const asText = (explanation: Explanation): string =>
   ].join("\n");
 
 const printerFor =
-  (mode: "text" | "json") =>
+  (mode: ExplainFormat) =>
   (explanation: Explanation): void => {
     const line = Bool.match(mode === "json", {
       onTrue: () => JSON.stringify(explanation),
@@ -251,7 +253,7 @@ const printerFor =
     Effect.runFork(Console.error(line));
   };
 
-const explaining = (pass: ExplainPass, mode: "text" | "json"): Explainer => {
+const explaining = (pass: ExplainPass, mode: ExplainFormat): Explainer => {
   const sent = wireRequestsFor(pass.request);
   const print = printerFor(mode);
   return {
@@ -284,5 +286,5 @@ const explainerFor = (pass: ExplainPass): Explainer =>
     Match.orElse((mode) => explaining(pass, mode)),
   );
 
-export { explainerFor };
+export { EXPLAIN_ENV, explainerFor };
 export type { Explainer, ExplainPass, Outcome, Placed };

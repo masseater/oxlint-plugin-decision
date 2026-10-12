@@ -2,6 +2,13 @@ import type { Location } from "@oxlint/plugins";
 import { Array as Arr, Option, Predicate, Result, Schema, String as Str } from "effect";
 
 import { BOOLEAN_ANSWER, decodeRuleAnswer } from "./answer.ts";
+import {
+  CiBehaviorSchema,
+  ExplainSettingSchema,
+  Probability,
+  RuleContextSchema,
+  TargetSchema,
+} from "./schema.ts";
 import type {
   AstNode,
   DecisionOptions,
@@ -77,11 +84,8 @@ const ModelSpecSchema = Schema.Union([
   Schema.NonEmptyArray(Schema.NonEmptyString),
 ]);
 
-const NONE = 0;
 const ONE = 1;
 const EVEN_ODDS = 0.5;
-
-const NonNegativeInt = Schema.Int.check(Schema.isGreaterThanOrEqualTo(NONE));
 
 const PositiveInt = Schema.Int.check(Schema.isGreaterThanOrEqualTo(ONE));
 
@@ -89,39 +93,22 @@ const RuleId = Schema.NonEmptyString.check(
   Schema.isPattern(RULE_ID, { message: "id must be lowercase words joined by hyphens" }),
 );
 
-const Probability = Schema.Number.check(Schema.isBetween({ minimum: NONE, maximum: ONE }));
-
 const LocationCutoff = Schema.Number.check(
   Schema.isBetween({ minimum: EVEN_ODDS, maximum: ONE, exclusiveMinimum: true }),
 );
 
-const RuleContextSchema = Schema.Union([
-  Schema.Struct({ scope: Schema.Literals(["node", "file", "comment"]) }),
-  Schema.Struct({
-    scope: Schema.Literal("lines"),
-    before: Schema.optionalKey(NonNegativeInt),
-    after: Schema.optionalKey(NonNegativeInt),
-  }),
-  Schema.Struct({
-    scope: Schema.Literal("enclosing"),
-    kind: Schema.Literals(["function", "class", "block"]),
-  }),
-]);
-
-const ExplainSetting = Schema.Union([Schema.Boolean, Schema.Literals(["text", "json"])]);
-
 const OptionsSchema = Schema.Struct({
-  ci: Schema.optionalKey(Schema.Literals(["skip", "fail"])),
+  ci: Schema.optionalKey(CiBehaviorSchema),
   timeoutMs: Schema.optionalKey(PositiveInt),
   maxSnippetChars: Schema.optionalKey(PositiveInt),
   model: Schema.optionalKey(ModelSpecSchema),
   env: Schema.optionalKey(Schema.Record(Schema.NonEmptyString, Schema.NonEmptyString)),
-  explain: Schema.optionalKey(ExplainSetting),
+  explain: Schema.optionalKey(ExplainSettingSchema),
 });
 
 const RuleSchema = Schema.Struct({
   id: RuleId,
-  target: Schema.Literals(["function", "call", "jsx", "file"]),
+  target: TargetSchema,
   question: Schema.NonEmptyString,
   cutoff: Probability,
   message: Schema.optionalKey(Schema.NonEmptyString),
