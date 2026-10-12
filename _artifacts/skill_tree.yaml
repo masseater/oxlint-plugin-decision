@@ -46,7 +46,14 @@ skills:
         use when someone wants a lint check that a pattern-based linter cannot
         express. Not for choosing or enabling the ready-made rules in
         @r_masseater/oxlint-plugin-decision-presets.\n",
-      sources: [src/**, README.md, example/**],
+      sources:
+        [
+          src/**,
+          README.md,
+          example/**,
+          tests/skills/write-decision-rules/**,
+          tests/skill-write-decision-rules.test.ts,
+        ],
       requires: [],
       references: [references/providers.md, references/tuning.md],
       purpose: "Teach an agent to author decision rules with
