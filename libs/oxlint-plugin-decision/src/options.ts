@@ -18,6 +18,7 @@ import type {
 const PREFIX = "oxlint-plugin-decision";
 const PROVIDER_SEPARATOR = "/";
 const FIRST_LINE = 1;
+const ONE_RULE = 1;
 const FIRST_COLUMN = 0;
 
 const TARGET_NODE_TYPES = {
@@ -148,7 +149,7 @@ class OptionsError extends Error {
 const modelIdsOf = (spec: ModelSpec): readonly string[] => Arr.dedupe(Arr.ensure(spec));
 
 const splitModelId = (id: string): Option.Option<readonly [string, string]> => {
-  const [provider = "", ...rest] = id.split(PROVIDER_SEPARATOR);
+  const [provider, ...rest] = Str.split(id, PROVIDER_SEPARATOR);
   const model = rest.join(PROVIDER_SEPARATOR);
   return Option.liftPredicate(
     [provider, model] as const,
@@ -176,10 +177,11 @@ const resolveModel = (
     ),
   );
 
-const duplicateIdOf = (rules: readonly DecisionRule[]): Option.Option<string> => {
-  const ids = rules.map(({ id }) => id);
-  return Arr.findFirst(ids, (id, index) => ids.indexOf(id) !== index);
-};
+const duplicateIdOf = (rules: readonly DecisionRule[]): Option.Option<string> =>
+  Arr.findFirst(
+    Object.entries(Arr.groupBy(rules, ({ id }) => id)),
+    ([, same]) => same.length > ONE_RULE,
+  ).pipe(Option.map(([id]) => id));
 
 const answerOf = (rule: DecisionRule): RuleAnswer => {
   if (Predicate.isUndefined(rule.answer)) {
@@ -256,7 +258,7 @@ const resolveOptions = (
 };
 
 const headOf = (text: string, line: number, column: number): Location => {
-  const [first = ""] = text.split("\n", FIRST_LINE);
+  const [first] = Str.split(text, "\n");
   return { start: { line, column }, end: { line, column: column + first.length } };
 };
 
