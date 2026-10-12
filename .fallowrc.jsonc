@@ -9,10 +9,10 @@
       { "name": "infra", "patterns": ["infra/**"], "autoDiscover": ["infra"] },
     ],
     "rules": [
-      { "from": "apps", "allow": ["libs"] },
+      { "from": "apps", "allow": ["libs", "infra"] },
       { "from": "libs", "allow": [] },
       { "from": "tools", "allow": ["libs"] },
-      { "from": "infra", "allow": ["libs", "apps"] },
+      { "from": "infra", "allow": ["libs"] },
     ],
   },
   "typeAware": { "enabled": true, "require": "complete" },
