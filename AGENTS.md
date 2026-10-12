@@ -13,7 +13,7 @@ Use intent maintainer setup to initialize missing records, maintainer add to reg
 
 ## 配置
 
-- ワークスペースはnxに倣ってapps・libs・tools・infraに分ける。参照してよい向きは、libsをapps・tools・infraから、appsをinfraからだけである。apps同士、tools同士、infra同士も参照しない。fallowのboundariesが落とす。
+- ワークスペースはnxに倣ってapps・libs・tools・infraに分ける。参照してよい向きは、libsをapps・tools・infraから、infraをappsからだけである。apps同士、tools同士、infra同士も参照しない。fallowのboundariesが落とす。
 
 ## 計測
 
