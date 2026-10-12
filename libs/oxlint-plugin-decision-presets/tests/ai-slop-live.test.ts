@@ -3,7 +3,7 @@ import { layer } from "@effect/vitest";
 import { deepStrictEqual } from "@effect/vitest/utils";
 import { Array as Arr, Config, Effect, FileSystem, Option, Order, Redacted } from "effect";
 
-import { aiSlopRules } from "#src/ai-slop.ts";
+import { aiSlopRules, duplicatesLibraryType } from "#src/ai-slop.ts";
 
 import {
   TIMEOUT,
@@ -42,6 +42,29 @@ const EXPECTED = [
   "fail.ts:60:8: [suppression-instead-of-fix]",
   "fail.ts:66:8: [reinvents-builtin]",
 ];
+
+const LIBRARY_TYPE_FILES = [
+  "copies-library-type.ts",
+  "checks-library-type.ts",
+  "owns-schema.ts",
+] as const;
+
+const LIBRARY_TYPE_EXPECTED = [
+  "13:29",
+  "20:15",
+  "26:23",
+  "31:14",
+  "33:17",
+  "40:36",
+  "43:20",
+  "45:28",
+  "50:20",
+  "57:16",
+  "63:25",
+  "64:12",
+  "70:17",
+  "81:16",
+].map((at) => `copies-library-type.ts:${at}: [duplicates-library-type]`);
 
 const forwardedEnv = Effect.map(
   Effect.all(FORWARDED.map((name) => Effect.orDie(Config.option(Config.String(name))))),
@@ -98,12 +121,48 @@ const aiSlopLive = Effect.scoped(
   }),
 );
 
+const libraryTypeLive = Effect.scoped(
+  Effect.gen(function* test() {
+    const fs = yield* FileSystem.FileSystem;
+    const key = yield* Config.Redacted("OPENROUTER_API_KEY");
+    const example = yield* fromRoot("example", "ai-slop");
+    const sources = yield* Effect.all(
+      LIBRARY_TYPE_FILES.map((name) => fs.readFileString(`${example}/${name}`)),
+    );
+    const cwd = yield* tempProject({
+      ...Object.fromEntries(Arr.zip(LIBRARY_TYPE_FILES, sources)),
+      "oxlint.config.ts": configSource({
+        jsPlugins: [yield* fromRoot("dist", "ai-slop.mjs")],
+        rules: enabled(AI_SLOP, [duplicatesLibraryType]),
+        settings: {
+          [AI_SLOP]: { model: LIVE_MODEL, timeoutMs: LIVE_TIMEOUT_MS },
+        },
+      }),
+    });
+    const run = yield* oxlint(
+      cwd,
+      ["--format", "unix", "-c", "oxlint.config.ts", ...LIBRARY_TYPE_FILES],
+      { ...(yield* forwardedEnv), OPENROUTER_API_KEY: Redacted.value(key) },
+    );
+    yield* Effect.log(outputOf(run));
+    deepStrictEqual(
+      byPosition(reportedLines(run, AI_SLOP).map((line) => headOf(line))),
+      LIBRARY_TYPE_EXPECTED,
+    );
+  }),
+);
+
 layer(NodeServices.layer, { excludeTestServices: true })(
   "the ai-slop rules on Span-01 Lite",
   (it) => {
     it.effect(
       "report each planted habit in fail.ts and nothing in pass.ts",
       () => aiSlopLive,
+      TIMEOUT,
+    );
+    it.effect(
+      "report the Discord schemas copied by hand and none tied to the library's types or owned by the app",
+      () => libraryTypeLive,
       TIMEOUT,
     );
   },

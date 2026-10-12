@@ -28,6 +28,7 @@ const ROWS = 30;
 const LOG_LINE = "console.log(user.email, user.phone);\n";
 const AROUND =
   "const before = 1;\nfunction handler() {\n  console.log(user.email, user.phone);\n}\n";
+const IMPORTS = 'import { user } from "./user.js";\nimport * as log from "node:console";\n';
 
 const askedTwins = Effect.gen(function* test() {
   const text = "first();\nf<T>(x);\nlast();\n";
@@ -175,6 +176,10 @@ const contexts = Effect.gen(function* test() {
     Option.some("function handler() {\n  console.log(user.email, user.phone);\n}"),
   );
   deepStrictEqual(yield* contextFor({ scope: "file" }), Option.some(AROUND));
+  deepStrictEqual(
+    yield* contextFor({ scope: "imports" }, `${IMPORTS}${AROUND}import "./late.js";\n`),
+    Option.some(`${IMPORTS.trimEnd()}\nimport "./late.js";`),
+  );
   deepStrictEqual(
     yield* contextFor({ scope: "lines", before: ONE, after: ONE }, AROUND.replaceAll("\n", "\r")),
     Option.some("L2| function handler() {\nL3|   console.log(user.email, user.phone);\nL4| }"),

@@ -104,7 +104,16 @@ const commentedSnippetOf = (
 const lacksComment = (context: Context, node: AstNode, rule: ResolvedRule): boolean =>
   isCommented(rule) && Option.isNone(commentedTextOf(context, node));
 
+const importsOf = (context: Context): string =>
+  context.sourceCode.ast.body
+    .filter((statement) => statement.type === "ImportDeclaration")
+    .map((statement) => context.sourceCode.getText(statement))
+    .join("\n");
+
 const contextOf = (context: Context, node: AstNode, rule: RuleContext): Option.Option<string> => {
+  if (rule.scope === "imports") {
+    return Option.some(importsOf(context));
+  }
   if (rule.scope === "lines") {
     return Option.some(linesAround(context, node, rule));
   }

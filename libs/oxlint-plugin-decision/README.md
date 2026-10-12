@@ -184,6 +184,7 @@ By default the model reads only the match. `context` sends more source with it, 
 | `{ scope: "lines", before: 5, after: 5 }`  | Numbered lines around the match. Both counts default to 5. |
 | `{ scope: "enclosing", kind: "function" }` | The nearest enclosing `function`, `class`, or `block`.     |
 | `{ scope: "file" }`                        | The whole file.                                            |
+| `{ scope: "imports" }`                     | The file's `import` declarations.                          |
 | `{ scope: "comment" }`                     | See below.                                                 |
 
 `{ scope: "comment" }` is for rules about the comment above the code. The match is sent starting at the comments directly above it (or above the `export` or declaration that holds it), with nothing between them but whitespace. A match without such a comment is not asked about.

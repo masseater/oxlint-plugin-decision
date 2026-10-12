@@ -152,6 +152,7 @@ The kinds are `boolean` (default), `classify`, and `severity`. You never write a
 | `{ scope: "lines", before: 5, after: 5 }`  | Numbered lines around the match; both default to 5.    |
 | `{ scope: "enclosing", kind: "function" }` | The nearest enclosing `function`, `class`, or `block`. |
 | `{ scope: "file" }`                        | The whole file.                                        |
+| `{ scope: "imports" }`                     | The file's `import` declarations.                      |
 | `{ scope: "comment" }`                     | The match starting at the comments directly above it.  |
 
 With `{ scope: "comment" }`, a match without a comment directly above it (or above the `export` or declaration holding it) is not asked about at all. Wider context costs more tokens, and an edit anywhere in the context re-asks that file.
