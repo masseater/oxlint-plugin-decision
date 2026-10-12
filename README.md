@@ -4,7 +4,7 @@
 > These packages are experimental. Use at your own risk.
 
 > [!CAUTION]
-> Every match is a paid model request. Run the plugin only with the answer cache kept, lint only changed files, and exclude files you don't need, such as `node_modules` and `dist`. The authors take no responsibility for any cost incurred by running it as is over every file of a codebase. See [Cost and caching](#cost-and-caching).
+> Every match that is not cached is a model request, billed unless you use a free model. Run the plugin only with the answer cache kept, lint only changed files, and exclude files you don't need, such as `node_modules` and `dist`. The authors take no responsibility for any cost incurred by running it as is over every file of a codebase. See [Cost and caching](#cost-and-caching).
 
 [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) rules written in plain English, answered by decision models on [OpenRouter](https://openrouter.ai).
 
@@ -87,7 +87,7 @@ See the [plugin README](libs/oxlint-plugin-decision/README.md) for rule fields, 
 
 ## Cost and caching
 
-Every match is a paid model request unless its answer is already cached, so keep an eye on what your rules match. Before running the plugin on a real codebase, put these three in place:
+Every match is a model request unless its answer is already cached, and requests to paid models are billed, so keep an eye on what your rules match. Before running the plugin on a real codebase, put these three in place:
 
 1. **Exclude files you don't need.** Generated and vendored code, such as `node_modules`, `dist` and build output, only adds requests. List it in `ignorePatterns`, and use `overrides` to turn rules on only where they matter.
 2. **Lint only changed files.** Pass the changed paths to oxlint instead of linting the whole tree.
