@@ -3,7 +3,7 @@ import { layer } from "@effect/vitest";
 import { assertInclude, deepStrictEqual, strictEqual } from "@effect/vitest/utils";
 import { Array as Arr, Effect, FileSystem, Option, Order } from "effect";
 
-import { aiSlopRules } from "#src/ai-slop.ts";
+import { aiSlopRules, duplicatesLibraryType } from "#src/ai-slop.ts";
 
 import {
   FAILED,
@@ -154,7 +154,71 @@ const loadsEntry = Effect.scoped(
   }),
 );
 
+const SCHEMA_FILES = [
+  "copies-library-type.ts",
+  "checks-library-type.ts",
+  "owns-schema.ts",
+] as const;
+
+const SCHEMAS_ASKED = {
+  "duplicates-library-type": [
+    ...[
+      "13",
+      "20",
+      "26",
+      "29",
+      "31",
+      "33",
+      "40",
+      "43",
+      "45",
+      "50",
+      "57",
+      "63",
+      "64",
+      "70",
+      "81",
+    ].map((line) => `copies-library-type.ts:${line}`),
+    ...["5", "11", "16", "20", "27", "34", "39"].map((line) => `owns-schema.ts:${line}`),
+  ],
+};
+
+const askedAboutSchemas = Effect.scoped(
+  Effect.gen(function* test() {
+    const core = yield* fromRoot(
+      "node_modules",
+      "@r_masseater",
+      "oxlint-plugin-decision",
+      "dist",
+      "index.mjs",
+    );
+    const entry = yield* fromRoot("dist", "ai-slop.mjs");
+    const sources = yield* Effect.all(SCHEMA_FILES.map((name) => exampleFile(name)));
+    const cwd = yield* tempProject({
+      ...Object.fromEntries(Arr.zip(SCHEMA_FILES, sources)),
+      "plugin.mjs": alwaysYes(core, entry),
+      "oxlint.config.ts": configSource({
+        jsPlugins: ["./plugin.mjs"],
+        rules: enabled(AI_SLOP, [duplicatesLibraryType]),
+        settings: { [AI_SLOP]: { model: "fake/any" } },
+      }),
+    });
+    const run = yield* oxlint(
+      cwd,
+      ["--format", "unix", "-c", "oxlint.config.ts", ...SCHEMA_FILES],
+      {},
+    );
+    strictEqual(run.status, FAILED, outputOf(run));
+    deepStrictEqual(sorted(byRule(run.stdout)), sorted(SCHEMAS_ASKED));
+  }),
+);
+
 layer(NodeServices.layer, { excludeTestServices: true })("the ai-slop rules", (it) => {
+  it.effect(
+    "ask about calls given schema fields, unless a type is named for them",
+    () => askedAboutSchemas,
+    TIMEOUT,
+  );
   it.effect("ask only about the functions each rule's select picks", () => askedWhere, TIMEOUT);
   it.effect("dist/ai-slop.mjs loads as an oxlint plugin", () => loadsEntry, TIMEOUT);
 });

@@ -1,5 +1,5 @@
 import { defineDecisionRule } from "@r_masseater/oxlint-plugin-decision";
-import type { DecisionRule, RuleContext } from "@r_masseater/oxlint-plugin-decision";
+import type { DecisionRule, RuleContext, Target } from "@r_masseater/oxlint-plugin-decision";
 
 import {
   forwardsOneCall,
@@ -12,9 +12,11 @@ import {
   hasSuppression,
 } from "./ai-slop-select.ts";
 import type { Select } from "./ai-slop-select.ts";
+import { spellsOutShape } from "./shape-select.ts";
 
 interface SlopRule {
   readonly id: string;
+  readonly target?: Target;
   readonly ask: string;
   readonly flag: string;
   readonly pass: string;
@@ -116,6 +118,16 @@ const reinventsBuiltin = slopRule({
   pass: "The function has no such hand-written loop: it already calls the built-in directly (for example `new Set`, `structuredClone`, `reduce` or `Intl`), or its loop does domain work that no single built-in does.",
 });
 
+const duplicatesLibraryType = slopRule({
+  id: "duplicates-library-type",
+  target: "call",
+  select: spellsOutShape,
+  context: { scope: "imports" },
+  ask: "This schema re-types by hand an object from an outside API whose types package this file already imports, instead of checking the schema against that package's type.",
+  flag: "The context lists the file's imports. One of them is a types package or SDK for an outside service, such as `discord-api-types`, `@octokit/types`, `stripe` or `@slack/types`, and this schema's fields are data from that service, such as a guild, channel, message, user, attachment, member, charge or issue with the service's own field names like `owner_id`, `global_name`, `parent_id` or `edited_timestamp`.",
+  pass: "None of the imports is a types package or SDK for an outside service; the imports are only the schema library and the app's own modules, so the fields describe the application's own data, such as job payloads, settings, stored rows or tool outputs.",
+});
+
 const aiSlopRules = [
   redundantGuard,
   defaultMasksMissingValue,
@@ -127,6 +139,7 @@ const aiSlopRules = [
   castInsteadOfNarrowing,
   suppressionInsteadOfFix,
   reinventsBuiltin,
+  duplicatesLibraryType,
 ] as const;
 
 export {
@@ -136,6 +149,7 @@ export {
   commentRestatesCode,
   defaultMasksMissingValue,
   docRestatesSignature,
+  duplicatesLibraryType,
   passThroughWrapper,
   placeholderImplementation,
   redundantGuard,

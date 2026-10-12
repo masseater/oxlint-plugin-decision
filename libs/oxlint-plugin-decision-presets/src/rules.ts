@@ -36,7 +36,7 @@ const untrustedInputRisk = defineDecisionRule({
   id: "untrusted-input-risk",
   target: "function",
   question:
-    "Does this function splice untrusted input, such as a user message or request parameter, into the same string as a SQL query, shell command, eval code, HTML, or language model instructions, instead of passing it as a separate parameter or field?",
+    "Does this function splice untrusted input, such as a user message or request parameter, into the same string as a SQL query, shell command, eval code, HTML, or language model instructions, instead of passing it as a separate parameter or field? Count input as untrusted only when it comes from outside the program, such as a request, a user message, a form, or a file or response the program does not control; a parameter whose origin is not shown counts when its name or type marks it as user or request data. Text taken from the program's own rule definitions, settings, constants or cache is not untrusted, and JSON.parse is not eval.",
   cutoff: 0.6,
   answer: { kind: "severity", minimum: "warn" },
 });

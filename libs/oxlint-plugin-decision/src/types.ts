@@ -33,6 +33,7 @@ type RuleContext =
   | { readonly scope: "lines"; readonly before?: number; readonly after?: number }
   | { readonly scope: "enclosing"; readonly kind: EnclosingKind }
   | { readonly scope: "file" }
+  | { readonly scope: "imports" }
   | { readonly scope: "comment" };
 
 type Severity = "info" | "warn" | "error";

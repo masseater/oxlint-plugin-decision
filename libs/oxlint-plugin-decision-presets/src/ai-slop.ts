@@ -16,6 +16,7 @@ export {
   commentRestatesCode,
   defaultMasksMissingValue,
   docRestatesSignature,
+  duplicatesLibraryType,
   passThroughWrapper,
   placeholderImplementation,
   redundantGuard,
