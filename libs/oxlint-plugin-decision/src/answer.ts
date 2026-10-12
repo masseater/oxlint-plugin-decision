@@ -1,6 +1,14 @@
 import { Option, Result, Schema } from "effect";
 
-import type { Question, RuleAnswer, Severity, Verdict } from "./types.ts";
+import type {
+  Answer,
+  ChoiceAnswer,
+  NoulAnswer,
+  Question,
+  RuleAnswer,
+  Severity,
+  Verdict,
+} from "./types.ts";
 
 const YES = "yes";
 const DEFAULT_MINIMUM: Severity = "warn";
@@ -50,19 +58,34 @@ const decodeRuleAnswer = (answer: unknown): Result.Result<RuleAnswer, string> =>
   return Result.fail(decoded.failure.message);
 };
 
-const NoulAnswer = Schema.Struct({ noul: Probability });
+const NoulAnswerSchema = Schema.Struct({ type: Schema.Literal("noul"), noul: Probability });
 
-const choiceAnswerOf = (labels: readonly string[]): Schema.Decoder<ChoiceVerdict> =>
-  Schema.Struct({
-    type: Schema.Literal("choice"),
-    choice: Schema.Literals(labels),
-    probabilities: Schema.Record(Schema.String, Probability),
-  });
+const ChoiceAnswerSchema = Schema.Struct({
+  type: Schema.Literal("choice"),
+  choice: Schema.String,
+  probabilities: Schema.optional(Schema.Record(Schema.String, Probability)),
+});
 
-interface ChoiceVerdict {
-  readonly choice: string;
-  readonly probabilities: Readonly<Record<string, number>>;
-}
+const AnswerSchema = Schema.Union([NoulAnswerSchema, ChoiceAnswerSchema]);
+
+const decodeNoul = Schema.decodeOption(NoulAnswerSchema);
+
+const decodeChoice = Schema.decodeOption(ChoiceAnswerSchema);
+
+const isNoul = (answer: Answer): answer is NoulAnswer => answer.type === "noul";
+
+const isChoice = (answer: Answer): answer is ChoiceAnswer => answer.type === "choice";
+
+const noulOf = (answer: Answer | undefined): Option.Option<NoulAnswer> =>
+  Option.fromUndefinedOr(answer).pipe(Option.filter(isNoul), Option.flatMap(decodeNoul));
+
+const choiceOf = (answer: Answer | undefined): Option.Option<ChoiceAnswer> =>
+  Option.fromUndefinedOr(answer).pipe(Option.filter(isChoice), Option.flatMap(decodeChoice));
+
+const probabilityOfChoice = ({ choice, probabilities }: ChoiceAnswer): Option.Option<number> =>
+  Option.fromUndefinedOr(probabilities).pipe(
+    Option.flatMap((byLabel) => Option.fromUndefinedOr(byLabel[choice])),
+  );
 
 const questionFor = (answer: RuleAnswer, instructions: string): Question => {
   switch (answer.kind) {
@@ -89,22 +112,25 @@ const questionFor = (answer: RuleAnswer, instructions: string): Question => {
   }
 };
 
-const choiceVerdictOf = (labels: readonly string[], raw: unknown): Option.Option<Verdict> =>
-  Schema.decodeUnknownOption(choiceAnswerOf(labels))(raw).pipe(
-    Option.flatMap(({ choice, probabilities }) =>
-      Option.fromUndefinedOr(probabilities[choice]).pipe(
-        Option.map((probability) => ({ answer: choice, probability })),
-      ),
+const choiceVerdictOf = (
+  criteria: Readonly<Record<string, unknown>>,
+  answer: Answer | undefined,
+): Option.Option<Verdict> =>
+  choiceOf(answer).pipe(
+    Option.filter(({ choice }) => Object.hasOwn(criteria, choice)),
+    Option.flatMap((chosen) =>
+      Option.map(probabilityOfChoice(chosen), (probability) => ({
+        answer: chosen.choice,
+        probability,
+      })),
     ),
   );
 
-const verdictOf = (question: Question, raw: unknown): Option.Option<Verdict> => {
+const verdictOf = (question: Question, answer: Answer | undefined): Option.Option<Verdict> => {
   if (question.type === "choice") {
-    return choiceVerdictOf(Object.keys(question.criteria), raw);
+    return choiceVerdictOf(question.criteria, answer);
   }
-  return Schema.decodeUnknownOption(NoulAnswer)(raw).pipe(
-    Option.map(({ noul }) => ({ answer: YES, probability: noul })),
-  );
+  return noulOf(answer).pipe(Option.map(({ noul }) => ({ answer: YES, probability: noul })));
 };
 
 const rankOf = (label: string): number => SEVERITY_ORDER.indexOf(label);
@@ -136,4 +162,15 @@ const isReported = (
   verdict: Verdict,
 ): boolean => verdict.probability >= rule.cutoff && answerMatches(rule.answer, verdict.answer);
 
-export { BOOLEAN_ANSWER, SEVERITY_ORDER, decodeRuleAnswer, isReported, questionFor, verdictOf };
+export {
+  AnswerSchema,
+  BOOLEAN_ANSWER,
+  SEVERITY_ORDER,
+  choiceOf,
+  decodeRuleAnswer,
+  isReported,
+  noulOf,
+  probabilityOfChoice,
+  questionFor,
+  verdictOf,
+};
