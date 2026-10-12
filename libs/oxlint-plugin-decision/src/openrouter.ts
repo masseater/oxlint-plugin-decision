@@ -36,10 +36,13 @@ const openRouter: DecisionProvider = {
   name: "openrouter",
   requiredEnv: ["OPENROUTER_API_KEY"],
   decide: (input) =>
-    runOrElse(Effect.try({ try: () => workerCall()(input), catch: reasonOf }), (cause) => ({
-      ok: false,
-      reason: reasonOf(cause),
-    })),
+    runOrElse(
+      Effect.sync(() => workerCall()(input)),
+      (cause) => ({
+        ok: false,
+        reason: reasonOf(cause),
+      }),
+    ),
 };
 
 export { openRouter };
