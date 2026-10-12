@@ -67,7 +67,7 @@ const EXAMPLES = {
     config: strictConfig,
     status: FAILED,
     asked: {
-      "catch-hides-failure": FUNCTIONS,
+      "catch-hides-failure": ["cart.js:42"],
       "idempotent-name": ["cart.js:38"],
       "pure-name-is-pure": ["cart.js:28"],
       "safe-name-is-safe": ["cart.js:34"],

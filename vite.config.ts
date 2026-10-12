@@ -53,14 +53,11 @@ const decisionFalsePositives: Readonly<Record<string, readonly string[]>> = {
     "decision-ai-slop/pass-through-wrapper",
     "decision-ai-slop/placeholder-implementation",
   ],
-  "libs/oxlint-plugin-decision/src/locate.ts": [
-    "decision-presets/catch-hides-failure",
-    "decision-presets/name-matches-behavior",
-  ],
+  "libs/oxlint-plugin-decision/src/locate.ts": ["decision-presets/name-matches-behavior"],
   "libs/oxlint-plugin-decision/src/name.ts": ["decision-ai-slop/placeholder-implementation"],
   "libs/oxlint-plugin-decision/src/openrouter-worker.ts": [
-    "decision-ai-slop/redundant-guard",
     "decision-presets/catch-hides-failure",
+    "decision-ai-slop/redundant-guard",
   ],
   "libs/oxlint-plugin-decision/src/openrouter.ts": [
     "decision-presets/catch-hides-failure",
@@ -71,15 +68,14 @@ const decisionFalsePositives: Readonly<Record<string, readonly string[]>> = {
     "decision-ai-slop/reinvents-builtin",
   ],
   "libs/oxlint-plugin-decision/src/plugin.ts": ["decision-ai-slop/default-masks-missing-value"],
-  "libs/oxlint-plugin-decision/src/report.ts": [
-    "decision-ai-slop/placeholder-implementation",
-    "decision-presets/catch-hides-failure",
-  ],
-  "libs/oxlint-plugin-decision/src/runtime.ts": [
-    "decision-ai-slop/default-masks-missing-value",
-    "decision-presets/catch-hides-failure",
-  ],
+  "libs/oxlint-plugin-decision/src/report.ts": ["decision-ai-slop/placeholder-implementation"],
+  "libs/oxlint-plugin-decision/src/request.ts": ["decision-presets/untrusted-input-risk"],
+  "libs/oxlint-plugin-decision/src/runtime.ts": ["decision-ai-slop/default-masks-missing-value"],
   "libs/oxlint-plugin-decision/src/visitor.ts": ["decision-ai-slop/placeholder-implementation"],
+  "libs/oxlint-plugin-decision/src/wire.ts": [
+    "decision-ai-slop/placeholder-implementation",
+    "decision-presets/untrusted-input-risk",
+  ],
 };
 
 const effectRules: Rules = Object.fromEntries(

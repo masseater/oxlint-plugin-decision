@@ -38,7 +38,6 @@ const EXAMPLES = {
       "cart.test.js:29:3: [test-mocks-subject]",
       "cart.js:28:8: [pure-name-is-pure]",
       "cart.js:34:8: [safe-name-is-safe]",
-      "cart.js:34:8: [catch-hides-failure]",
       "cart.js:42:8: [catch-hides-failure]",
     ],
   },

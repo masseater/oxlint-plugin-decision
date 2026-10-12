@@ -156,11 +156,30 @@ const hasFallback: Select = containing(
 
 const hasCast: Select = containing(isCast);
 
+const isCatchName = (name: SelectedNode): boolean =>
+  Match.value(name).pipe(
+    Match.when({ type: "Identifier" }, (identifier) => identifier.name.startsWith("catch")),
+    Match.orElse(() => false),
+  );
+
+const isCatch: NodeTest = (node) =>
+  Match.value(node).pipe(
+    Match.when({ type: "CatchClause" }, () => true),
+    Match.when({ type: "MemberExpression", computed: false }, (member) =>
+      isCatchName(member.property),
+    ),
+    Match.when({ type: "Property", computed: false }, (property) => isCatchName(property.key)),
+    Match.orElse(() => false),
+  );
+
+const hasCatch: Select = containing(isCatch);
+
 export {
   forwardsOneCall,
   hasAtMostOneStatement,
   isDeclared,
   hasCast,
+  hasCatch,
   hasCommentInside,
   hasFallback,
   hasGuard,
