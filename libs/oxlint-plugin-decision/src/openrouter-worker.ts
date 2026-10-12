@@ -1,12 +1,23 @@
-import { NodeServices } from "@effect/platform-node";
 import { OpenRouter } from "@openrouter/sdk";
 import { OpenRouterError } from "@openrouter/sdk/models/errors";
-import { Config, Crypto, Effect, FileSystem, Option, Path, Redacted, Schema } from "effect";
+import {
+  Array as Arr,
+  Config,
+  Crypto,
+  Effect,
+  FileSystem,
+  Option,
+  Path,
+  Redacted,
+  Schema,
+  pipe,
+} from "effect";
 import { runAsWorker } from "synckit";
 
 import { AnswerSchema } from "./answer.ts";
 import { parseVerdicts } from "./request.ts";
 import { envNameOf, messageOf } from "./runtime.ts";
+import { workerServices } from "./services.ts";
 import type { DecideInput, DecideResult, DecisionRequest, DecisionResponse } from "./types.ts";
 import { mergeResponses, wireRequestsFor } from "./wire.ts";
 import type { WireRequest } from "./wire.ts";
@@ -146,9 +157,11 @@ const askAndStore = Effect.fn("askAndStore")(function* askAndStore(
 });
 
 const decide = Effect.fn("decide")(function* decide(input: DecideInput) {
+  yield* Effect.annotateCurrentSpan({ model: input.request.model });
   const endpoint = yield* serverUrlOf(input.env);
   const file = yield* cacheFile(endpoint, input.request);
   const cached = yield* readCache(file, input.request);
+  yield* Effect.annotateCurrentSpan({ cached: Option.isSome(cached) });
   if (Option.isSome(cached)) {
     return { response: cached.value, cached: true };
   }
@@ -162,15 +175,29 @@ const reasonOf = (error: unknown): string => {
   return messageOf(error);
 };
 
-const run = (input: DecideInput): Promise<DecideResult> =>
-  Effect.runPromise(
-    decide(input).pipe(
-      Effect.match({
-        onSuccess: ({ response, cached }): DecideResult => ({ ok: true, response, cached }),
-        onFailure: (error): DecideResult => ({ ok: false, reason: reasonOf(error) }),
-      }),
-      Effect.provide(NodeServices.layer),
-    ),
+const decideOne = (
+  input: DecideInput,
+): Effect.Effect<DecideResult, never, Crypto.Crypto | FileSystem.FileSystem | Path.Path> =>
+  decide(input).pipe(
+    Effect.match({
+      onSuccess: ({ response, cached }): DecideResult => ({ ok: true, response, cached }),
+      onFailure: (error): DecideResult => ({ ok: false, reason: reasonOf(error) }),
+    }),
   );
+
+const decideEach = (
+  inputs: Arr.NonEmptyReadonlyArray<DecideInput>,
+): Effect.Effect<Arr.NonEmptyReadonlyArray<DecideResult>> =>
+  Effect.all(
+    pipe(
+      inputs,
+      Arr.map((input) => decideOne(input)),
+    ),
+    { concurrency: "unbounded" },
+  ).pipe(Effect.provide(workerServices));
+
+const run = (
+  inputs: Arr.NonEmptyReadonlyArray<DecideInput>,
+): Promise<Arr.NonEmptyReadonlyArray<DecideResult>> => Effect.runPromise(decideEach(inputs));
 
 runAsWorker(run);

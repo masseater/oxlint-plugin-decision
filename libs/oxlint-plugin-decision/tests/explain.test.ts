@@ -22,6 +22,8 @@ const LEAKS = {
   report: ["leaks"],
 } as const;
 
+const NO_TIME = 0;
+
 const Probabilities = Schema.Record(Schema.String, Schema.Number);
 
 const ExplainedLine = Schema.Struct({
@@ -30,6 +32,7 @@ const ExplainedLine = Schema.Struct({
   rule: Schema.String,
   model: Schema.String,
   cached: Schema.optionalKey(Schema.Boolean),
+  durationMs: Schema.Int.check(Schema.isGreaterThanOrEqualTo(NO_TIME)),
   state: Schema.Struct({ chars: Schema.Number, head: Schema.String }),
   questions: Schema.Array(
     Schema.Struct({ id: Schema.String, question: Schema.String, probabilities: Probabilities }),
@@ -84,7 +87,8 @@ const jsonFromEnv = Effect.gen(function* test() {
     env: { ...env, [EXPLAIN_ENV]: "json" },
   });
   const records = recordsOf(run.stderr);
-  const { questions, state, ...leaks } = recordAt(records, LEAKS_LINE);
+  const { questions, state, durationMs, ...leaks } = recordAt(records, LEAKS_LINE);
+  strictEqual(durationMs >= NO_TIME, true);
   deepStrictEqual(
     questions.map(({ id, probabilities }) => [id, probabilities]),
     [

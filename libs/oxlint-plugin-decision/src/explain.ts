@@ -52,6 +52,7 @@ interface Explanation {
   readonly served?: string;
   readonly cutoff: number;
   readonly cached?: boolean;
+  readonly durationMs: number;
   readonly state: { readonly chars: number; readonly head: string };
   readonly questions: readonly ExplainQuestion[];
   readonly verdict?: Verdict;
@@ -83,6 +84,7 @@ interface ExplainPass {
   readonly filename: string;
   readonly model: string;
   readonly request: DecisionRequest;
+  readonly durationMs: number;
 }
 
 const SEPARATOR = /^[/\\]/u;
@@ -158,7 +160,7 @@ const summaryOf = (text: string): Explanation["state"] => ({
 
 type Base = Pick<
   Explanation,
-  "file" | "line" | "column" | "rule" | "model" | "cutoff" | "state" | "questions"
+  "file" | "line" | "column" | "rule" | "model" | "cutoff" | "durationMs" | "state" | "questions"
 >;
 
 interface Sent {
@@ -179,6 +181,7 @@ const baseOf = (
     rule: match.rule.id,
     model: pass.model,
     cutoff: match.rule.cutoff,
+    durationMs: pass.durationMs,
     state: summaryOf(stateTextOf(sent, ref, match.snippet)),
     questions: questions.map(([id, question]) => ({
       id,
@@ -229,7 +232,7 @@ const servedText = (served: string | undefined): string =>
 
 const asText = (explanation: Explanation): string =>
   [
-    `${PREFIX} explain: ${explanation.file}:${String(explanation.line)}:${String(explanation.column)} [${explanation.rule}] ${explanation.model}${servedText(explanation.served)} cached=${cachedText(explanation.cached)}`,
+    `${PREFIX} explain: ${explanation.file}:${String(explanation.line)}:${String(explanation.column)} [${explanation.rule}] ${explanation.model}${servedText(explanation.served)} cached=${cachedText(explanation.cached)} ${String(explanation.durationMs)}ms`,
     `  state: ${String(explanation.state.chars)} chars ${JSON.stringify(explanation.state.head)}`,
     ...explanation.questions.map(
       ({ id, question, probabilities }) =>

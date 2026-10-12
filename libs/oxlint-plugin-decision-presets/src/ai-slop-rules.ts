@@ -3,8 +3,8 @@ import type { DecisionRule, RuleContext } from "@r_masseater/oxlint-plugin-decis
 
 import {
   forwardsOneCall,
-  hasAtMostOneStatement,
   isDeclared,
+  mayBePlaceholder,
   hasCast,
   hasCommentInside,
   hasFallback,
@@ -61,7 +61,7 @@ const passThroughWrapper = slopRule({
 
 const placeholderImplementation = slopRule({
   id: "placeholder-implementation",
-  select: hasAtMostOneStatement,
+  select: mayBePlaceholder,
   ask: "This function is a stand-in that pretends to do its job: it returns a fixed value or does nothing where its name promises real work.",
   flag: "The body is empty, only logs, or only holds a TODO while the name promises an action; a validator, checker or permission function always returns true or always returns false; a function named after a computation returns a hard-coded number, string or object; or a branch the name promises to handle silently does nothing.",
   pass: "The body does the work its name promises, even simply. An intentional no-op whose name says so (noop, ignore, a default callback), an abstract method meant to be overridden, and a test double inside test code are not placeholders.",
@@ -113,7 +113,7 @@ const reinventsBuiltin = slopRule({
   select: isDeclared,
   ask: "This function contains a hand-written loop or algorithm that re-implements something the JavaScript standard library or the platform already provides.",
   flag: "A loop or manual algorithm in the body does what one built-in call does: de-duplicating with an array and includes instead of a Set, deep copying instead of structuredClone, grouping instead of Object.groupBy, building query strings instead of URLSearchParams, formatting numbers or dates instead of Intl, padding instead of padStart, flattening instead of flat, or finding the last match instead of findLast.",
-  pass: "The function has no such hand-written loop: it already calls the built-in directly (for example `new Set`, `structuredClone`, `reduce` or `Intl`), or its loop does domain work that no single built-in does.",
+  pass: "The function has no such hand-written loop: it already calls the built-in directly (for example `new Set`, `structuredClone`, `reduce` or `Intl`), or its loop does domain work that no single built-in does. A chain of built-in array methods such as `filter`, `map`, `flatMap` and `flat` already uses the built-ins.",
 });
 
 const aiSlopRules = [

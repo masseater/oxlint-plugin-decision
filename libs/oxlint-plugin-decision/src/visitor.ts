@@ -4,7 +4,8 @@ import { Array as Arr, Option, Predicate } from "effect";
 import { commentedSnippetOf, contextOf, lacksComment } from "./context.ts";
 import { isSelected } from "./name.ts";
 import { OptionsError, REPORT_LOC, TARGET_NODE_TYPES, snippetNodeFor } from "./options.ts";
-import { reportModel } from "./report.ts";
+import { reportModels } from "./report.ts";
+import type { ModelPass } from "./report.ts";
 import { truncateSnippet } from "./request.ts";
 import { envNameOf, envOf, failsInCi, warnOnce } from "./runtime.ts";
 import type {
@@ -119,23 +120,26 @@ const finish = (batch: Collected): void => {
   if (Predicate.isUndefined(first)) {
     return;
   }
-  const models = availableModels(batch);
   const deadline = Date.now() + batch.options.timeoutMs;
-  for (const model of models) {
+  const passes = availableModels(batch).flatMap((model): readonly ModelPass[] => {
     const matches = batch.matches.filter(({ rule }) =>
       rule.models.some(({ id }) => id === model.id),
     );
-    if (Arr.isReadonlyArrayNonEmpty(matches)) {
-      reportModel({
-        contextOf: (match) => contextOfRule(batch, match.rule.id),
-        filename: first.filename,
-        options: batch.options,
-        model,
-        matches,
-        deadline,
-      });
-    }
-  }
+    return Arr.match(matches, {
+      onEmpty: () => [],
+      onNonEmpty: (some) => [
+        {
+          contextOf: (match) => contextOfRule(batch, match.rule.id),
+          filename: first.filename,
+          options: batch.options,
+          model,
+          matches: some,
+          deadline,
+        },
+      ],
+    });
+  });
+  reportModels(passes);
 };
 
 const ruleIn = (batch: Collected, id: string): ResolvedRule =>

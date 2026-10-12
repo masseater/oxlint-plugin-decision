@@ -283,7 +283,7 @@ You can also set `explain: true` (or `"json"`) in `createDecisionPlugin` or in `
 For every match the plugin asked a model about, it prints to stderr, so oxlint's own output stays as it is:
 
 ```text
-oxlint-plugin-decision explain: fail.js:5:3 [no-pii-in-logs] openrouter/respan/span-01-lite (served openrouter/respan/span-01-lite-20260925) cached=no
+oxlint-plugin-decision explain: fail.js:5:3 [no-pii-in-logs] openrouter/respan/span-01-lite (served openrouter/respan/span-01-lite-20260925) cached=no 412ms
   state: 64 chars "state.snippets.s3: console.log(\"loaded\", user.email, user.ph"
   s3: yes=0.93
     Consider only snippet "s3" in state.snippets. Does this call write personal data, such as an email or phone number, to a log or console?
@@ -291,12 +291,12 @@ oxlint-plugin-decision explain: fail.js:5:3 [no-pii-in-logs] openrouter/respan/s
 ```
 
 - The file and position, the rule, the model id the rule was asked with (after any per-rule override), and the model that served the answer.
-- Whether the answer came from the cache.
+- Whether the answer came from the cache, and how long the plugin waited for the answers of that file, in milliseconds. Every model of a file is asked together, so they share one wait.
 - The length and first characters of the source sent as state. The full source is not printed.
 - Each question exactly as sent, with the probability of each answer. When a Respan model answers a `classify` or `severity` rule, each yes/no question it was asked is listed on its own.
 - The verdict, the rule's cutoff, and whether it was reported.
 
-If the request failed, the record says why instead. In JSON Lines the same fields are `file`, `line`, `column`, `rule`, `model`, `served`, `cutoff`, `cached`, `state`, `questions`, `verdict`, `reported`, and `error`.
+If the request failed, the record says why instead. In JSON Lines the same fields are `file`, `line`, `column`, `rule`, `model`, `served`, `cutoff`, `cached`, `durationMs`, `state`, `questions`, `verdict`, `reported`, and `error`.
 
 Explain mode only prints. It does not change what is asked, what is cached, or what is reported.
 
@@ -391,6 +391,10 @@ export default defineConfig({
 `createDecisionPlugin` checks every rule and setting when the plugin loads, so a typo in a rule fails the oxlint run instead of being ignored.
 
 A provider's `decide` is synchronous, because oxlint rules are. It gets an OpenRouter Decisions request (`model`, `state`, `questions`) and returns `{ ok: true, response }` with a Decisions response, or `{ ok: false, reason }`. The built-in `openRouter` provider does its network call on a worker thread through [synckit](https://github.com/un-ts/synckit); a custom provider that calls a network service should do the same.
+
+oxlint runs JS plugins on one thread, so files are asked one after another. Within a file, the plugin hands every model of the same provider to the provider's optional `decideAll` in one call, and the built-in provider sends them at the same time. A provider without `decideAll` is asked one model at a time through `decide`.
+
+The built-in provider's worker reports its `decide`, `ask` and `send` steps as spans over OTLP when the standard `OTEL_TRACES_EXPORTER=otlp` and `OTEL_EXPORTER_OTLP_ENDPOINT` (or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`) are set, and does nothing otherwise.
 
 Types for all of this are exported: `DecisionRule`, `DecisionOptions`, `RuleAnswer`, `RuleContext`, `DecisionProvider`, `DecisionRequest`, `DecideResult`, and more.
 

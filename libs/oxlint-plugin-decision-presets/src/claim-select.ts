@@ -37,12 +37,10 @@ const namedLike = ({ prefixes, suffixes = [] }: NameWords): Select => {
     );
 };
 
-const noName = (): Option.Option<string> => Option.none();
-
 const identifierName = (node: SelectedNode): Option.Option<string> =>
   Match.value(node).pipe(
     Match.when({ type: "Identifier" }, (identifier) => Option.some(identifier.name)),
-    Match.orElse(noName),
+    Match.orElse(() => Option.none<string>()),
   );
 
 const rootOf = (callee: SelectedNode): Option.Option<string> =>

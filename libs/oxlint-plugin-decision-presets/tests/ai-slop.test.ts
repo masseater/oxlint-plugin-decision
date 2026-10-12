@@ -49,6 +49,7 @@ const PASS_SHORT = [
   "pass.ts:24",
   "pass.ts:34",
   "pass.ts:51",
+  "pass.ts:60",
 ];
 const COMMENTED = ["pass.ts:28", "pass.ts:51", "fail.ts:27", "fail.ts:39", "fail.ts:60"];
 
@@ -68,6 +69,7 @@ const ASKED: Readonly<Record<string, readonly string[]>> = {
     "pass.ts:34",
     "pass.ts:51",
     "pass.ts:56",
+    "pass.ts:60",
     "fail.ts:19",
     "fail.ts:23",
     "fail.ts:39",
@@ -75,7 +77,9 @@ const ASKED: Readonly<Record<string, readonly string[]>> = {
   ],
   "redundant-guard": ["pass.ts:8", "pass.ts:38", "fail.ts:4", "fail.ts:66"],
   "reinvents-builtin": [
-    ...["4", "8", "16", "20", "24", "28", "34", "38", "51", "56"].map((line) => `pass.ts:${line}`),
+    ...["4", "8", "16", "20", "24", "28", "34", "38", "51", "56", "60", "64", "68"].map(
+      (line) => `pass.ts:${line}`,
+    ),
     ...["4", "14", "19", "23", "27", "39", "51", "55", "60", "66"].map((line) => `fail.ts:${line}`),
   ],
   "suppression-instead-of-fix": ["pass.ts:51", "fail.ts:60"],

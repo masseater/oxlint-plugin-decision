@@ -1,12 +1,15 @@
 import { layer } from "@effect/vitest";
-import { strictEqual } from "@effect/vitest/utils";
-import { Effect, Layer, Option } from "effect";
+import { deepStrictEqual, strictEqual } from "@effect/vitest/utils";
+import { Effect, Layer, Match, Option } from "effect";
 
 import { openRouter } from "#src/openrouter.ts";
 import { envNameOf, envOf, failsInCi, messageOf, runOrElse, warnOnce } from "#src/runtime.ts";
 import type { ResolvedOptions } from "#src/types.ts";
 
 const TIMEOUT_MS = 5;
+const NETWORK = "network: ";
+const ONE_PREFIX = 2;
+const NO_FAILURE = 0;
 
 const options: ResolvedOptions = {
   ci: "fail",
@@ -51,7 +54,13 @@ const reportsWorkerFailure = Effect.sync(() => {
     timeoutMs: TIMEOUT_MS,
     env: {},
   });
-  strictEqual(result.ok, false);
+  deepStrictEqual(
+    Match.value(result).pipe(
+      Match.when({ ok: false }, ({ reason }) => reason.split(NETWORK).length),
+      Match.orElse(() => NO_FAILURE),
+    ),
+    ONE_PREFIX,
+  );
 });
 
 layer(Layer.empty)("runtime helpers", (it) => {

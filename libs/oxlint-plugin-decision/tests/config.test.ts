@@ -57,6 +57,63 @@ const customProvider = Effect.scoped(
   }),
 );
 
+const batchingPlugin = (
+  dist: string,
+): string => `import { createDecisionPlugin, defineDecisionRule, defineProvider } from ${JSON.stringify(dist)};
+
+const answer = (noul) => ({ request }) => ({
+  ok: true,
+  response: {
+    model: request.model,
+    answers: Object.fromEntries(Object.keys(request.questions).map((ref) => [ref, { type: "noul", noul }])),
+  },
+});
+
+export default createDecisionPlugin({
+  name: "batch",
+  rules: [
+    defineDecisionRule({ id: "first", target: "call", question: "Is this a call?", cutoff: 0.5 }),
+    defineDecisionRule({ id: "second", target: "call", question: "Is this a call?", cutoff: 0.5 }),
+  ],
+  providers: [
+    defineProvider({
+      name: "fake",
+      requiredEnv: [],
+      decide: answer(0.1),
+      decideAll: (inputs) => inputs.map(answer(inputs.length === 2 ? 0.9 : 0.1)),
+    }),
+  ],
+});
+`;
+
+const ONE_PART = 1;
+
+const batchedModels = Effect.scoped(
+  Effect.gen(function* test() {
+    const cwd = yield* writeProject({
+      "plugin.mjs": batchingPlugin(yield* pluginPath),
+      "log.js": "console.log(user.email);\n",
+      "oxlint.config.ts": configSource({
+        jsPlugins: ["./plugin.mjs"],
+        settings: { batch: { model: "fake/one", ci: "fail" } },
+        rules: { "batch/first": "error", "batch/second": ["error", { model: "fake/two" }] },
+      }),
+    });
+    const run = yield* runOxlint({
+      cwd,
+      args: ["--format", "unix", "-c", "oxlint.config.ts", "log.js"],
+      env: {},
+    });
+    deepStrictEqual(
+      run.stdout
+        .split("\n")
+        .filter((line) => line.includes("batch("))
+        .map((line) => line.split(" answered", ONE_PART).join("")),
+      ["log.js:1:1: [first] fake/one", "log.js:1:1: [second] fake/two"],
+    );
+  }),
+);
+
 const EVEN_ODDS = 0.5;
 const ABOVE_CERTAIN = 1.01;
 
@@ -137,6 +194,7 @@ layer(NodeServices.layer, { excludeTestServices: true })("plugin configuration",
     () => customProvider,
     TIMEOUT,
   );
+  it.effect("asks every model of a file in one provider call", () => batchedModels, TIMEOUT);
   it.effect.each(badConfigs)(
     "refuses a config where %s",
     (badConfig) => refuses(badConfig),
