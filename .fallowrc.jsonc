@@ -1,6 +1,20 @@
 {
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
   "production": true,
+  "boundaries": {
+    "zones": [
+      { "name": "apps", "patterns": ["apps/**"], "autoDiscover": ["apps"] },
+      { "name": "libs", "patterns": ["libs/**"] },
+      { "name": "tools", "patterns": ["tools/**"], "autoDiscover": ["tools"] },
+      { "name": "infra", "patterns": ["infra/**"], "autoDiscover": ["infra"] },
+    ],
+    "rules": [
+      { "from": "apps", "allow": ["libs"] },
+      { "from": "libs", "allow": [] },
+      { "from": "tools", "allow": ["libs"] },
+      { "from": "infra", "allow": ["libs", "apps"] },
+    ],
+  },
   "typeAware": { "enabled": true, "require": "complete" },
   "failOnParseError": true,
   "ignorePatterns": [".claude/**", "libs/*/example/**"],

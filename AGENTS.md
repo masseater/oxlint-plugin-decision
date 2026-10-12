@@ -11,6 +11,10 @@ Keep maintainer decisions and changes in the repository; do not require the user
 Use intent maintainer setup to initialize missing records, maintainer add to register skills, maintainer status to identify work, and maintainer sync to update generated metadata. Finish with intent maintainer check.
 <!-- intent-maintainer:end -->
 
+## 配置
+
+- ワークスペースはnxに倣ってapps・libs・tools・infraに分ける。参照してよい向きは、libsをapps・tools・infraから、appsをinfraからだけである。apps同士、tools同士、infra同士も参照しない。fallowのboundariesが落とす。
+
 ## 計測
 
 - 推測するな、計測しろ。仮説を立てたら、実装や修正の前に計測で事実を確かめ、その結果だけで判断する。
