@@ -8,7 +8,6 @@ import {
   Match,
   Option,
   Predicate,
-  Schema,
   String as Str,
 } from "effect";
 
@@ -16,6 +15,8 @@ import { PREFIX } from "./options.ts";
 import { refAt } from "./request.ts";
 import { envOf } from "./runtime.ts";
 import type {
+  Answer,
+  Answers,
   DecisionRequest,
   ExplainSetting,
   Match as RuleMatch,
@@ -60,7 +61,7 @@ interface Explanation {
 
 interface Outcome {
   readonly served: string;
-  readonly answers: Readonly<Record<string, unknown>>;
+  readonly answers: Answers;
   readonly cached: boolean | undefined;
   readonly verdict: Option.Option<Verdict>;
   readonly reported: boolean;
@@ -118,21 +119,21 @@ const fromEnv = (value: string): ExplainMode =>
 const explainModeOf = (setting: ExplainSetting): ExplainMode =>
   Option.match(envOf(EXPLAIN_ENV), { onNone: () => fromSetting(setting), onSome: fromEnv });
 
-const NoulAnswer = Schema.Struct({ noul: Schema.Number });
-const ChoiceAnswer = Schema.Struct({ probabilities: Schema.Record(Schema.String, Schema.Number) });
+const probabilitiesIn = (answer: Answer): Option.Option<Readonly<Record<string, number>>> => {
+  if (answer.type === "noul") {
+    return Option.some({ yes: answer.noul });
+  }
+  if (answer.type === "UNKNOWN") {
+    return Option.none();
+  }
+  return Option.fromUndefinedOr(answer.probabilities);
+};
 
-const decodeNoul = Schema.decodeUnknownOption(NoulAnswer);
-const decodeChoice = Schema.decodeUnknownOption(ChoiceAnswer);
-
-const probabilitiesOf = (answer: unknown): Readonly<Record<string, number>> =>
-  Option.match(decodeNoul(answer), {
-    onSome: ({ noul }) => ({ yes: noul }),
-    onNone: () =>
-      Option.match(decodeChoice(answer), {
-        onSome: ({ probabilities }) => probabilities,
-        onNone: () => ({}),
-      }),
-  });
+const probabilitiesOf = (answer: Answer | undefined): Readonly<Record<string, number>> =>
+  Option.fromUndefinedOr(answer).pipe(
+    Option.flatMap(probabilitiesIn),
+    Option.getOrElse(() => ({})),
+  );
 
 const asksAbout = (ref: string, id: string): boolean =>
   id.split(OPTION_SEPARATOR, FIRST).includes(ref);
@@ -169,7 +170,7 @@ const baseOf = (
   { pass, sent }: Sent,
   match: RuleMatch,
   { ref, loc }: Placed,
-): ((answers: Readonly<Record<string, unknown>>) => Base) => {
+): ((answers: Answers) => Base) => {
   const questions = sentFor(sent, ref);
   return (answers) => ({
     file: relativeTo(pass.cwd, pass.filename),

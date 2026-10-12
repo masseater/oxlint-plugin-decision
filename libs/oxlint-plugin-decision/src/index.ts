@@ -11,6 +11,7 @@ export type {
   DecisionPluginSetup,
   DecisionProvider,
   DecisionRequest,
+  DecisionResponse,
   DecisionRule,
   EnclosingKind,
   ExplainSetting,
