@@ -1,6 +1,6 @@
 {
   "name": "@r_masseater/oxlint-plugin-decision-presets",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Ready-made plain-English rule presets for @r_masseater/oxlint-plugin-decision.",
   "keywords": [
     "decision-model",
