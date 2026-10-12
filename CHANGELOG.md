@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.3](https://github.com/masseater/oxlint-plugin-decision/compare/v0.0.2...v0.0.3) (2026-10-12)
+
+
+### Bug Fixes
+
+* pass OPENROUTER_API_KEY to the publish workflow's verify ([#42](https://github.com/masseater/oxlint-plugin-decision/issues/42)) ([06e6fd8](https://github.com/masseater/oxlint-plugin-decision/commit/06e6fd8ebbaf844dd3508ad94e4d8f4fa72eff7e))
+* **release:** release the fix commits and stop parsing an empty PR output ([#45](https://github.com/masseater/oxlint-plugin-decision/issues/45)) ([fed219c](https://github.com/masseater/oxlint-plugin-decision/commit/fed219c8952493aa3351ab902866dadc9795a507))
+
 ## [0.0.2](https://github.com/masseater/oxlint-plugin-decision/compare/v0.0.1...v0.0.2) (2026-10-12)
 
 
