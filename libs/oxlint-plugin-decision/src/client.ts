@@ -62,7 +62,7 @@ const linkedGitDir = Effect.fn("linkedGitDir")(function* linkedGitDir(dir: strin
   );
 });
 
-type GitServices = FileSystem.FileSystem | Path.Path;
+type ClientServices = FileSystem.FileSystem | Path.Path;
 
 const gitDirAt = Effect.fn("gitDirAt")(function* gitDirAt(dir: string) {
   const fs = yield* FileSystem.FileSystem;
@@ -78,7 +78,7 @@ const gitDirAt = Effect.fn("gitDirAt")(function* gitDirAt(dir: string) {
   return yield* linkedGitDir(dir, dotGit);
 });
 
-const gitDirFrom = (dir: string): Effect.Effect<Option.Option<string>, unknown, GitServices> =>
+const gitDirFrom = (dir: string): Effect.Effect<Option.Option<string>, unknown, ClientServices> =>
   Effect.gen(function* walk() {
     const path = yield* Path.Path;
     const here = yield* gitDirAt(dir);
@@ -131,8 +131,8 @@ const attribution = Effect.gen(function* attribution() {
   };
 }).pipe(Effect.cached, Effect.runSync);
 
-const clientFor = (apiKey: string): Effect.Effect<OpenRouter, never, GitServices> =>
+const clientFor = (apiKey: string): Effect.Effect<OpenRouter, never, ClientServices> =>
   attribution.pipe(Effect.map((app) => new OpenRouter({ apiKey, ...app })));
 
 export { clientFor };
-export type { GitServices as ClientServices };
+export type { ClientServices };
