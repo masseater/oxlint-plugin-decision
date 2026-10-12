@@ -19,3 +19,7 @@ Use intent maintainer setup to initialize missing records, maintainer add to reg
 - スパンは時間を使っている処理そのものに仕込む。計測のためだけにコマンドやプロセスを包まない。
 - 判定と所要時間は `OXLINT_DECISION_EXPLAIN=json` で読む。oxlint のルールごとの時間は `--debug=timings` で読む。
 - 判断の根拠にする計測は、実際のモデルに問い合わせる lint で行う。モックのテストは計る仕組みが動くかを確かめるためだけに使う。
+
+## マージ
+
+- マージ前に必ず base ブランチを取り込み、手元の `vp run verify` を通してからマージする。コンフリクトしないからといって、取り込まないままマージしない。マージしてよいかは聞かない。
