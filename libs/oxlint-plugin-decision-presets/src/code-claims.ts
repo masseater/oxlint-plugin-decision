@@ -1,5 +1,6 @@
 import type { DecisionRule } from "@r_masseater/oxlint-plugin-decision";
 
+import { hasCatch } from "./ai-slop-select.ts";
 import { COMMENT, ENCLOSING_FUNCTION, claimRule } from "./claim-rule.ts";
 import { isLogCall, namedLike } from "./claim-select.ts";
 
@@ -47,6 +48,7 @@ const idempotentName = claimRule({
 const catchHidesFailure = claimRule({
   id: "catch-hides-failure",
   cutoff: 0.55,
+  select: hasCatch,
   ask: "A catch block in this function hides a failure the function's caller needed to know about.",
   yes: "The catch block neither rethrows, returns an error value the signature admits, nor reports through a channel the function is documented to use; it returns a default, an empty value, a made-up value or nothing, or only logs, and the function's name or return type promises a real result: a value that was fetched, parsed or computed, or an operation such as a save or a send that the caller will assume happened.",
   no: "The function has no catch block; or the failure is propagated (rethrown, wrapped, or logged and then rethrown); converted into a value the caller can distinguish from success, such as a Result or null when the return type admits it; or absorbed where absorbing is the point: a cleanup or best-effort step after the real result is in hand, a fallback to the next attempt or source, a catch that swallows only the case in which the goal already holds, or a top-level entry point that reports and exits with a non-zero status. A function named safe*, try* or *OrNull has promised to absorb failure.",

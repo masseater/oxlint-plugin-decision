@@ -1,7 +1,7 @@
-import type { DecisionRule, SelectedNode } from "@r_masseater/oxlint-plugin-decision";
+import type { SelectedNode } from "@r_masseater/oxlint-plugin-decision";
 import { Array as Arr, Match, Option, Predicate } from "effect";
 
-type Select = NonNullable<DecisionRule["select"]>;
+import type { Select } from "./ai-slop-select.ts";
 
 const WORD_STARTS: ReadonlySet<string> = new Set([
   "",
@@ -110,4 +110,4 @@ const isTestCall = callingAny(["it", "test"]);
 const isDescribeCall = callingAny(["describe"]);
 
 export { isDescribeCall, isLogCall, isTestCall, namedLike };
-export type { NameWords, Select };
+export type { NameWords };

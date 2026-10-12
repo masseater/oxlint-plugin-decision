@@ -13,8 +13,10 @@ vp install
 ## Checks
 
 ```sh
-vp run verify   # format, lint, typecheck, build, mock tests, workflow lint, fallow
+vp run verify   # build, format, lint, typecheck, mock tests, workflow lint, fallow
 ```
+
+The lint runs the `strict` and `ai-slop` presets from the built `libs/oxlint-plugin-decision-presets/dist` against `libs/*/src` with Span-01 Lite (false positives are turned off per file in `decisionFalsePositives`), so build before `vp check` and set `OPENROUTER_API_KEY`. Without the key the decision rules only warn locally; in CI they fail.
 
 Inside the package:
 
