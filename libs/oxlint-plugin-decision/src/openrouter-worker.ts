@@ -30,6 +30,8 @@ const RETRY_EXPONENT = 2;
 const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
 const API_SUFFIX = /\/api\/v1\/*$|\/+$/u;
 const CACHE_DIR = ["node_modules", ".cache", "oxlint-plugin-decision"] as const;
+const APP_URL = "https://github.com/masseater/oxlint-plugin-decision";
+const APP_TITLE = "oxlint-plugin-decision";
 
 const reasonFor = (error: unknown): string => {
   if (error instanceof OpenRouterError) {
@@ -102,7 +104,11 @@ const send = Effect.fn("send")(function* send(
   { timeoutMs, env }: Pick<DecideInput, "timeoutMs" | "env">,
 ) {
   const apiKey = yield* Config.Redacted(envNameOf(env, "OPENROUTER_API_KEY"));
-  const client = new OpenRouter({ apiKey: Redacted.value(apiKey) });
+  const client = new OpenRouter({
+    apiKey: Redacted.value(apiKey),
+    httpReferer: APP_URL,
+    appTitle: APP_TITLE,
+  });
   return yield* Effect.tryPromise({
     try: (signal) =>
       client.alpha.decisions.create(
