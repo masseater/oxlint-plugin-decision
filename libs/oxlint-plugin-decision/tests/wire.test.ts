@@ -3,7 +3,7 @@ import { layer } from "@effect/vitest";
 import { deepStrictEqual } from "@effect/vitest/utils";
 import { Effect } from "effect";
 
-import type { DecisionRequest } from "#src/types.ts";
+import type { Answers, DecisionRequest, NoulAnswer } from "#src/types.ts";
 import { mergeResponses, wireRequestsFor } from "#src/wire.ts";
 
 import { TIMEOUT } from "./fixtures.ts";
@@ -42,9 +42,9 @@ const severityRequest: DecisionRequest = {
   questions: { s0: { type: "choice", instructions: "Is it risky?", criteria: SEVERITY } },
 };
 
-const yes = (noul: number): unknown => ({ type: "noul", noul });
+const yes = (noul: number): NoulAnswer => ({ type: "noul", noul });
 
-const yesAnswers = (scores: Scores): Readonly<Record<string, unknown>> =>
+const yesAnswers = (scores: Scores): Answers =>
   Object.fromEntries(Object.entries(scores).map(([id, noul]) => [id, yes(noul)]));
 
 const merged = (request: DecisionRequest, scores: Scores): unknown =>

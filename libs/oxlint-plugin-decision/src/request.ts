@@ -1,10 +1,20 @@
 import type { Location } from "@oxlint/plugins";
-import { Array as Arr, Boolean as Bool, Number as Num, Option, Predicate, Schema } from "effect";
+import {
+  Array as Arr,
+  Boolean as Bool,
+  Number as Num,
+  Option,
+  Predicate,
+  String as Str,
+} from "effect";
 
-import { questionFor, verdictOf } from "./answer.ts";
+import { choiceOf, probabilityOfChoice, questionFor, verdictOf } from "./answer.ts";
 import type {
+  Answer,
+  Answers,
   ChoiceQuestion,
   DecisionRequest,
+  DecisionResponse,
   LineRange,
   Question,
   RequestMatch,
@@ -106,39 +116,23 @@ const locationQuestion = (
   },
 });
 
-const Probability = Schema.Number.check(Schema.isBetween({ minimum: 0, maximum: 1 }));
-
-const ChoiceAnswer = Schema.Struct({
-  type: Schema.Literal("choice"),
-  choice: Schema.String,
-  probabilities: Schema.Record(Schema.String, Probability),
-});
-
-const Response = Schema.Struct({
-  model: Schema.NonEmptyString,
-  answers: Schema.Record(Schema.String, Schema.Unknown),
-});
-
-const decodeChoice = Schema.decodeUnknownOption(ChoiceAnswer);
-const decodeResponse = Schema.decodeUnknownOption(Response);
-
 type ChoiceCriteria = ChoiceQuestion["criteria"];
 
-const validChoice = (answer: unknown, criteria: ChoiceCriteria): boolean =>
+const validChoice = (answer: Answer | undefined, criteria: ChoiceCriteria): boolean =>
   Option.exists(
-    decodeChoice(answer),
-    ({ choice, probabilities }) =>
-      Object.hasOwn(criteria, choice) && Object.hasOwn(probabilities, choice),
+    choiceOf(answer),
+    (chosen) =>
+      Object.hasOwn(criteria, chosen.choice) && Option.isSome(probabilityOfChoice(chosen)),
   );
 
 const selectedLocation = (
-  answer: unknown,
+  answer: Answer | undefined,
   candidates: Readonly<Record<string, LineRange>>,
   cutoff: number,
 ): Option.Option<LineRange> =>
-  decodeChoice(answer).pipe(
-    Option.filter(({ choice, probabilities }) =>
-      Option.exists(Option.fromUndefinedOr(probabilities[choice]), (probability) =>
+  choiceOf(answer).pipe(
+    Option.filter((chosen) =>
+      Option.exists(probabilityOfChoice(chosen), (probability) =>
         Num.isGreaterThanOrEqualTo(probability, cutoff),
       ),
     ),
@@ -232,7 +226,7 @@ const mainQuestionsOf = (request: DecisionRequest): readonly (readonly [string, 
   Object.entries(request.questions).filter(([id]) => !id.endsWith(LOCATION_SUFFIX));
 
 const resultOf = (
-  answers: Readonly<Record<string, unknown>>,
+  answers: Answers,
   [ref, question]: readonly [string, Question],
 ): readonly [string, Verdict] => [
   ref,
@@ -242,10 +236,10 @@ const resultOf = (
   ),
 ];
 
-const parseVerdicts = (json: unknown, request: DecisionRequest): Verdicts => {
+const parseVerdicts = (response: DecisionResponse, request: DecisionRequest): Verdicts => {
   const { model, answers } = Option.getOrThrowWith(
-    decodeResponse(json),
-    () => new Error("response has no model id or answers object"),
+    Option.liftPredicate(response, ({ model: served }) => Str.isNonEmpty(served)),
+    () => new Error("response has no model id"),
   );
   const results = Object.fromEntries(
     mainQuestionsOf(request).map((entry) => resultOf(answers, entry)),

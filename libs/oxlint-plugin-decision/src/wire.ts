@@ -1,3 +1,4 @@
+import type { DecisionsRequest } from "@openrouter/sdk/models";
 import {
   Array as Arr,
   Boolean as Bool,
@@ -5,20 +6,26 @@ import {
   Option,
   Order,
   Predicate,
-  Schema,
   pipe,
 } from "effect";
 
-import { SEVERITY_ORDER } from "./answer.ts";
+import { SEVERITY_ORDER, noulOf } from "./answer.ts";
 import { snippetRefOf } from "./request.ts";
-import type { ChoiceQuestion, DecisionRequest, NoulQuestion, Question } from "./types.ts";
+import type {
+  Answers,
+  ChoiceAnswer,
+  ChoiceQuestion,
+  DecisionRequest,
+  DecisionResponse,
+  NoulQuestion,
+  Question,
+} from "./types.ts";
 
 type State = DecisionRequest["state"];
 
 type ChoiceCriteria = ChoiceQuestion["criteria"];
 
-interface WireRequest {
-  readonly model: string;
+interface WireRequest extends Readonly<Pick<DecisionsRequest, "model" | "state" | "questions">> {
   readonly state: DecisionRequest["state"] | string;
   readonly questions: Readonly<Record<string, Question>>;
 }
@@ -112,38 +119,29 @@ const asYesNo = ([id, question]: readonly [string, Question]): readonly (readonl
   return [[id, question]];
 };
 
-const perSnippet = (request: DecisionRequest): readonly WireRequest[] =>
-  Object.values(Arr.groupBy(Object.entries(request.questions), ([id]) => snippetRefOf(id))).map(
-    (questions) => {
-      const [[id]] = questions;
-      return {
-        model: request.model,
-        state: stateAsText(stateOf(request.state, snippetRefOf(id))),
-        questions: Object.fromEntries(questions.flatMap((entry) => asYesNo(entry))),
-      };
-    },
-  );
+const perSnippet = (request: DecisionRequest): Arr.NonEmptyReadonlyArray<WireRequest> => {
+  const wires = Object.values(
+    Arr.groupBy(Object.entries(request.questions), ([id]) => snippetRefOf(id)),
+  ).map((questions): WireRequest => {
+    const [[id]] = questions;
+    return {
+      model: request.model,
+      state: stateAsText(stateOf(request.state, snippetRefOf(id))),
+      questions: Object.fromEntries(questions.flatMap((entry) => asYesNo(entry))),
+    };
+  });
+  if (Arr.isReadonlyArrayNonEmpty(wires)) {
+    return wires;
+  }
+  return [request];
+};
 
-const wireRequestsFor = (request: DecisionRequest): readonly WireRequest[] => {
+const wireRequestsFor = (request: DecisionRequest): Arr.NonEmptyReadonlyArray<WireRequest> => {
   if (isRespan(request.model)) {
     return perSnippet(request);
   }
   return [request];
 };
-
-const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
-  Predicate.isObject(value) && !Array.isArray(value);
-
-const answersOf = (response: unknown): Readonly<Record<string, unknown>> => {
-  if (isRecord(response) && isRecord(response["answers"])) {
-    return response["answers"];
-  }
-  return {};
-};
-
-const NoulAnswer = Schema.Struct({ noul: Schema.Number });
-
-const decodeNoul = Schema.decodeUnknownOption(NoulAnswer);
 
 interface Score {
   readonly label: string;
@@ -152,15 +150,11 @@ interface Score {
 
 const byYes = Order.mapInput(Order.Number, ({ yes }: Score) => yes);
 
-const scoreOf = (
-  answers: Readonly<Record<string, unknown>>,
-  id: string,
-  label: string,
-): Option.Option<Score> =>
-  Option.map(decodeNoul(answers[optionIdOf(id, label)]), ({ noul }) => ({ label, yes: noul }));
+const scoreOf = (answers: Answers, id: string, label: string): Option.Option<Score> =>
+  Option.map(noulOf(answers[optionIdOf(id, label)]), ({ noul }) => ({ label, yes: noul }));
 
 const scoresOf = (
-  answers: Readonly<Record<string, unknown>>,
+  answers: Answers,
   id: string,
   labels: readonly string[],
 ): Option.Option<Arr.NonEmptyReadonlyArray<Score>> =>
@@ -174,13 +168,13 @@ const probabilitiesOf = (scores: readonly Score[]): Readonly<Record<string, numb
 const choiceAnswer = (
   choice: string,
   probabilities: Readonly<Record<string, number>>,
-): unknown => ({
+): ChoiceAnswer => ({
   type: "choice",
   choice,
   probabilities,
 });
 
-const bestLabel = (scores: Arr.NonEmptyReadonlyArray<Score>): unknown =>
+const bestLabel = (scores: Arr.NonEmptyReadonlyArray<Score>): ChoiceAnswer =>
   choiceAnswer(Arr.max(scores, byYes).label, probabilitiesOf(scores));
 
 const atLeast = (scores: Arr.NonEmptyReadonlyArray<Score>): Arr.NonEmptyReadonlyArray<Score> =>
@@ -192,7 +186,7 @@ const atLeast = (scores: Arr.NonEmptyReadonlyArray<Score>): Arr.NonEmptyReadonly
     })),
   );
 
-const severityLevel = (scores: Arr.NonEmptyReadonlyArray<Score>): unknown => {
+const severityLevel = (scores: Arr.NonEmptyReadonlyArray<Score>): ChoiceAnswer => {
   const cumulative = atLeast(scores);
   const probabilities = {
     [NO_SEVERITY]: Num.subtract(CERTAIN, Arr.headNonEmpty(cumulative).yes),
@@ -216,9 +210,9 @@ const labelsAsked = (criteria: ChoiceCriteria): readonly string[] => {
 };
 
 const choiceFromYesNo = (
-  answers: Readonly<Record<string, unknown>>,
+  answers: Answers,
   [id, { criteria }]: readonly [string, ChoiceQuestion],
-): readonly (readonly [string, unknown])[] => {
+): readonly (readonly [string, ChoiceAnswer])[] => {
   const collapse = Bool.match(isSeverityScale(criteria), {
     onTrue: () => severityLevel,
     onFalse: () => bestLabel,
@@ -239,10 +233,7 @@ const choiceQuestionsOf = (
     return [];
   });
 
-const withChoices = (
-  request: DecisionRequest,
-  answers: Readonly<Record<string, unknown>>,
-): Readonly<Record<string, unknown>> => {
+const withChoices = (request: DecisionRequest, answers: Answers): Answers => {
   if (!isRespan(request.model)) {
     return answers;
   }
@@ -254,11 +245,14 @@ const withChoices = (
   };
 };
 
-const mergeResponses = (request: DecisionRequest, responses: readonly unknown[]): unknown => ({
-  ...Option.getOrElse(Option.filter(Arr.head(responses), isRecord), () => ({})),
+const mergeResponses = (
+  request: DecisionRequest,
+  responses: Arr.NonEmptyReadonlyArray<DecisionResponse>,
+): DecisionResponse => ({
+  ...Arr.headNonEmpty(responses),
   answers: withChoices(
     request,
-    Object.fromEntries(responses.flatMap((response) => Object.entries(answersOf(response)))),
+    Object.fromEntries(responses.flatMap(({ answers }) => Object.entries(answers))),
   ),
 });
 
