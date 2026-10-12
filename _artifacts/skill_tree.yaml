@@ -20,13 +20,11 @@ review:
       README.md,
       CONTRIBUTING.md,
       LICENSE,
-      NOTICE,
       libs/oxlint-plugin-decision-presets/**,
       libs/oxlint-plugin-decision/tests/**,
       libs/oxlint-plugin-decision/vite.config.ts,
       libs/oxlint-plugin-decision/tsconfig.json,
       libs/oxlint-plugin-decision/LICENSE,
-      libs/oxlint-plugin-decision/NOTICE,
     ]
 skills:
   [
