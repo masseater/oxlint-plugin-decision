@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "fallow": "fallow --production --quiet --format compact && fallow dead-code --no-production --quiet --format compact && fallow dupes --quiet --format compact && fallow security --fail-on-issues --quiet",
+    "fallow": "fallow --production --fail-on-issues --quiet --format compact && fallow dead-code --no-production --fail-on-issues --quiet --format compact && fallow dead-code --no-production --quiet --format json | jq -e '[.prop_drilling_chains, .thin_wrappers, .duplicate_prop_shapes] | all(length == 0)' > /dev/null && fallow dupes --fail-on-issues --quiet --format compact && fallow security --fail-on-issues --quiet",
     "prepare": "vp config",
     "skills:check": "intent validate libs/oxlint-plugin-decision/skills && intent maintainer check"
   },

@@ -1,6 +1,7 @@
 import type { SelectedNode } from "@r_masseater/oxlint-plugin-decision";
 import { Array as Arr, Match, Option, Predicate } from "effect";
 
+import { identifierOf } from "./ai-slop-select.ts";
 import type { Select } from "./ai-slop-select.ts";
 
 const WORD_STARTS: ReadonlySet<string> = new Set([
@@ -37,16 +38,10 @@ const namedLike = ({ prefixes, suffixes = [] }: NameWords): Select => {
     );
 };
 
-const identifierName = (node: SelectedNode): Option.Option<string> =>
-  Match.value(node).pipe(
-    Match.when({ type: "Identifier" }, (identifier) => Option.some(identifier.name)),
-    Match.orElse(() => Option.none<string>()),
-  );
-
 const rootOf = (callee: SelectedNode): Option.Option<string> =>
   Match.value(callee).pipe(
     Match.when({ type: "MemberExpression", computed: false }, (member) => rootOf(member.object)),
-    Match.orElse(identifierName),
+    Match.orElse(identifierOf),
   );
 
 const calleeOf = (node: SelectedNode): Option.Option<SelectedNode> =>
@@ -75,9 +70,9 @@ const LOG_LEVELS: ReadonlySet<string> = new Set([
 const lastNameOf = (node: SelectedNode): Option.Option<string> =>
   Match.value(node).pipe(
     Match.when({ type: "MemberExpression", computed: false }, (member) =>
-      identifierName(member.property),
+      identifierOf(member.property),
     ),
-    Match.orElse(identifierName),
+    Match.orElse(identifierOf),
   );
 
 const isLogger = (name: string): boolean =>
@@ -91,7 +86,7 @@ interface LogCall {
 const logCallOf = (callee: SelectedNode): Option.Option<LogCall> =>
   Match.value(callee).pipe(
     Match.when({ type: "MemberExpression", computed: false }, (member) =>
-      Option.some({ level: identifierName(member.property), logger: lastNameOf(member.object) }),
+      Option.some({ level: identifierOf(member.property), logger: lastNameOf(member.object) }),
     ),
     Match.orElse(() => Option.none()),
   );

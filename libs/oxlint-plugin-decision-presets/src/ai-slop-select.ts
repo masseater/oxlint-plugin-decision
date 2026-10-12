@@ -271,6 +271,7 @@ const isCatch: NodeTest = (node) =>
 const hasCatch: Select = containing(isCatch);
 
 export {
+  identifierOf,
   forwardsOneCall,
   mayBePlaceholder,
   isDeclared,
