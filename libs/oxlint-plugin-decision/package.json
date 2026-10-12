@@ -1,6 +1,6 @@
 {
   "name": "@r_masseater/oxlint-plugin-decision",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Oxlint JS plugin that lints code with plain-English rules answered by decision models on OpenRouter.",
   "keywords": [
     "decision-model",
