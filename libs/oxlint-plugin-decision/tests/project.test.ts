@@ -181,6 +181,42 @@ const contexts = Effect.gen(function* test() {
   );
 });
 
+const attributed = Effect.gen(function* test() {
+  const env = yield* mockEnv("test-key");
+  yield* lintProject({
+    files: { "log.js": LOG_LINE },
+    options: { rules: [callRule] },
+    env: { ...env, GITHUB_ACTIONS: "true", GITHUB_REPOSITORY: "acme/app" },
+  });
+  deepStrictEqual(
+    (yield* loggedRequests).map(({ app }) => app),
+    [
+      {
+        referer: "https://github.com/acme/app/oxlint-plugin-decision/github-actions",
+        title: "acme/app github-actions oxlint-plugin-decision",
+        visibility: "hidden",
+      },
+    ],
+  );
+});
+
+const fromRemote = Effect.gen(function* test() {
+  const env = yield* mockEnv("test-key");
+  yield* lintProject({
+    files: {
+      "log.js": LOG_LINE,
+      ".git": "gitdir: .\n",
+      config: '[core]\n\tbare = false\n[remote "origin"]\n\turl = git@github.com:acme/tool.git\n',
+    },
+    options: { rules: [callRule] },
+    env: { ...env, CLAUDECODE: "1" },
+  });
+  deepStrictEqual(
+    (yield* loggedRequests).map(({ app }) => app.title),
+    ["acme/tool claude-code oxlint-plugin-decision"],
+  );
+});
+
 layer(NodeServices.layer, { excludeTestServices: true })("linting a project", (it) => {
   it.effect(
     "asks separately about files with the same text but different parses",
@@ -206,4 +242,10 @@ layer(NodeServices.layer, { excludeTestServices: true })("linting a project", (i
     () => withMock(renamedEnv),
     TIMEOUT,
   );
+  it.effect(
+    "names the repository and where it runs as a hidden OpenRouter app",
+    () => withMock(attributed),
+    TIMEOUT,
+  );
+  it.effect("reads the repository from the origin remote", () => withMock(fromRemote), TIMEOUT);
 });
