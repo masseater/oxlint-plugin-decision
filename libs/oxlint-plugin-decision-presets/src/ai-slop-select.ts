@@ -184,6 +184,5 @@ export {
   hasFallback,
   hasGuard,
   hasSuppression,
-  isCast,
 };
 export type { NodeTest, Select };

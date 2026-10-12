@@ -14,6 +14,5 @@ export default defineConfig({
     "decision-ai-slop/cast-instead-of-narrowing": "error",
     "decision-ai-slop/suppression-instead-of-fix": "error",
     "decision-ai-slop/reinvents-builtin": "error",
-    "decision-ai-slop/duplicates-library-type": "error",
   },
 });

@@ -95,7 +95,7 @@ const LocationCutoff = Schema.Number.check(
 );
 
 const RuleContextSchema = Schema.Union([
-  Schema.Struct({ scope: Schema.Literals(["node", "file", "imports", "comment"]) }),
+  Schema.Struct({ scope: Schema.Literals(["node", "file", "comment"]) }),
   Schema.Struct({
     scope: Schema.Literal("lines"),
     before: Schema.optionalKey(NonNegativeInt),
