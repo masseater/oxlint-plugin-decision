@@ -25,10 +25,21 @@ jobs:
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: false
-      - run: vp run verify
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: node_modules/.cache/oxlint-plugin-decision
+          key: oxlint-plugin-decision-${{ github.sha }}
+          restore-keys: oxlint-plugin-decision-
+      - id: verify
+        run: vp run verify
         env:
           GH_TOKEN: ${{ github.token }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - if: always() && steps.verify.outcome != 'skipped'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: node_modules/.cache/oxlint-plugin-decision
+          key: oxlint-plugin-decision-${{ github.sha }}
 
   release:
     needs: verify
@@ -78,6 +89,12 @@ jobs:
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           enable-cache: false
+      - if: steps.pr.outcome == 'success'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: node_modules/.cache/oxlint-plugin-decision
+          key: oxlint-plugin-decision-${{ github.sha }}
+          restore-keys: oxlint-plugin-decision-
       - if: steps.pr.outcome == 'success'
         run: vp run verify
         env:
