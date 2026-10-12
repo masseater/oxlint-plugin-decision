@@ -394,7 +394,7 @@ A provider's `decide` is synchronous, because oxlint rules are. It gets an OpenR
 
 oxlint runs JS plugins on one thread, so files are asked one after another. Within a file, the plugin hands every model of the same provider to the provider's optional `decideAll` in one call, and the built-in provider sends them at the same time. A provider without `decideAll` is asked one model at a time through `decide`.
 
-The built-in provider's worker reports its `decide`, `ask` and `send` steps as spans over OTLP when the standard `OTEL_EXPORTER_OTLP_ENDPOINT` (or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`) is set, and does nothing otherwise.
+The built-in provider's worker reports its `decide`, `ask` and `send` steps as spans over OTLP when the standard `OTEL_TRACES_EXPORTER=otlp` and `OTEL_EXPORTER_OTLP_ENDPOINT` (or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`) are set, and does nothing otherwise.
 
 Types for all of this are exported: `DecisionRule`, `DecisionOptions`, `RuleAnswer`, `RuleContext`, `DecisionProvider`, `DecisionRequest`, `DecideResult`, and more.
 
