@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.0.4](https://github.com/masseater/oxlint-plugin-decision/compare/v0.0.3...v0.0.4) (2026-10-12)
+
+
+### Features
+
+* OpenRouter のアプリをリポジトリと実行元（CI / Claude Code cloud / Claude Code / local）ごとに分ける ([#52](https://github.com/masseater/oxlint-plugin-decision/issues/52)) ([8f036a1](https://github.com/masseater/oxlint-plugin-decision/commit/8f036a1c0e33b50bd39f0a5e8967e99d7cafb1fc))
+
+
+### Bug Fixes
+
+* keep decision answers across CI runs and name the app on OpenRouter ([#51](https://github.com/masseater/oxlint-plugin-decision/issues/51)) ([1c0055e](https://github.com/masseater/oxlint-plugin-decision/commit/1c0055efc91d8ce74421415ce5159779ee37ce41))
+* **release:** release the fix commits and stop parsing an empty PR output ([#48](https://github.com/masseater/oxlint-plugin-decision/issues/48)) ([aad2ba6](https://github.com/masseater/oxlint-plugin-decision/commit/aad2ba67f3df3de57ee05b53d1aee197e6059293))
+* **release:** run up-to-date on the release PR before merging it ([#53](https://github.com/masseater/oxlint-plugin-decision/issues/53)) ([c069053](https://github.com/masseater/oxlint-plugin-decision/commit/c069053b221f2e56ba2cb9d777b314a748a00c69))
+
 ## [0.0.3](https://github.com/masseater/oxlint-plugin-decision/compare/v0.0.2...v0.0.3) (2026-10-12)
 
 
