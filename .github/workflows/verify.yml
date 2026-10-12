@@ -49,14 +49,34 @@ jobs:
       contents: write
       pull-requests: write
       actions: write
+      checks: read
     concurrency:
       group: release
     steps:
-      - id: release
+      - env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::RELEASE_PLEASE_TOKEN is not set. Issue a fine-grained PAT (Contents and Pull requests: write) and register it with gh secret set RELEASE_PLEASE_TOKEN."
+            exit 1
+          fi
+          if ! gh api "repos/$GITHUB_REPOSITORY" --silent; then
+            echo "::error::RELEASE_PLEASE_TOKEN was rejected; it has probably expired. Regenerate the fine-grained PAT and run gh secret set RELEASE_PLEASE_TOKEN again."
+            exit 1
+          fi
+      - id: tagged
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           config-file: .github/release-please/config.json
           manifest-file: .github/release-please/manifest.json
+          skip-github-pull-request: true
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          config-file: .github/release-please/config.json
+          manifest-file: .github/release-please/manifest.json
+          skip-github-release: true
       - id: pr
         if: steps.release.outputs.prs_created == 'true'
         env:
@@ -103,21 +123,19 @@ jobs:
       - if: steps.pr.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_PR: ${{ steps.release.outputs.pr }}
           HEAD: ${{ steps.pr.outputs.head }}
         run: |
-          branch="$(jq -r .headBranchName <<<"$RELEASE_PR")"
-          gh workflow run up-to-date.yml --repo "$GITHUB_REPOSITORY" --ref "$branch"
-          for _ in $(seq 30); do
-            run="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow up-to-date.yml --event workflow_dispatch --commit "$HEAD" --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
-            [ -n "$run" ] && break
-            sleep 2
+          for _ in $(seq 60); do
+            conclusion="$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD/check-runs?check_name=up-to-date" --jq '[.check_runs[] | select(.status == "completed")][0].conclusion // empty')"
+            [ "$conclusion" = success ] && exit 0
+            if [ -n "$conclusion" ]; then
+              echo "::error::up-to-date concluded $conclusion on $HEAD"
+              exit 1
+            fi
+            sleep 5
           done
-          if [ -z "$run" ]; then
-            echo "::error::up-to-date was not dispatched for $HEAD"
-            exit 1
-          fi
-          gh run watch "$run" --repo "$GITHUB_REPOSITORY" --exit-status
+          echo "::error::up-to-date did not complete on $HEAD"
+          exit 1
       - id: merge
         if: steps.pr.outcome == 'success'
         env:
@@ -132,8 +150,8 @@ jobs:
           config-file: .github/release-please/config.json
           manifest-file: .github/release-please/manifest.json
           skip-github-pull-request: true
-      - if: steps.release.outputs.release_created == 'true' || steps.released.outputs.release_created == 'true'
+      - if: steps.tagged.outputs.release_created == 'true' || steps.released.outputs.release_created == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.release.outputs.tag_name || steps.released.outputs.tag_name }}
+          TAG: ${{ steps.tagged.outputs.tag_name || steps.released.outputs.tag_name }}
         run: gh workflow run publish.yml --repo "$GITHUB_REPOSITORY" --ref main -f ref="$TAG"
