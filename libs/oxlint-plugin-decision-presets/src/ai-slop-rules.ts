@@ -1,5 +1,5 @@
 import { defineDecisionRule } from "@r_masseater/oxlint-plugin-decision";
-import type { DecisionRule, RuleContext } from "@r_masseater/oxlint-plugin-decision";
+import type { DecisionRule } from "@r_masseater/oxlint-plugin-decision";
 
 import {
   forwardsOneCall,
@@ -11,16 +11,12 @@ import {
   hasGuard,
   hasSuppression,
 } from "./ai-slop-select.ts";
-import type { Select } from "./ai-slop-select.ts";
 
-interface SlopRule {
-  readonly id: string;
+interface SlopRule
+  extends Pick<DecisionRule, "id" | "select" | "context">, Partial<Pick<DecisionRule, "cutoff">> {
   readonly ask: string;
   readonly flag: string;
   readonly pass: string;
-  readonly select?: Select;
-  readonly context?: RuleContext;
-  readonly cutoff?: number;
 }
 
 const CUTOFF = 0.6;

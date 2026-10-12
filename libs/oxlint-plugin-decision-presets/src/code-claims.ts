@@ -1,8 +1,7 @@
 import type { DecisionRule } from "@r_masseater/oxlint-plugin-decision";
 
-import { hasCatch } from "./ai-slop-select.ts";
 import { COMMENT, ENCLOSING_FUNCTION, claimRule } from "./claim-rule.ts";
-import { isLogCall, namedLike } from "./claim-select.ts";
+import { hasCatch, isLogCall, namedLike } from "./claim-select.ts";
 
 const fnNamePromises = claimRule({
   id: "fn-name-promises",

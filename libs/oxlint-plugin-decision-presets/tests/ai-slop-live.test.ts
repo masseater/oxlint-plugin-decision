@@ -1,34 +1,26 @@
 import { NodeServices } from "@effect/platform-node";
 import { layer } from "@effect/vitest";
 import { deepStrictEqual } from "@effect/vitest/utils";
-import { Array as Arr, Config, Effect, FileSystem, Option, Order, Redacted } from "effect";
+import { Array as Arr, Config, Effect, FileSystem, Order, Redacted } from "effect";
 
-import { aiSlopRules } from "#src/ai-slop.ts";
+import aiSlopPlugin, { aiSlopRules } from "#src/ai-slop.ts";
 
 import {
+  LIVE_MODEL,
   TIMEOUT,
   configSource,
   enabled,
+  forwardedEnv,
   fromRoot,
+  headOf,
   outputOf,
   oxlint,
   reportedLines,
   tempProject,
 } from "./oxlint.ts";
 
-const AI_SLOP = "decision-ai-slop";
-const LIVE_MODEL = "openrouter/respan/span-01-lite";
+const AI_SLOP = aiSlopPlugin.meta.name;
 const LIVE_TIMEOUT_MS = 120_000;
-
-const FORWARDED = [
-  "HTTPS_PROXY",
-  "https_proxy",
-  "NO_PROXY",
-  "no_proxy",
-  "NODE_EXTRA_CA_CERTS",
-  "NODE_USE_ENV_PROXY",
-  "SSL_CERT_FILE",
-] as const;
 
 const EXPECTED = [
   "fail.ts:4:8: [redundant-guard]",
@@ -42,23 +34,6 @@ const EXPECTED = [
   "fail.ts:60:8: [suppression-instead-of-fix]",
   "fail.ts:66:8: [reinvents-builtin]",
 ];
-
-const forwardedEnv = Effect.map(
-  Effect.all(FORWARDED.map((name) => Effect.orDie(Config.option(Config.String(name))))),
-  (values) =>
-    Object.fromEntries(
-      Arr.zip(FORWARDED, values).flatMap(([name, value]) =>
-        Option.match(value, { onNone: () => [], onSome: (found) => [[name, found] as const] }),
-      ),
-    ),
-);
-
-const ID_END = "]";
-
-const LINE_START = 0;
-
-const headOf = (line: string): string =>
-  line.slice(LINE_START, line.indexOf(ID_END) + ID_END.length);
 
 const FILE = 0;
 const LINE = 1;

@@ -8,6 +8,16 @@ import type {
 } from "@openrouter/sdk/models";
 import type { Context, ESTree, Location, Range } from "@oxlint/plugins";
 
+import type {
+  CiBehaviorSchema,
+  EnclosingKindSchema,
+  ExplainSettingSchema,
+  RuleAnswerSchema,
+  RuleContextSchema,
+  SeveritySchema,
+  TargetSchema,
+} from "./schema.ts";
+
 type Frozen<Value> = Value extends (...args: never) => unknown
   ? Value
   : Value extends object
@@ -21,38 +31,26 @@ interface SelectMatch {
   readonly context: Context;
 }
 
-type Target = "function" | "call" | "jsx" | "file";
+type Target = typeof TargetSchema.Type;
 
-type CiBehavior = "skip" | "fail";
+type CiBehavior = typeof CiBehaviorSchema.Type;
 
 type ModelSpec = string | readonly string[];
 
-type ExplainSetting = boolean | "text" | "json";
+type ExplainSetting = typeof ExplainSettingSchema.Type;
 
 interface RuleLocation {
   readonly question: string;
   readonly cutoff: number;
 }
 
-type EnclosingKind = "function" | "class" | "block";
+type EnclosingKind = typeof EnclosingKindSchema.Type;
 
-type RuleContext =
-  | { readonly scope: "node" }
-  | { readonly scope: "lines"; readonly before?: number; readonly after?: number }
-  | { readonly scope: "enclosing"; readonly kind: EnclosingKind }
-  | { readonly scope: "file" }
-  | { readonly scope: "comment" };
+type RuleContext = typeof RuleContextSchema.Type;
 
-type Severity = "info" | "warn" | "error";
+type Severity = typeof SeveritySchema.Type;
 
-type RuleAnswer =
-  | { readonly kind: "boolean" }
-  | {
-      readonly kind: "classify";
-      readonly labels: Readonly<Record<string, string>>;
-      readonly report: readonly [string, ...string[]];
-    }
-  | { readonly kind: "severity"; readonly minimum?: Severity };
+type RuleAnswer = typeof RuleAnswerSchema.Type;
 
 interface DecisionRule {
   readonly id: string;

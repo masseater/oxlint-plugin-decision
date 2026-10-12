@@ -4,6 +4,8 @@ import type { PlatformError } from "effect/PlatformError";
 import { ChildProcess } from "effect/process";
 import type { ChildProcessSpawner } from "effect/process";
 
+import strictPlugin from "#src/strict.ts";
+
 type Services = FileSystem.FileSystem | Path.Path | ChildProcessSpawner.ChildProcessSpawner;
 
 type Env = Readonly<Record<string, string>>;
@@ -73,7 +75,7 @@ const tempProject = (files: Env): Effect.Effect<string, PlatformError, Services 
 
 const configSource = (config: object): string => `export default ${JSON.stringify(config)};\n`;
 
-const PLUGIN_NAME = "decision-presets";
+const PLUGIN_NAME = strictPlugin.meta.name;
 
 const EXAMPLE_FILES = ["fail.js", "pass.js"] as const;
 
@@ -96,18 +98,50 @@ const enabled = (
 ): Readonly<Record<string, string>> =>
   Object.fromEntries(rules.map(({ id }) => [`${plugin}/${id}`, "error"]));
 
+const LIVE_MODEL = "openrouter/respan/span-01-lite";
+
+const FORWARDED = [
+  "HTTPS_PROXY",
+  "https_proxy",
+  "NO_PROXY",
+  "no_proxy",
+  "NODE_EXTRA_CA_CERTS",
+  "NODE_USE_ENV_PROXY",
+  "SSL_CERT_FILE",
+] as const;
+
+const forwardedEnv: Effect.Effect<Env> = Effect.map(
+  Effect.all(FORWARDED.map((name) => Effect.orDie(Config.option(Config.String(name))))),
+  (values) =>
+    Object.fromEntries(
+      Arr.zip(FORWARDED, values).flatMap(([name, value]) =>
+        Option.match(value, { onNone: () => [], onSome: (found) => [[name, found] as const] }),
+      ),
+    ),
+);
+
+const ID_END = "]";
+
+const LINE_START = 0;
+
+const headOf = (line: string): string =>
+  line.slice(LINE_START, line.indexOf(ID_END) + ID_END.length);
+
 const outputOf = (run: Run): string => `${run.stdout}${run.stderr}`;
 
 export {
   EXAMPLE_FILES,
   FAILED,
+  LIVE_MODEL,
   PASSED,
   PLUGIN_NAME,
   TIMEOUT,
   configSource,
   enabled,
   exampleFiles,
+  forwardedEnv,
   fromRoot,
+  headOf,
   outputOf,
   oxlint,
   reportedLines,

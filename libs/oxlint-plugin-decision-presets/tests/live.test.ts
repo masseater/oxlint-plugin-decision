@@ -2,7 +2,7 @@ import { NodeServices } from "@effect/platform-node";
 import { layer } from "@effect/vitest";
 import { deepStrictEqual } from "@effect/vitest/utils";
 import type { DecisionRule } from "@r_masseater/oxlint-plugin-decision";
-import { Array as Arr, Config, Effect, Option, Redacted } from "effect";
+import { Config, Effect, Redacted } from "effect";
 
 import { codeClaims } from "#src/code-claims.ts";
 import { presets } from "#src/presets.ts";
@@ -10,30 +10,21 @@ import { testClaims } from "#src/test-claims.ts";
 
 import {
   EXAMPLE_FILES,
+  LIVE_MODEL,
   PLUGIN_NAME,
   TIMEOUT,
   configSource,
   enabled,
   exampleFiles,
+  forwardedEnv,
   fromRoot,
+  headOf,
   outputOf,
   oxlint,
   reportedLines,
   tempProject,
 } from "./oxlint.ts";
 import type { Services } from "./oxlint.ts";
-
-const LIVE_MODEL = "openrouter/respan/span-01-lite";
-
-const PROXY_ENV = [
-  "HTTPS_PROXY",
-  "https_proxy",
-  "NO_PROXY",
-  "no_proxy",
-  "NODE_EXTRA_CA_CERTS",
-  "NODE_USE_ENV_PROXY",
-  "SSL_CERT_FILE",
-] as const;
 
 const EXPECTED = {
   recommended: [
@@ -64,22 +55,6 @@ const PRESET_RULES = {
   "review-only": withoutClaims(presets.reviewOnly),
 } as const satisfies Readonly<Record<PresetEntry, unknown>>;
 
-const proxyEnv = Effect.map(
-  Effect.all(PROXY_ENV.map((name) => Effect.orDie(Config.option(Config.String(name))))),
-  (values) =>
-    Object.fromEntries(
-      Arr.zip(PROXY_ENV, values).flatMap(([name, value]) =>
-        Option.match(value, { onNone: () => [], onSome: (found) => [[name, found] as const] }),
-      ),
-    ),
-);
-
-const ID_END = "]";
-const LINE_START = 0;
-
-const headOf = (line: string): string =>
-  line.slice(LINE_START, line.indexOf(ID_END) + ID_END.length);
-
 const presetLive = (preset: PresetEntry): Effect.Effect<void, unknown, Services> =>
   Effect.scoped(
     Effect.gen(function* test() {
@@ -97,7 +72,7 @@ const presetLive = (preset: PresetEntry): Effect.Effect<void, unknown, Services>
         cwd,
         ["--format", "unix", "-c", "oxlint.config.ts", ...EXAMPLE_FILES],
         {
-          ...(yield* proxyEnv),
+          ...(yield* forwardedEnv),
           OPENROUTER_API_KEY: Redacted.value(key),
         },
       );

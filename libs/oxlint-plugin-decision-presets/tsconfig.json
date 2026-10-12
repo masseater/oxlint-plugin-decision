@@ -1,9 +1,7 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "./tsconfig.build.json",
   "include": ["src", "tests", "*.ts"],
   "compilerOptions": {
-    "types": ["node"],
-    "declaration": true,
     "paths": {
       "@r_masseater/oxlint-plugin-decision": ["../oxlint-plugin-decision/src/index.ts"]
     }

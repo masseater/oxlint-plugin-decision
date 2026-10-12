@@ -8,6 +8,7 @@ import type { RuleContext } from "#src/types.ts";
 import {
   FAILED,
   PASSED,
+  RESPAN,
   TIMEOUT,
   callRule,
   lintProject,
@@ -95,7 +96,7 @@ const textState = Effect.gen(function* test() {
   const env = yield* mockEnv("test-key");
   const run = yield* lintProject({
     files: { "log.js": LOG_LINE },
-    options: { model: "openrouter/respan/span-01-lite", rules: [callRule] },
+    options: { model: RESPAN, rules: [callRule] },
     env,
   });
   deepStrictEqual(
@@ -109,7 +110,7 @@ const textStatePerSnippet = Effect.gen(function* test() {
   const env = yield* mockEnv("test-key");
   const run = yield* lintProject({
     files: { "log.js": `${LOG_LINE}console.log("done");\n` },
-    options: { model: "openrouter/respan/span-01-lite", rules: [callRule] },
+    options: { model: RESPAN, rules: [callRule] },
     env,
   });
   deepStrictEqual(
