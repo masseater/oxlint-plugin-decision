@@ -1,1 +1,2 @@
+vp run -r build
 vp staged
