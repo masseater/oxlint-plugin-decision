@@ -3,7 +3,7 @@ import { layer } from "@effect/vitest";
 import { assertInclude, deepStrictEqual, strictEqual } from "@effect/vitest/utils";
 import { Array as Arr, Effect, FileSystem, Option, Order } from "effect";
 
-import { aiSlopRules } from "#src/ai-slop.ts";
+import aiSlopPlugin, { aiSlopRules } from "#src/ai-slop.ts";
 
 import {
   FAILED,
@@ -17,7 +17,7 @@ import {
 } from "./oxlint.ts";
 import type { Services } from "./oxlint.ts";
 
-const AI_SLOP = "decision-ai-slop";
+const AI_SLOP = aiSlopPlugin.meta.name;
 
 const EXAMPLES = ["fail.ts", "pass.ts"] as const;
 

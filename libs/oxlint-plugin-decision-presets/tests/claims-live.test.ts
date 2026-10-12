@@ -1,16 +1,19 @@
 import { NodeServices } from "@effect/platform-node";
 import { layer } from "@effect/vitest";
 import { deepStrictEqual } from "@effect/vitest/utils";
-import { Array as Arr, Config, Effect, FileSystem, Option, Redacted } from "effect";
+import { Config, Effect, FileSystem, Redacted } from "effect";
 
 import strictConfig from "#example/claims/oxlint.config.ts";
 import reviewOnlyConfig from "#example/claims/review-only.config.ts";
 
 import {
+  LIVE_MODEL,
   PLUGIN_NAME,
   TIMEOUT,
   configSource,
+  forwardedEnv,
   fromRoot,
+  headOf,
   outputOf,
   oxlint,
   reportedLines,
@@ -18,18 +21,7 @@ import {
 } from "./oxlint.ts";
 import type { Services } from "./oxlint.ts";
 
-const LIVE_MODEL = "openrouter/respan/span-01-lite";
 const LIVE_TIMEOUT_MS = 120_000;
-
-const FORWARDED = [
-  "HTTPS_PROXY",
-  "https_proxy",
-  "NO_PROXY",
-  "no_proxy",
-  "NODE_EXTRA_CA_CERTS",
-  "NODE_USE_ENV_PROXY",
-  "SSL_CERT_FILE",
-] as const;
 
 const EXAMPLES = {
   strict: {
@@ -55,22 +47,6 @@ const EXAMPLES = {
 } as const;
 
 type Entry = keyof typeof EXAMPLES;
-
-const forwardedEnv = Effect.map(
-  Effect.all(FORWARDED.map((name) => Effect.orDie(Config.option(Config.String(name))))),
-  (values) =>
-    Object.fromEntries(
-      Arr.zip(FORWARDED, values).flatMap(([name, value]) =>
-        Option.match(value, { onNone: () => [], onSome: (found) => [[name, found] as const] }),
-      ),
-    ),
-);
-
-const ID_END = "]";
-const LINE_START = 0;
-
-const headOf = (line: string): string =>
-  line.slice(LINE_START, line.indexOf(ID_END) + ID_END.length);
 
 const claimsLive = (entry: Entry): Effect.Effect<void, unknown, Services> =>
   Effect.scoped(

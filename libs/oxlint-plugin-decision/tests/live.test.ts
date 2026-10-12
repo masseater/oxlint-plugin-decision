@@ -4,7 +4,7 @@ import { deepStrictEqual, strictEqual } from "@effect/vitest/utils";
 import { Array as Arr, Config, Effect, FileSystem, Option, Order, Path, Redacted } from "effect";
 import type { Scope } from "effect";
 
-import { TIMEOUT, outputOf } from "./fixtures.ts";
+import { RESPAN, TIMEOUT, outputOf } from "./fixtures.ts";
 import {
   configSource,
   decisionLines,
@@ -15,7 +15,6 @@ import {
 } from "./oxlint.ts";
 import type { Services } from "./oxlint.ts";
 
-const LIVE_MODEL = "openrouter/respan/span-01-lite";
 const JEV_MODEL = "openrouter/~typesafe/jev-latest";
 const PROVIDER_FAILURE = /http \d+|network:|timeout|is not set/u;
 const REPORTED = /^(?<where>\S+:\d+:\d+): \[(?<rule>[^\]]+)\]/u;
@@ -50,7 +49,7 @@ import { createDecisionPlugin } from ${JSON.stringify(dist)};
 import { rules } from ${JSON.stringify(example)};
 
 export default createDecisionPlugin({
-  model: ${JSON.stringify(LIVE_MODEL)},
+  model: ${JSON.stringify(RESPAN)},
   rules: rules.map((rule) => Object.assign({}, rule, ${cutoff})),
 });
 `;

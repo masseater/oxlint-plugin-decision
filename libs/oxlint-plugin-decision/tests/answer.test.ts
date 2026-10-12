@@ -5,15 +5,13 @@ import { Array as Arr, Effect, Option, Order } from "effect";
 
 import type { DecisionOptions, RuleAnswer } from "#src/types.ts";
 
-import { TIMEOUT, callRule, lintProject, withMock } from "./fixtures.ts";
+import { RESPAN, TIMEOUT, callRule, lintProject, withMock } from "./fixtures.ts";
 import { loggedRequests } from "./mock-openrouter.ts";
 import type { MockOpenRouter } from "./mock-openrouter.ts";
 import { decisionLines, mockEnv } from "./oxlint.ts";
 import type { Services } from "./oxlint.ts";
 
 const SOURCE = "ok();\nconsole.log(user.email, user.phone);\n";
-
-const RESPAN = "openrouter/respan/span-01-lite";
 
 const answered = (
   answer: RuleAnswer,

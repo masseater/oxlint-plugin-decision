@@ -12,6 +12,7 @@ type Env = Readonly<Record<string, string>>;
 
 type MockTest<Value = void> = Effect.Effect<Value, unknown, Services | MockOpenRouter>;
 
+const RESPAN = "openrouter/respan/span-01-lite";
 const TIMEOUT = 120_000;
 const PASSED = 0;
 const FAILED = 1;
@@ -77,6 +78,7 @@ const outputOf = (run: OxlintRun): string => `${run.stdout}${run.stderr}`;
 export {
   FAILED,
   PASSED,
+  RESPAN,
   TIMEOUT,
   callRule,
   lintExample,

@@ -5,6 +5,7 @@ import type { DecisionPluginSetup, DecisionRule } from "#src/types.ts";
 
 import type { MockOpenRouter } from "./mock-openrouter.ts";
 import {
+  cacheDirOf,
   diagnosticsOf,
   firstSpan,
   mockEnv,
@@ -91,7 +92,7 @@ const cacheEntries = (
   Effect.gen(function* entries() {
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
-    const dir = path.join(cwd, "node_modules", ".cache", "oxlint-plugin-decision");
+    const dir = yield* cacheDirOf(cwd);
     const names = yield* fs.readDirectory(dir);
     return names.map((name) => path.join(dir, name));
   });

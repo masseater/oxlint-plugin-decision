@@ -3,15 +3,14 @@ import { layer } from "@effect/vitest";
 import { assertInclude, deepStrictEqual, strictEqual } from "@effect/vitest/utils";
 import { Array as Arr, Effect, Option, Order, Schema } from "effect";
 
+import { EXPLAIN_ENV } from "#src/explain.ts";
 import type { DecisionPluginSetup } from "#src/types.ts";
 
-import { TIMEOUT, callRule, lintProject, outputOf, withMock } from "./fixtures.ts";
+import { RESPAN, TIMEOUT, callRule, lintProject, outputOf, withMock } from "./fixtures.ts";
 import { decisionLines, mockEnv, projectFilesFor, runOxlint, writeProject } from "./oxlint.ts";
 
 const SOURCE = "ok();\nconsole.log(user.email, user.phone);\n";
 const LOG_ONLY = "console.log(user.email, user.phone);\n";
-const RESPAN = "openrouter/respan/span-01-lite";
-const EXPLAIN_ENV = "OXLINT_DECISION_EXPLAIN";
 const FIRST_LINE = 1;
 const HEAD = "state.snippets.s1:";
 const LEAKS_LINE = 2;
