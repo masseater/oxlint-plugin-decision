@@ -1,14 +1,21 @@
 import { presets as effectPresets } from "@effect/tsgo/oxlint-presets";
 import { defineConfig } from "vite-plus";
 
-type Rules = Readonly<Record<string, "error">>;
+type Rules = Readonly<Record<string, "error" | readonly ["error", { readonly model: string }]>>;
 
 const decisionModel = "openrouter/respan/span-01-lite";
+
+const deciderModel = "openrouter/perplexity/pplx-decider-v1.1-27b";
 
 const presetsDist = "./libs/oxlint-plugin-decision-presets/dist";
 
 const decisionRules = (plugin: string, ids: readonly string[]): Rules =>
   Object.fromEntries(ids.map((id) => [`${plugin}/${id}`, "error"] as const));
+
+const deciderRules = (plugin: string, ids: readonly string[]): Rules =>
+  Object.fromEntries(
+    ids.map((id) => [`${plugin}/${id}`, ["error", { model: deciderModel }]] as const),
+  );
 
 const decisionPresetRules: Rules = {
   ...decisionRules("decision-presets", [
@@ -20,13 +27,12 @@ const decisionPresetRules: Rules = {
     "pure-name-is-pure",
     "safe-name-is-safe",
     "idempotent-name",
-    "catch-hides-failure",
     "test-name-verifies-claim",
     "test-mocks-subject",
   ]),
+  ...deciderRules("decision-presets", ["catch-hides-failure"]),
   ...decisionRules("decision-ai-slop", [
     "redundant-guard",
-    "default-masks-missing-value",
     "pass-through-wrapper",
     "placeholder-implementation",
     "comment-restates-code",
@@ -34,48 +40,8 @@ const decisionPresetRules: Rules = {
     "doc-restates-signature",
     "cast-instead-of-narrowing",
     "suppression-instead-of-fix",
-    "reinvents-builtin",
   ]),
-};
-
-const decisionFalsePositives: Readonly<Record<string, readonly string[]>> = {
-  "libs/oxlint-plugin-decision-presets/src/ai-slop-rules.ts": [
-    "decision-presets/untrusted-input-risk",
-  ],
-  "libs/oxlint-plugin-decision-presets/src/ai-slop-select.ts": [
-    "decision-ai-slop/reinvents-builtin",
-  ],
-  "libs/oxlint-plugin-decision-presets/src/claim-select.ts": [
-    "decision-ai-slop/placeholder-implementation",
-  ],
-  "libs/oxlint-plugin-decision/src/define.ts": ["decision-ai-slop/placeholder-implementation"],
-  "libs/oxlint-plugin-decision/src/explain.ts": [
-    "decision-ai-slop/pass-through-wrapper",
-    "decision-ai-slop/placeholder-implementation",
-  ],
-  "libs/oxlint-plugin-decision/src/locate.ts": ["decision-presets/name-matches-behavior"],
-  "libs/oxlint-plugin-decision/src/name.ts": ["decision-ai-slop/placeholder-implementation"],
-  "libs/oxlint-plugin-decision/src/openrouter-worker.ts": [
-    "decision-presets/catch-hides-failure",
-    "decision-ai-slop/redundant-guard",
-  ],
-  "libs/oxlint-plugin-decision/src/openrouter.ts": [
-    "decision-presets/catch-hides-failure",
-    "decision-ai-slop/pass-through-wrapper",
-  ],
-  "libs/oxlint-plugin-decision/src/options.ts": [
-    "decision-ai-slop/default-masks-missing-value",
-    "decision-ai-slop/reinvents-builtin",
-  ],
-  "libs/oxlint-plugin-decision/src/plugin.ts": ["decision-ai-slop/default-masks-missing-value"],
-  "libs/oxlint-plugin-decision/src/report.ts": ["decision-ai-slop/placeholder-implementation"],
-  "libs/oxlint-plugin-decision/src/request.ts": ["decision-presets/untrusted-input-risk"],
-  "libs/oxlint-plugin-decision/src/runtime.ts": ["decision-ai-slop/default-masks-missing-value"],
-  "libs/oxlint-plugin-decision/src/visitor.ts": ["decision-ai-slop/placeholder-implementation"],
-  "libs/oxlint-plugin-decision/src/wire.ts": [
-    "decision-ai-slop/placeholder-implementation",
-    "decision-presets/untrusted-input-risk",
-  ],
+  ...deciderRules("decision-ai-slop", ["default-masks-missing-value", "reinvents-builtin"]),
 };
 
 const effectRules: Rules = Object.fromEntries(
@@ -171,10 +137,6 @@ export default defineConfig({
         files: ["libs/*/tests/**"],
         rules: Object.fromEntries(Object.keys(decisionPresetRules).map((name) => [name, "off"])),
       },
-      ...Object.entries(decisionFalsePositives).map(([file, names]) => ({
-        files: [file],
-        rules: Object.fromEntries(names.map((name) => [name, "off"] as const)),
-      })),
     ],
     settings: {
       "decision-presets": { model: decisionModel },

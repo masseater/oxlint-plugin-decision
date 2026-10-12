@@ -16,7 +16,7 @@ vp install
 vp run verify   # build, format, lint, typecheck, mock tests, workflow lint, fallow
 ```
 
-The lint runs the `strict` and `ai-slop` presets from the built `libs/oxlint-plugin-decision-presets/dist` against `libs/*/src` with Span-01 Lite (false positives are turned off per file in `decisionFalsePositives`), so build before `vp check` and set `OPENROUTER_API_KEY`. Without the key the decision rules only warn locally; in CI they fail.
+The lint runs the `strict` and `ai-slop` presets from the built `libs/oxlint-plugin-decision-presets/dist` against `libs/*/src` with Span-01 Lite, except `catch-hides-failure`, `default-masks-missing-value` and `reinvents-builtin`, which use `openrouter/perplexity/pplx-decider-v1.1-27b` because Span-01 Lite could not tell this repository's code apart from real violations of them. Build before `vp check` and set `OPENROUTER_API_KEY`. Without the key the decision rules only warn locally; in CI they fail.
 
 Inside the package:
 
