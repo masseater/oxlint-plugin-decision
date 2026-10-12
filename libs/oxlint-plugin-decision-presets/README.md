@@ -122,7 +122,7 @@ Judgment calls that are worth a look in review but too subjective to fail a buil
 
 ### ai-slop
 
-Catches the padding that coding agents tend to leave in JavaScript and TypeScript: guards that can never fire, made-up defaults, wrappers that add nothing, stand-in bodies, comments that repeat the code or narrate the change, casts or lint suppressions in place of a fix, and hand-copied schemas of a library's types. Most of it is noise rather than a bug, so run it as `"warn"`; a placeholder body is a real gap, so `placeholder-implementation` is worth `"error"`. Each rule only asks about functions or calls that contain what it looks for, such as a cast, a comment or an object of schema fields. The cutoffs were tuned on Span-01 Lite (`openrouter/respan/span-01-lite`).
+Catches the padding that coding agents tend to leave in JavaScript and TypeScript: guards that can never fire, made-up defaults, wrappers that add nothing, stand-in bodies, comments that repeat the code or narrate the change, and casts or lint suppressions in place of a fix. Most of it is noise rather than a bug, so run it as `"warn"`; a placeholder body is a real gap, so `placeholder-implementation` is worth `"error"`. Each rule only asks about functions that contain what it looks for, such as a cast or a comment. The cutoffs were tuned on Span-01 Lite (`openrouter/respan/span-01-lite`).
 
 This entry is its own plugin, named `decision-ai-slop`, so its rules are `decision-ai-slop/<id>` and its settings go under `settings["decision-ai-slop"]`. It can be loaded next to any other preset.
 
@@ -143,24 +143,22 @@ export default defineConfig({
     "decision-ai-slop/cast-instead-of-narrowing": "warn",
     "decision-ai-slop/suppression-instead-of-fix": "warn",
     "decision-ai-slop/reinvents-builtin": "warn",
-    "decision-ai-slop/duplicates-library-type": "warn",
   },
 });
 ```
 
-| Id                            | Asks about                                                                                                                                         | Reports                                                                                    |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `redundant-guard`             | Functions with an `if`, `?:`, `?.`, `typeof` or `try`                                                                                              | A parameter checked for a case its declared type already rules out.                        |
-| `default-masks-missing-value` | Functions with `??`, `??=`, `\|\|` with a literal, or default parameters                                                                           | A made-up default standing in for a value that should always be there.                     |
-| `pass-through-wrapper`        | Functions whose body is one call                                                                                                                   | A function that only forwards its arguments to another one.                                |
-| `placeholder-implementation`  | Functions with at most one statement                                                                                                               | A body that returns a fixed value or does nothing where the name promises real work.       |
-| `comment-restates-code`       | Functions with comments inside                                                                                                                     | A comment that only says again what the next line does.                                    |
-| `comment-narrates-history`    | Functions with comments inside                                                                                                                     | A comment about what was changed, a stopgap, or the conversation that produced the code.   |
-| `doc-restates-signature`      | Functions with a comment directly above                                                                                                            | A doc comment that only rewords the name and parameters.                                   |
-| `cast-instead-of-narrowing`   | Functions with `as`, `<T>` or `!` (not `as const`)                                                                                                 | A type assertion the code has not established.                                             |
-| `suppression-instead-of-fix`  | Functions with an `eslint-disable`, `oxlint-disable` or `@ts-*` comment                                                                            | A suppression with no reason, or one hiding a problem with a local fix.                    |
-| `reinvents-builtin`           | Every function that is not an inline callback                                                                                                      | A hand-written loop that re-implements a standard built-in.                                |
-| `duplicates-library-type`     | Calls given an object of fields, such as `Schema.Struct({ ... })` or `z.object({ ... })`, not tied to a type by `satisfies`, `as` or an annotation | A schema that re-types an object from an outside API whose types package the file imports. |
+| Id                            | Asks about                                                               | Reports                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `redundant-guard`             | Functions with an `if`, `?:`, `?.`, `typeof` or `try`                    | A parameter checked for a case its declared type already rules out.                      |
+| `default-masks-missing-value` | Functions with `??`, `??=`, `\|\|` with a literal, or default parameters | A made-up default standing in for a value that should always be there.                   |
+| `pass-through-wrapper`        | Functions whose body is one call                                         | A function that only forwards its arguments to another one.                              |
+| `placeholder-implementation`  | Functions with at most one statement                                     | A body that returns a fixed value or does nothing where the name promises real work.     |
+| `comment-restates-code`       | Functions with comments inside                                           | A comment that only says again what the next line does.                                  |
+| `comment-narrates-history`    | Functions with comments inside                                           | A comment about what was changed, a stopgap, or the conversation that produced the code. |
+| `doc-restates-signature`      | Functions with a comment directly above                                  | A doc comment that only rewords the name and parameters.                                 |
+| `cast-instead-of-narrowing`   | Functions with `as`, `<T>` or `!` (not `as const`)                       | A type assertion the code has not established.                                           |
+| `suppression-instead-of-fix`  | Functions with an `eslint-disable`, `oxlint-disable` or `@ts-*` comment  | A suppression with no reason, or one hiding a problem with a local fix.                  |
+| `reinvents-builtin`           | Every function that is not an inline callback                            | A hand-written loop that re-implements a standard built-in.                              |
 
 The rules are also exported one by one, and as the list `aiSlopRules`, for your own plugin.
 
