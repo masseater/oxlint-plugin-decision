@@ -55,7 +55,7 @@ skills:
           defineDecisionRule({ id: "x", target: "call", question: "...", cutoff: 0.8 });
         correct_pattern: |
           defineDecisionRule({ id: "x", target: "call", select: (node, { name }) => name === "fetch", question: "...", cutoff: 0.8 });
-        source: libs/oxlint-plugin-decision/README.md#cost-and-caching
+        source: README.md#cost-and-caching
         priority: HIGH
         status: active
       - mistake: Decision rules enabled in the editor config

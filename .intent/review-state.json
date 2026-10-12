@@ -3,9 +3,9 @@
   "baseline": "57a674a2d3ff7174b2c7de2390f3cfbccde0a50d",
   "items": {
     "skill:libs/oxlint-plugin-decision/skills/write-decision-rules/SKILL.md": {
-      "fingerprint": "24216d3d1db39ec758d9a4e8a9c6b8254e4e4dce3e4138e0cd243bafff560067",
+      "fingerprint": "3eae9517cd1a13ed244e5be80b71dbea3aaf089f8886cd9bcdca1583567abdba",
       "snapshot": {
-        "libs/oxlint-plugin-decision/README.md": "475d940674a5d463da55e577fa3b69e244ad703fd77c3c6b5033961b37b96d6c",
+        "libs/oxlint-plugin-decision/README.md": "753784db1ef224456361d2fea31931a247aa7c4efcbcef8cd0064519bcba59a0",
         "libs/oxlint-plugin-decision/example/fail.js": "6910d18929369823ec98c8ec67aa8b9a94b7e67415beea3b32fc8028535ec69a",
         "libs/oxlint-plugin-decision/example/oxlint.config.ts": "0e3274a3e1b23100a00b6a5c973fbec1088758c15312a71859225fcac2ee35e9",
         "libs/oxlint-plugin-decision/example/pass.js": "b5970e8765445185aed18f3e9780ab9b799de7fe925d003015d695ef47f2298a",
@@ -34,20 +34,22 @@
         "libs/oxlint-plugin-decision/tests/skill-write-decision-rules.test.ts": "e4695a9376af5f5481c9b59c53a5032c8557f62363b9cad6776a1852c40ad2c8",
         "libs/oxlint-plugin-decision/tests/skills/write-decision-rules/task.md": "4a3bb7b8f94d6238c152769995fbd40a1df302f9258ef085512ee37296779e44"
       },
-      "head": "63e55ff9fdf86d6030540e91e0afe01d872287e1",
-      "outcome": "updated",
-      "reason": "Task check added (tests/skills/write-decision-rules/task.md, tests/skill-write-decision-rules.test.ts, 3 passing against the mock server), task check tracked as skill sources, Intent's check-skills.yml restored with node-version 26, and a fresh-consumer run recorded in skill_spec.md.",
+      "head": "43162f7a4fd27dfbbd3f8bcc631135d70c02017f",
+      "outcome": "no-change",
+      "reason": "Main (#29) moved the Cost and caching section from the package README to the root README and added a link to it; the API behavior the skill teaches did not change, and the skill already states the cost guidance itself.",
       "evidence": [
-        "Changed: libs/oxlint-plugin-decision/skills/write-decision-rules/SKILL.md, libs/oxlint-plugin-decision/tests/skill-write-decision-rules.test.ts, libs/oxlint-plugin-decision/tests/skills/write-decision-rules/task.md at 63e55ff9fdf86d6030540e91e0afe01d872287e1"
+        "git diff 57a674a origin/main -- libs/oxlint-plugin-decision/README.md",
+        "intent validate passed",
+        "tests/skill-write-decision-rules.test.ts 3 passed"
       ]
     },
     "planning:_artifacts": {
-      "fingerprint": "5fe195863cce9826e80fceff4d300037231071febe8dcb13b7a19ef433a89434",
+      "fingerprint": "119b1b73efd898d7130522b72a43547e707e8213ab8e87aba6ab146059533b27",
       "snapshot": {
-        "_artifacts/domain_map.yaml": "d1c7cdca6a60533883c966f71bd7708c34af2f9066baa8807a819b40b3e7498f",
-        "_artifacts/skill_spec.md": "73a5dcac93d8f3bd094e5921ecbd1145fdee7ac5523da7f0d16e49cb4ad7c8b9",
+        "_artifacts/domain_map.yaml": "807339acae733333cc8365b6d289f3a072659669e6c4030d9bc50005bc06657e",
+        "_artifacts/skill_spec.md": "2885e03eee5f2d42425186ccf1e364151c4408c850d99ae63bd94f0b9c184868",
         "_artifacts/skill_tree.yaml": "e73a1f47e9df1c876b4a5b5c3a484f87024dc93b447bdd75ea836cf11bfd0f28",
-        "libs/oxlint-plugin-decision/README.md": "475d940674a5d463da55e577fa3b69e244ad703fd77c3c6b5033961b37b96d6c",
+        "libs/oxlint-plugin-decision/README.md": "753784db1ef224456361d2fea31931a247aa7c4efcbcef8cd0064519bcba59a0",
         "libs/oxlint-plugin-decision/example/fail.js": "6910d18929369823ec98c8ec67aa8b9a94b7e67415beea3b32fc8028535ec69a",
         "libs/oxlint-plugin-decision/example/oxlint.config.ts": "0e3274a3e1b23100a00b6a5c973fbec1088758c15312a71859225fcac2ee35e9",
         "libs/oxlint-plugin-decision/example/pass.js": "b5970e8765445185aed18f3e9780ab9b799de7fe925d003015d695ef47f2298a",
@@ -76,12 +78,10 @@
         "libs/oxlint-plugin-decision/tests/skill-write-decision-rules.test.ts": "e4695a9376af5f5481c9b59c53a5032c8557f62363b9cad6776a1852c40ad2c8",
         "libs/oxlint-plugin-decision/tests/skills/write-decision-rules/task.md": "4a3bb7b8f94d6238c152769995fbd40a1df302f9258ef085512ee37296779e44"
       },
-      "head": "63e55ff9fdf86d6030540e91e0afe01d872287e1",
+      "head": "43162f7a4fd27dfbbd3f8bcc631135d70c02017f",
       "outcome": "updated",
-      "reason": "Task check added (tests/skills/write-decision-rules/task.md, tests/skill-write-decision-rules.test.ts, 3 passing against the mock server), task check tracked as skill sources, Intent's check-skills.yml restored with node-version 26, and a fresh-consumer run recorded in skill_spec.md.",
-      "evidence": [
-        "Changed: _artifacts/skill_spec.md, _artifacts/skill_tree.yaml, libs/oxlint-plugin-decision/skills/write-decision-rules/SKILL.md, libs/oxlint-plugin-decision/tests/skill-write-decision-rules.test.ts, libs/oxlint-plugin-decision/tests/skills/write-decision-rules/task.md at 63e55ff9fdf86d6030540e91e0afe01d872287e1"
-      ]
+      "reason": "domain_map.yaml and skill_spec.md now cite the root README for the cost failure mode, since #29 moved that section there.",
+      "evidence": ["_artifacts/domain_map.yaml", "_artifacts/skill_spec.md"]
     }
   }
 }

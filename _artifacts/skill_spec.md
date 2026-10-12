@@ -18,13 +18,13 @@
 
 ### write-decision-rules (5 failure modes)
 
-| #   | Mistake                                   | Priority | Source                     | Cross-skill? |
-| --- | ----------------------------------------- | -------- | -------------------------- | ------------ |
-| 1   | API key passed in code or config          | HIGH     | src/options.ts             | —            |
-| 2   | Broad target without select               | HIGH     | README.md#cost-and-caching | —            |
-| 3   | Decision rules enabled in the editor      | HIGH     | README.md#in-the-editor    | —            |
-| 4   | Question where yes means the code is fine | MEDIUM   | README.md#rules            | —            |
-| 5   | Rule id not lowercase-hyphenated/repeated | MEDIUM   | src/options.ts             | —            |
+| #   | Mistake                                   | Priority | Source                          | Cross-skill? |
+| --- | ----------------------------------------- | -------- | ------------------------------- | ------------ |
+| 1   | API key passed in code or config          | HIGH     | src/options.ts                  | —            |
+| 2   | Broad target without select               | HIGH     | root README.md#cost-and-caching | —            |
+| 3   | Decision rules enabled in the editor      | HIGH     | README.md#in-the-editor         | —            |
+| 4   | Question where yes means the code is fine | MEDIUM   | README.md#rules                 | —            |
+| 5   | Rule id not lowercase-hyphenated/repeated | MEDIUM   | src/options.ts                  | —            |
 
 ## Subsystems & Reference Candidates
 
