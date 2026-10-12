@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      DECISION_CACHE_DIR: node_modules/.cache/oxlint-plugin-decision
+      DECISION_CACHE_KEY: oxlint-plugin-decision-${{ github.sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -27,8 +30,8 @@ jobs:
           enable-cache: false
       - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: node_modules/.cache/oxlint-plugin-decision
-          key: oxlint-plugin-decision-${{ github.sha }}
+          path: ${{ env.DECISION_CACHE_DIR }}
+          key: ${{ env.DECISION_CACHE_KEY }}
           restore-keys: oxlint-plugin-decision-
       - id: verify
         run: vp run verify
@@ -38,8 +41,8 @@ jobs:
       - if: always() && steps.verify.outcome != 'skipped'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: node_modules/.cache/oxlint-plugin-decision
-          key: oxlint-plugin-decision-${{ github.sha }}
+          path: ${{ env.DECISION_CACHE_DIR }}
+          key: ${{ env.DECISION_CACHE_KEY }}
 
   release:
     needs: verify

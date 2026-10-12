@@ -27,7 +27,7 @@ catalogs:
 overrides:
   effect: "catalog:stack"
   "@effect/platform-node-shared": 4.0.0
-  "@effect/vitest": 4.0.0
+  "@effect/vitest": "catalog:"
   vite@*: npm:@voidzero-dev/vite-plus-core@1.1.0
 peerDependencyRules:
   allowAny:

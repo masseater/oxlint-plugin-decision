@@ -1,6 +1,9 @@
 import { presets as effectPresets } from "@effect/tsgo/oxlint-presets";
 import { defineConfig } from "vite-plus";
 
+import aiSlopPlugin from "./libs/oxlint-plugin-decision-presets/dist/ai-slop.mjs";
+import strictPlugin from "./libs/oxlint-plugin-decision-presets/dist/strict.mjs";
+
 type Rules = Readonly<Record<string, "error" | readonly ["error", { readonly model: string }]>>;
 
 const decisionModel = "openrouter/respan/span-01-lite";
@@ -9,39 +12,30 @@ const deciderModel = "openrouter/perplexity/pplx-decider-v1.1-27b";
 
 const presetsDist = "./libs/oxlint-plugin-decision-presets/dist";
 
-const decisionRules = (plugin: string, ids: readonly string[]): Rules =>
-  Object.fromEntries(ids.map((id) => [`${plugin}/${id}`, "error"] as const));
+const deciderRuleIds: ReadonlySet<string> = new Set([
+  "catch-hides-failure",
+  "default-masks-missing-value",
+  "reinvents-builtin",
+]);
 
-const deciderRules = (plugin: string, ids: readonly string[]): Rules =>
-  Object.fromEntries(
-    ids.map((id) => [`${plugin}/${id}`, ["error", { model: deciderModel }]] as const),
-  );
+const allRulesOf = (
+  plugin: Readonly<{ meta: { readonly name: string }; rules: object }>,
+): Rules => {
+  const ids = Object.keys(plugin.rules);
+  const ruleOf = (id: string): string => `${plugin.meta.name}/${id}`;
+  return {
+    ...Object.fromEntries(ids.map((id) => [ruleOf(id), "error"] as const)),
+    ...Object.fromEntries(
+      ids
+        .filter((id) => deciderRuleIds.has(id))
+        .map((id) => [ruleOf(id), ["error", { model: deciderModel }]] as const),
+    ),
+  };
+};
 
 const decisionPresetRules: Rules = {
-  ...decisionRules("decision-presets", [
-    "no-pii-in-logs",
-    "no-prompt-injection",
-    "no-hardcoded-secrets",
-    "name-matches-behavior",
-    "untrusted-input-risk",
-    "pure-name-is-pure",
-    "safe-name-is-safe",
-    "idempotent-name",
-    "test-name-verifies-claim",
-    "test-mocks-subject",
-  ]),
-  ...deciderRules("decision-presets", ["catch-hides-failure"]),
-  ...decisionRules("decision-ai-slop", [
-    "redundant-guard",
-    "pass-through-wrapper",
-    "placeholder-implementation",
-    "comment-restates-code",
-    "comment-narrates-history",
-    "doc-restates-signature",
-    "cast-instead-of-narrowing",
-    "suppression-instead-of-fix",
-  ]),
-  ...deciderRules("decision-ai-slop", ["default-masks-missing-value", "reinvents-builtin"]),
+  ...allRulesOf(strictPlugin),
+  ...allRulesOf(aiSlopPlugin),
 };
 
 const effectRules: Rules = Object.fromEntries(
@@ -84,8 +78,8 @@ export default defineConfig({
     jsPlugins: [
       { name: "vite-plus", specifier: "vite-plus/oxlint-plugin" },
       { name: "no-comments", specifier: "eslint-plugin-no-comments" },
-      { name: "decision-presets", specifier: `${presetsDist}/strict.mjs` },
-      { name: "decision-ai-slop", specifier: `${presetsDist}/ai-slop.mjs` },
+      { name: strictPlugin.meta.name, specifier: `${presetsDist}/strict.mjs` },
+      { name: aiSlopPlugin.meta.name, specifier: `${presetsDist}/ai-slop.mjs` },
     ],
     rules: {
       "vite-plus/prefer-vite-plus-imports": "error",
@@ -140,8 +134,8 @@ export default defineConfig({
       },
     ],
     settings: {
-      "decision-presets": { model: decisionModel, timeoutMs: 60_000 },
-      "decision-ai-slop": { model: decisionModel, timeoutMs: 60_000 },
+      [strictPlugin.meta.name]: { model: decisionModel, timeoutMs: 60_000 },
+      [aiSlopPlugin.meta.name]: { model: decisionModel, timeoutMs: 60_000 },
     },
     options: {
       typeAware: true,

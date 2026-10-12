@@ -1,5 +1,7 @@
 import { defineConfig } from "vite-plus";
 
+const liveTests = ["tests/live.test.ts"];
+
 export default defineConfig({
   pack: {
     entry: ["src/index.ts", "src/openrouter-worker.ts"],
@@ -20,8 +22,8 @@ export default defineConfig({
       reporter: ["text-summary", "json"],
     },
     projects: [
-      { extends: true, test: { name: "mock", exclude: ["tests/live.test.ts"] } },
-      { extends: true, test: { name: "live", include: ["tests/live.test.ts"] } },
+      { extends: true, test: { name: "mock", exclude: liveTests } },
+      { extends: true, test: { name: "live", include: liveTests } },
     ],
   },
   run: {

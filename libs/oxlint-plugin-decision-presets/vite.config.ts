@@ -1,5 +1,7 @@
 import { defineConfig } from "vite-plus";
 
+const liveTests = ["tests/live.test.ts", "tests/claims-live.test.ts", "tests/ai-slop-live.test.ts"];
+
 export default defineConfig({
   pack: {
     entry: [
@@ -31,22 +33,14 @@ export default defineConfig({
         test: {
           name: "mock",
           include: ["tests/**/*.test.ts"],
-          exclude: [
-            "tests/live.test.ts",
-            "tests/claims-live.test.ts",
-            "tests/ai-slop-live.test.ts",
-          ],
+          exclude: liveTests,
         },
       },
       {
         extends: true,
         test: {
           name: "live",
-          include: [
-            "tests/live.test.ts",
-            "tests/claims-live.test.ts",
-            "tests/ai-slop-live.test.ts",
-          ],
+          include: liveTests,
         },
       },
     ],
