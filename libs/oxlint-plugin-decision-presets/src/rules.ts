@@ -28,7 +28,7 @@ const nameMatchesBehavior = defineDecisionRule({
   id: "name-matches-behavior",
   target: "function",
   question:
-    "Does this function's name describe only reading or fetching data (for example get, find, load or fetch), while its body also writes, logs or sends something?",
+    "Does this function's name describe only reading or fetching data (for example get, find, load or fetch), while its body also changes or announces something on the side, such as writing to a database or file, logging, or sending a message? Sending the request that fetches the data, such as calling an API or a model and reading its answer, is the fetching itself and does not count.",
   cutoff: 0.6,
 });
 
@@ -36,7 +36,7 @@ const untrustedInputRisk = defineDecisionRule({
   id: "untrusted-input-risk",
   target: "function",
   question:
-    "Does this function splice untrusted input, such as a user message or request parameter, into the same string as a SQL query, shell command, eval code, HTML, or language model instructions, instead of passing it as a separate parameter or field?",
+    "Does this function splice untrusted input, such as a user message or request parameter, into the same string as a SQL query, shell command, eval code, HTML, or language model instructions, instead of passing it as a separate parameter or field? Count input as untrusted only when it comes from outside the program, such as a request, a user message, a form, or a file or response the program does not control; a parameter whose origin is not shown counts when its name or type marks it as user or request data. Text taken from the program's own rule definitions, settings, constants or cache is not untrusted, and JSON.parse is not eval.",
   cutoff: 0.6,
   answer: { kind: "severity", minimum: "warn" },
 });

@@ -147,18 +147,18 @@ export default defineConfig({
 });
 ```
 
-| Id                            | Asks about                                                               | Reports                                                                                  |
-| ----------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| `redundant-guard`             | Functions with an `if`, `?:`, `?.`, `typeof` or `try`                    | A parameter checked for a case its declared type already rules out.                      |
-| `default-masks-missing-value` | Functions with `??`, `??=`, `\|\|` with a literal, or default parameters | A made-up default standing in for a value that should always be there.                   |
-| `pass-through-wrapper`        | Functions whose body is one call                                         | A function that only forwards its arguments to another one.                              |
-| `placeholder-implementation`  | Functions with at most one statement                                     | A body that returns a fixed value or does nothing where the name promises real work.     |
-| `comment-restates-code`       | Functions with comments inside                                           | A comment that only says again what the next line does.                                  |
-| `comment-narrates-history`    | Functions with comments inside                                           | A comment about what was changed, a stopgap, or the conversation that produced the code. |
-| `doc-restates-signature`      | Functions with a comment directly above                                  | A doc comment that only rewords the name and parameters.                                 |
-| `cast-instead-of-narrowing`   | Functions with `as`, `<T>` or `!` (not `as const`)                       | A type assertion the code has not established.                                           |
-| `suppression-instead-of-fix`  | Functions with an `eslint-disable`, `oxlint-disable` or `@ts-*` comment  | A suppression with no reason, or one hiding a problem with a local fix.                  |
-| `reinvents-builtin`           | Every function that is not an inline callback                            | A hand-written loop that re-implements a standard built-in.                              |
+| Id                            | Asks about                                                                                                               | Reports                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `redundant-guard`             | Functions with an `if`, `?:`, `?.`, `typeof` or `try` and a parameter typed other than `unknown` or `any`                | A parameter checked for a case its declared type already rules out.                      |
+| `default-masks-missing-value` | Functions with `??`, `??=`, `\|\|` with a literal, or default parameters                                                 | A made-up default standing in for a value that should always be there.                   |
+| `pass-through-wrapper`        | Functions whose body is one call, except inline callbacks                                                                | A function that only forwards its arguments to another one.                              |
+| `placeholder-implementation`  | Functions with at most one statement, except inline callbacks and generic identities such as `<T>(value: T): T => value` | A body that returns a fixed value or does nothing where the name promises real work.     |
+| `comment-restates-code`       | Functions with comments inside                                                                                           | A comment that only says again what the next line does.                                  |
+| `comment-narrates-history`    | Functions with comments inside                                                                                           | A comment about what was changed, a stopgap, or the conversation that produced the code. |
+| `doc-restates-signature`      | Functions with a comment directly above                                                                                  | A doc comment that only rewords the name and parameters.                                 |
+| `cast-instead-of-narrowing`   | Functions with `as`, `<T>` or `!` (not `as const`)                                                                       | A type assertion the code has not established.                                           |
+| `suppression-instead-of-fix`  | Functions with an `eslint-disable`, `oxlint-disable` or `@ts-*` comment                                                  | A suppression with no reason, or one hiding a problem with a local fix.                  |
+| `reinvents-builtin`           | Every function that is not an inline callback, including one passed in an options object such as `{ onNone: () => ... }` | A hand-written loop that re-implements a standard built-in.                              |
 
 The rules are also exported one by one, and as the list `aiSlopRules`, for your own plugin.
 

@@ -1,4 +1,4 @@
-import { loadUser } from "./deps.js";
+import { loadUser, matchOrder } from "./deps.js";
 import type { Order, Report, User } from "./deps.js";
 
 export function displayName(user: User): string {
@@ -55,4 +55,19 @@ export function printReport(report: Report): void {
 
 export function unique(values: readonly string[]): string[] {
   return [...new Set(values)];
+}
+
+export function orderLabel(order: Order | undefined): string {
+  return matchOrder(order, { onMissing: () => "no order", onFound: (found) => found.id });
+}
+
+export function defineOrder<const Shape extends Order>(order: Shape): Shape {
+  return order;
+}
+
+export function errorText(error: unknown): string {
+  if (typeof error === "string") {
+    return error;
+  }
+  return String(error);
 }

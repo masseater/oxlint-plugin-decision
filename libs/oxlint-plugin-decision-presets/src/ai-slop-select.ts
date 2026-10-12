@@ -19,7 +19,7 @@ const descendantsOf = (node: SelectedNode): readonly SelectedNode[] => [
 ];
 
 const containing =
-  (test: NodeTest): Select =>
+  (test: NodeTest): NodeTest =>
   (node) =>
     descendantsOf(node).some((found) => test(found));
 
@@ -85,8 +85,22 @@ const statementsOf = (body: SelectedNode): readonly SelectedNode[] =>
 
 const ONE_STATEMENT = 1;
 
-const isCallback = (node: SelectedNode): boolean =>
-  Option.exists(Option.fromNullishOr(node.parent), ofType("CallExpression", "NewExpression"));
+const isCall = ofType("CallExpression", "NewExpression");
+
+const parentOf = (node: SelectedNode): Option.Option<SelectedNode> =>
+  Option.fromNullishOr(node.parent);
+
+const isArgument = (node: SelectedNode): boolean => Option.exists(parentOf(node), isCall);
+
+const isOptionOfCall = (node: SelectedNode): boolean =>
+  parentOf(node).pipe(
+    Option.filter(ofType("Property")),
+    Option.flatMap(parentOf),
+    Option.filter(ofType("ObjectExpression")),
+    Option.exists(isArgument),
+  );
+
+const isCallback: NodeTest = Predicate.or(isArgument, isOptionOfCall);
 
 const isDeclared: NodeTest = Predicate.not(isCallback);
 
@@ -119,6 +133,88 @@ const isSingleCall: NodeTest = (node) =>
 
 const forwardsOneCall: NodeTest = Predicate.and(hasAtMostOneStatement, isSingleCall);
 
+const paramsOf = (node: SelectedNode): readonly SelectedNode[] =>
+  Match.value(node).pipe(
+    Match.when({ type: "FunctionDeclaration" }, (fn) => fn.params),
+    Match.when({ type: "FunctionExpression" }, (fn) => fn.params),
+    Match.when({ type: "ArrowFunctionExpression" }, (fn) => fn.params),
+    Match.orElse(() => []),
+  );
+
+const declaredTypeOf = (param: SelectedNode): Option.Option<SelectedNode> =>
+  Match.value(param).pipe(
+    Match.when({ type: "AssignmentPattern" }, (assigned) => declaredTypeOf(assigned.left)),
+    Match.when({ type: "TSParameterProperty" }, (property) => declaredTypeOf(property.parameter)),
+    Match.when({ typeAnnotation: { type: "TSTypeAnnotation" } }, (typed) =>
+      Option.some(typed.typeAnnotation.typeAnnotation),
+    ),
+    Match.orElse(() => Option.none()),
+  );
+
+const isOpenType = ofType("TSUnknownKeyword", "TSAnyKeyword");
+
+const hasNarrowParameter: NodeTest = (node) =>
+  paramsOf(node).some((param) => Option.exists(declaredTypeOf(param), Predicate.not(isOpenType)));
+
+const typeParameterNamesOf = (node: SelectedNode): readonly string[] =>
+  Match.value(node).pipe(
+    Match.when({ typeParameters: { type: "TSTypeParameterDeclaration" } }, (generic) =>
+      generic.typeParameters.params.map((parameter) => parameter.name.name),
+    ),
+    Match.orElse(() => []),
+  );
+
+const referencedNameOf = (type: SelectedNode): Option.Option<string> =>
+  Match.value(type).pipe(
+    Match.when({ type: "TSTypeReference", typeName: { type: "Identifier" } }, (reference) =>
+      Option.some(reference.typeName.name),
+    ),
+    Match.orElse(() => Option.none()),
+  );
+
+const isGenericParameter = (node: SelectedNode, param: SelectedNode): boolean =>
+  Option.exists(Option.flatMap(declaredTypeOf(param), referencedNameOf), (name) =>
+    typeParameterNamesOf(node).includes(name),
+  );
+
+const identifierOf = (node: SelectedNode): Option.Option<string> =>
+  Match.value(node).pipe(
+    Match.when({ type: "Identifier" }, (identifier) => Option.some(identifier.name)),
+    Match.orElse(() => Option.none()),
+  );
+
+const returnedOf = (node: SelectedNode): Option.Option<SelectedNode> =>
+  Option.flatMap(bodyOf(node), (body) =>
+    Option.flatMap(Arr.head(statementsOf(body)), expressionOf),
+  );
+
+const returnedNameOf = (node: SelectedNode): Option.Option<string> =>
+  Option.flatMap(returnedOf(node), identifierOf);
+
+const returnsParameter = (node: SelectedNode, param: SelectedNode): boolean =>
+  Option.exists(
+    Option.all([returnedNameOf(node), identifierOf(param)]),
+    ([returned, given]) => returned === given,
+  );
+
+const ONE_PARAMETER = 1;
+
+const onlyParameterOf = (node: SelectedNode): Option.Option<SelectedNode> =>
+  Option.liftPredicate(paramsOf(node), (params) => params.length === ONE_PARAMETER).pipe(
+    Option.flatMap(Arr.head),
+  );
+
+const isGenericIdentity: NodeTest = (node) =>
+  onlyParameterOf(node).pipe(
+    Option.filter((param) => isGenericParameter(node, param)),
+    Option.exists((param) => returnsParameter(node, param)),
+  );
+
+const mayBePlaceholder: NodeTest = Predicate.and(
+  hasAtMostOneStatement,
+  Predicate.not(isGenericIdentity),
+);
+
 const commentsIn = (node: SelectedNode, { context }: SelectMatch): readonly string[] => {
   const [start, end] = node.range;
   return context.sourceCode
@@ -143,12 +239,12 @@ const SUPPRESSIONS = [
 const hasSuppression: Select = (node, match) =>
   commentsIn(node, match).some((comment) => SUPPRESSIONS.some((word) => comment.includes(word)));
 
-const hasGuard: Select = containing(
-  Predicate.or(
-    ofType("IfStatement", "ConditionalExpression", "ChainExpression", "TryStatement"),
-    isTypeofCheck,
-  ),
+const isGuard: NodeTest = Predicate.or(
+  ofType("IfStatement", "ConditionalExpression", "ChainExpression", "TryStatement"),
+  isTypeofCheck,
 );
+
+const hasGuard: NodeTest = Predicate.and(hasNarrowParameter, containing(isGuard));
 
 const hasFallback: Select = containing(
   Predicate.or(isFallbackOperator, ofType("AssignmentPattern")),
@@ -176,7 +272,7 @@ const hasCatch: Select = containing(isCatch);
 
 export {
   forwardsOneCall,
-  hasAtMostOneStatement,
+  mayBePlaceholder,
   isDeclared,
   hasCast,
   hasCatch,
