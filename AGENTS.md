@@ -25,6 +25,10 @@ Use intent maintainer setup to initialize missing records, maintainer add to reg
 - 判定と所要時間は `OXLINT_DECISION_EXPLAIN=json` で読む。oxlint のルールごとの時間は `--debug=timings` で読む。
 - 判断の根拠にする計測は、実際のモデルに問い合わせる lint で行う。モックのテストは計る仕組みが動くかを確かめるためだけに使う。
 
+## 脆弱性スキャン
+
+- 依存パッケージの既知の脆弱性は、verify の `audit` タスク（`vp pm audit`）が落とす。直すときは `vp pm audit --fix` で `pnpm-workspace.yaml` の overrides に修正版を足す。修正版が出ていない勧告だけを、`auditConfig.ignoreGhsas` に GHSA の ID で載せ、理由をコミットメッセージに書く。
+
 ## マージ
 
 - マージ前に必ず base ブランチを取り込み、手元の `vp run verify` を通してからマージする。コンフリクトしないからといって、取り込まないままマージしない。マージしてよいかは聞かない。
