@@ -9,14 +9,16 @@ import {
   Option,
   Path,
   Redacted,
+  Schema,
   pipe,
 } from "effect";
 import { runAsWorker } from "synckit";
 
+import { AnswerSchema } from "./answer.ts";
 import { parseVerdicts } from "./request.ts";
 import { envNameOf, messageOf } from "./runtime.ts";
 import { workerServices } from "./services.ts";
-import type { DecideInput, DecideResult, DecisionRequest } from "./types.ts";
+import type { DecideInput, DecideResult, DecisionRequest, DecisionResponse } from "./types.ts";
 import { mergeResponses, wireRequestsFor } from "./wire.ts";
 import type { WireRequest } from "./wire.ts";
 
@@ -58,8 +60,15 @@ const cacheFile = Effect.fn("cacheFile")(function* cacheFile(
   return path.resolve(...CACHE_DIR, `${toHex([...digest])}.json`);
 });
 
-const isComplete = (json: unknown, request: DecisionRequest): boolean =>
-  Option.liftThrowable(() => parseVerdicts(json, request).complete)().pipe(
+const CachedResponse = Schema.Struct({
+  model: Schema.NonEmptyString,
+  answers: Schema.Record(Schema.String, AnswerSchema),
+});
+
+const decodeCached = Schema.decodeOption(Schema.fromJsonString(CachedResponse));
+
+const isComplete = (response: DecisionResponse, request: DecisionRequest): boolean =>
+  Option.liftThrowable(() => parseVerdicts(response, request).complete)().pipe(
     Option.getOrElse(() => false),
   );
 
@@ -70,17 +79,20 @@ const readCache = Effect.fn("readCache")(function* readCache(
   const fs = yield* FileSystem.FileSystem;
   const text = yield* fs.readFileString(file).pipe(Effect.option);
   return text.pipe(
-    Option.flatMap((raw) => Option.liftThrowable((): unknown => JSON.parse(raw))()),
-    Option.filter((json) => isComplete(json, request)),
+    Option.flatMap((raw): Option.Option<DecisionResponse> => decodeCached(raw)),
+    Option.filter((response) => isComplete(response, request)),
   );
 });
 
-const writeCache = Effect.fn("writeCache")(function* writeCache(file: string, json: unknown) {
+const writeCache = Effect.fn("writeCache")(function* writeCache(
+  file: string,
+  response: DecisionResponse,
+) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const temp = `${file}.tmp-${String(Date.now())}`;
   yield* fs.makeDirectory(path.dirname(file), { recursive: true });
-  yield* fs.writeFileString(temp, JSON.stringify(json));
+  yield* fs.writeFileString(temp, JSON.stringify(response));
   yield* fs.rename(temp, file);
 });
 
@@ -91,10 +103,10 @@ const send = Effect.fn("send")(function* send(
 ) {
   const apiKey = yield* Config.Redacted(envNameOf(env, "OPENROUTER_API_KEY"));
   const client = new OpenRouter({ apiKey: Redacted.value(apiKey) });
-  const response: unknown = yield* Effect.tryPromise({
+  return yield* Effect.tryPromise({
     try: (signal) =>
       client.alpha.decisions.create(
-        { decisionsRequest: { ...decisionsRequest, questions: { ...decisionsRequest.questions } } },
+        { decisionsRequest },
         {
           serverURL: endpoint,
           retries: {
@@ -113,7 +125,6 @@ const send = Effect.fn("send")(function* send(
       ),
     catch: reasonFor,
   });
-  return response;
 });
 
 const ask = Effect.fn("ask")(function* ask(

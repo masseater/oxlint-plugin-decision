@@ -1,3 +1,11 @@
+import type {
+  DecisionsChoiceAnswer,
+  DecisionsChoiceQuestion,
+  DecisionsNoulAnswer,
+  DecisionsNoulQuestion,
+  DecisionsRequest,
+  DecisionsResponse,
+} from "@openrouter/sdk/models";
 import type { Context, ESTree, Location, Range } from "@oxlint/plugins";
 
 type Frozen<Value> = Value extends (...args: never) => unknown
@@ -68,21 +76,22 @@ interface DecisionOptions {
   readonly explain?: ExplainSetting;
 }
 
-interface NoulQuestion {
-  readonly type: "noul";
+interface NoulQuestion extends Readonly<Pick<DecisionsNoulQuestion, "type" | "instructions">> {
   readonly instructions: string;
 }
 
-interface ChoiceQuestion {
-  readonly type: "choice";
+interface ChoiceQuestion extends Readonly<
+  Pick<DecisionsChoiceQuestion, "type" | "instructions" | "criteria">
+> {
   readonly instructions: string;
   readonly criteria: Readonly<Record<string, string | null>>;
 }
 
 type Question = NoulQuestion | ChoiceQuestion;
 
-interface DecisionRequest {
-  readonly model: string;
+interface DecisionRequest extends Readonly<
+  Pick<DecisionsRequest, "model" | "state" | "questions">
+> {
   readonly state: {
     readonly snippets: Readonly<Record<string, string>>;
     readonly contexts?: Readonly<Record<string, string>>;
@@ -90,8 +99,18 @@ interface DecisionRequest {
   readonly questions: Readonly<Record<string, Question>>;
 }
 
+type DecisionResponse = Frozen<Pick<DecisionsResponse, "model" | "answers">>;
+
+type Answers = DecisionResponse["answers"];
+
+type Answer = Answers[string];
+
+type NoulAnswer = Frozen<DecisionsNoulAnswer>;
+
+type ChoiceAnswer = Frozen<DecisionsChoiceAnswer>;
+
 type DecideResult =
-  | { readonly ok: true; readonly response: unknown; readonly cached?: boolean }
+  | { readonly ok: true; readonly response: DecisionResponse; readonly cached?: boolean }
   | { readonly ok: false; readonly reason: string };
 
 interface DecideInput {
@@ -158,7 +177,7 @@ interface Verdict {
 interface Verdicts {
   readonly model: string;
   readonly results: Readonly<Record<string, Verdict>>;
-  readonly answers: Readonly<Record<string, unknown>>;
+  readonly answers: Answers;
   readonly complete: boolean;
 }
 
@@ -181,7 +200,10 @@ interface AstNode {
 }
 
 export type {
+  Answer,
+  Answers,
   AstNode,
+  ChoiceAnswer,
   Frozen,
   SelectedNode,
   SelectMatch,
@@ -194,6 +216,7 @@ export type {
   DecisionPluginSetup,
   DecisionProvider,
   DecisionRequest,
+  DecisionResponse,
   DecisionRule,
   EnclosingKind,
   ExplainSetting,
@@ -201,6 +224,7 @@ export type {
   Match,
   ModelRef,
   ModelSpec,
+  NoulAnswer,
   NoulQuestion,
   Question,
   RequestMatch,
