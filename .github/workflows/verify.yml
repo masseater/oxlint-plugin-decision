@@ -49,109 +49,22 @@ jobs:
       contents: write
       pull-requests: write
       actions: write
-      checks: read
     concurrency:
       group: release
     steps:
-      - env:
-          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "::error::RELEASE_PLEASE_TOKEN is not set. Issue a fine-grained PAT (Contents and Pull requests: write) and register it with gh secret set RELEASE_PLEASE_TOKEN."
-            exit 1
-          fi
-          if ! gh api "repos/$GITHUB_REPOSITORY" --silent; then
-            echo "::error::RELEASE_PLEASE_TOKEN was rejected; it has probably expired. Regenerate the fine-grained PAT and run gh secret set RELEASE_PLEASE_TOKEN again."
-            exit 1
-          fi
       - id: tagged
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           config-file: .github/release-please/config.json
           manifest-file: .github/release-please/manifest.json
           skip-github-pull-request: true
-      - id: release
-        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           config-file: .github/release-please/config.json
           manifest-file: .github/release-please/manifest.json
           skip-github-release: true
-      - id: pr
-        if: steps.release.outputs.prs_created == 'true'
+      - if: steps.tagged.outputs.release_created == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_PR: ${{ steps.release.outputs.pr }}
-        run: |
-          PR="$(jq -r .number <<<"$RELEASE_PR")"
-          head="$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)"
-          behind="$(gh api "repos/$GITHUB_REPOSITORY/compare/main...$head" --jq .behind_by)"
-          if [ "$behind" != "0" ]; then
-            echo "::error::release PR #$PR is $behind commit(s) behind main"
-            exit 1
-          fi
-          {
-            echo "number=$PR"
-            echo "head=$head"
-          } >> "$GITHUB_OUTPUT"
-      - if: steps.pr.outcome == 'success'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ steps.pr.outputs.head }}
-          persist-credentials: false
-      - if: steps.pr.outcome == 'success'
-        uses: voidzero-dev/setup-vp@3754dd7dbdb32bd8f6d28b6043de13ad3a75f21f # v1.21.1
-        with:
-          cache: true
-          run-install: |
-            - args: ['--frozen-lockfile']
-      - if: steps.pr.outcome == 'success'
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
-        with:
-          enable-cache: false
-      - if: steps.pr.outcome == 'success'
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: node_modules/.cache/oxlint-plugin-decision
-          key: oxlint-plugin-decision-${{ github.sha }}
-          restore-keys: oxlint-plugin-decision-
-      - if: steps.pr.outcome == 'success'
-        run: vp run verify
-        env:
-          GH_TOKEN: ${{ github.token }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      - if: steps.pr.outcome == 'success'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          HEAD: ${{ steps.pr.outputs.head }}
-        run: |
-          for _ in $(seq 60); do
-            conclusion="$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD/check-runs?check_name=up-to-date" --jq '[.check_runs[] | select(.status == "completed")][0].conclusion // empty')"
-            [ "$conclusion" = success ] && exit 0
-            if [ -n "$conclusion" ]; then
-              echo "::error::up-to-date concluded $conclusion on $HEAD"
-              exit 1
-            fi
-            sleep 5
-          done
-          echo "::error::up-to-date did not complete on $HEAD"
-          exit 1
-      - id: merge
-        if: steps.pr.outcome == 'success'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR: ${{ steps.pr.outputs.number }}
-          HEAD: ${{ steps.pr.outputs.head }}
-        run: gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --squash --match-head-commit "$HEAD"
-      - id: released
-        if: steps.merge.outcome == 'success'
-        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
-        with:
-          config-file: .github/release-please/config.json
-          manifest-file: .github/release-please/manifest.json
-          skip-github-pull-request: true
-      - if: steps.tagged.outputs.release_created == 'true' || steps.released.outputs.release_created == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.tagged.outputs.tag_name || steps.released.outputs.tag_name }}
+          TAG: ${{ steps.tagged.outputs.tag_name }}
         run: gh workflow run publish.yml --repo "$GITHUB_REPOSITORY" --ref main -f ref="$TAG"
