@@ -140,7 +140,7 @@ export default defineConfig({
     ],
     settings: {
       "decision-presets": { model: decisionModel },
-      "decision-ai-slop": { model: decisionModel },
+      "decision-ai-slop": { model: decisionModel, timeoutMs: 60_000 },
     },
     options: {
       typeAware: true,
