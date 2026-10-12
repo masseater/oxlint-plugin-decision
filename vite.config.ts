@@ -55,7 +55,7 @@ export default defineConfig({
     "*": "vp check --fix",
   },
   fmt: {
-    ignorePatterns: ["**/CHANGELOG.md"],
+    ignorePatterns: ["CHANGELOG.md"],
     sortImports: true,
     sortPackageJson: true,
   },
