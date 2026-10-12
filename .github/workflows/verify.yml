@@ -50,15 +50,19 @@ jobs:
         if: steps.release.outputs.prs_created == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          PR: ${{ fromJSON(steps.release.outputs.pr).number }}
+          RELEASE_PR: ${{ steps.release.outputs.pr }}
         run: |
+          PR="$(jq -r .number <<<"$RELEASE_PR")"
           head="$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)"
           behind="$(gh api "repos/$GITHUB_REPOSITORY/compare/main...$head" --jq .behind_by)"
           if [ "$behind" != "0" ]; then
             echo "::error::release PR #$PR is $behind commit(s) behind main"
             exit 1
           fi
-          echo "head=$head" >> "$GITHUB_OUTPUT"
+          {
+            echo "number=$PR"
+            echo "head=$head"
+          } >> "$GITHUB_OUTPUT"
       - if: steps.pr.outcome == 'success'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -83,7 +87,7 @@ jobs:
         if: steps.pr.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
-          PR: ${{ fromJSON(steps.release.outputs.pr).number }}
+          PR: ${{ steps.pr.outputs.number }}
           HEAD: ${{ steps.pr.outputs.head }}
         run: gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --squash --match-head-commit "$HEAD"
       - id: released
