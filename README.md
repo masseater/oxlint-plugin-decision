@@ -160,4 +160,4 @@ This is a fork of [oxlint-plugin-jev](https://github.com/wobsoriano/oxlint-plugi
 
 ## License
 
-[AGPL-3.0-only](LICENSE). Portions from oxlint-plugin-jev stay under the MIT License; see [NOTICE](NOTICE).
+[MIT](LICENSE).

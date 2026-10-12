@@ -290,4 +290,4 @@ The rules that check a claim the code makes about itself are adapted from [jev-l
 
 ## License
 
-AGPL-3.0-only. Portions from oxlint-plugin-jev and jev-lint stay under the MIT License; see NOTICE.
+MIT.
