@@ -4,7 +4,7 @@
 > These packages are experimental. Use at your own risk.
 
 > [!CAUTION]
-> Every match is a paid model request. Run the plugin only with the answer cache kept, lint only changed files, and exclude files you don't need, such as `node_modules` and `dist`. The authors take no responsibility for any cost incurred by running it as is over every file of a codebase. See [Cost and caching](libs/oxlint-plugin-decision/README.md#cost-and-caching).
+> Every match is a paid model request. Run the plugin only with the answer cache kept, lint only changed files, and exclude files you don't need, such as `node_modules` and `dist`. The authors take no responsibility for any cost incurred by running it as is over every file of a codebase. See [Cost and caching](#cost-and-caching).
 
 [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) rules written in plain English, answered by decision models on [OpenRouter](https://openrouter.ai).
 
@@ -83,7 +83,66 @@ export default defineConfig({
 });
 ```
 
-See the [plugin README](libs/oxlint-plugin-decision/README.md) for rule fields, answer kinds, context, models, settings, providers, and cost and caching.
+See the [plugin README](libs/oxlint-plugin-decision/README.md) for rule fields, answer kinds, context, models, settings and providers.
+
+## Cost and caching
+
+Every match is a paid model request unless its answer is already cached, so keep an eye on what your rules match. Before running the plugin on a real codebase, put these three in place:
+
+1. **Exclude files you don't need.** Generated and vendored code, such as `node_modules`, `dist` and build output, only adds requests. List it in `ignorePatterns`, and use `overrides` to turn rules on only where they matter.
+2. **Lint only changed files.** Pass the changed paths to oxlint instead of linting the whole tree.
+3. **Keep the cache.** Answers are cached under `node_modules/.cache/oxlint-plugin-decision`. Don't delete it between local runs, and persist it in CI.
+
+```ts
+// oxlint.config.ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["./decision-plugin.mjs"],
+  ignorePatterns: [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/coverage/**",
+    "**/*.min.js",
+  ],
+  rules: {
+    "team/no-pii-in-logs": "off",
+  },
+  overrides: [
+    {
+      files: ["src/**/*.{ts,tsx}"],
+      rules: {
+        "team/no-pii-in-logs": "error",
+      },
+    },
+  ],
+});
+```
+
+Lint only the files changed since `main`. `xargs -r` skips oxlint when nothing changed; without it, oxlint would lint the whole tree:
+
+```sh
+git diff --name-only --diff-filter=d origin/main... -- '*.ts' '*.tsx' '*.js' '*.jsx' | xargs -r npx oxlint
+```
+
+Persist the cache in GitHub Actions:
+
+```yaml
+- uses: actions/cache@v4
+  with:
+    path: node_modules/.cache/oxlint-plugin-decision
+    key: oxlint-decision-${{ github.sha }}
+    restore-keys: oxlint-decision-
+```
+
+More on what drives the cost:
+
+- Every match is sent; the plugin has no per-file cap, so a broad target, such as `"call"` on a large codebase, sends many requests. Control the volume with oxlint itself: narrow files and rules with `overrides`, and lint only changed files by passing their paths.
+- Wider `context` and longer snippets cost more tokens. `maxSnippetChars` caps each snippet.
+- A list of models multiplies the requests: each model answers every match.
+- Answers are cached on disk under `node_modules/.cache/oxlint-plugin-decision`. Unchanged code is not asked again, so a second run over the same files is free. Editing a snippet, its context, a question or an answer kind re-asks that file; changing a cutoff or an `id` does not.
+- Free models such as `openrouter/respan/span-01-lite` are a cheap way to try rules before switching to a paid model.
 
 ## Models
 
