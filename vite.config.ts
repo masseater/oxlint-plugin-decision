@@ -158,11 +158,11 @@ export default defineConfig({
       },
       "actions-lint": {
         command:
-          "uvx --from actionlint-py@1.7.12.25 actionlint && uvx zizmor@1.30.1 .github && ast-grep scan --rule .github/rules/no-full-history-checkout.yml .github/workflows",
+          'uvx --from actionlint-py@1.7.12.25 actionlint && uvx zizmor@1.30.1 $(test -n "$CLAUDE_CODE_REMOTE" && echo --no-online-audits) .github && ast-grep scan --rule .github/rules/no-full-history-checkout.yml .github/workflows',
         cache: {
+          env: ["CLAUDE_CODE_REMOTE"],
           untrackedEnv: [
             "GH_TOKEN",
-            "ZIZMOR_NO_ONLINE_AUDITS",
             "HTTPS_PROXY",
             "https_proxy",
             "NO_PROXY",
