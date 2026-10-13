@@ -122,7 +122,7 @@ Judgment calls that are worth a look in review but too subjective to fail a buil
 
 ### ai-slop
 
-Catches the padding that coding agents tend to leave in JavaScript and TypeScript: guards that can never fire, made-up defaults, wrappers that add nothing, stand-in bodies, comments that repeat the code or narrate the change, and casts or lint suppressions in place of a fix. Most of it is noise rather than a bug, so run it as `"warn"`; a placeholder body is a real gap, so `placeholder-implementation` is worth `"error"`. Each rule only asks about functions that contain what it looks for, such as a cast or a comment. The cutoffs were tuned on Span-01 Lite (`openrouter/respan/span-01-lite`).
+Catches the padding that coding agents tend to leave in JavaScript and TypeScript: guards that can never fire, made-up defaults, wrappers that add nothing, stand-in bodies, comments that repeat the code or narrate the change, and casts or lint suppressions in place of a fix. Most of it is noise rather than a bug, so run it as `"warn"`; a placeholder body is a real gap, so `placeholder-implementation` is worth `"error"`. Each rule only asks about functions that contain what it looks for, such as a cast or a comment. The questions were tuned on Span-01 Lite (`openrouter/respan/span-01-lite`).
 
 This entry is its own plugin, named `decision-ai-slop`, so its rules are `decision-ai-slop/<id>` and its settings go under `settings["decision-ai-slop"]`. It can be loaded next to any other preset.
 
@@ -286,7 +286,7 @@ export default defineConfig({
 
 ## Credits
 
-The rules that check a claim the code makes about itself are adapted from [jev-lint](https://github.com/mizchi/jev-lint) by mizchi: `fn-name-promises`, `pure-name-is-pure`, `safe-name-is-safe`, `idempotent-name`, `catch-hides-failure`, `error-message-matches-condition`, `log-level-matches-event`, `log-message-matches-event`, `comment-describes-block`, `comment-describes-declaration`, `doc-errors-match-body`, `var-name-describes-value`, `describe-names-subject`, `test-name-describes-code`, `test-name-verifies-claim`, `snapshot-only-behaviour-claim` and `test-mocks-subject`. Their questions and cutoffs come from jev-lint, which tuned them on the default model, `openrouter/~typesafe/jev-latest`. jev-lint's rules that look across files, or at types, classes, other languages, documents and commits, are not here.
+The rules that check a claim the code makes about itself are adapted from [jev-lint](https://github.com/mizchi/jev-lint) by mizchi: `fn-name-promises`, `pure-name-is-pure`, `safe-name-is-safe`, `idempotent-name`, `catch-hides-failure`, `error-message-matches-condition`, `log-level-matches-event`, `log-message-matches-event`, `comment-describes-block`, `comment-describes-declaration`, `doc-errors-match-body`, `var-name-describes-value`, `describe-names-subject`, `test-name-describes-code`, `test-name-verifies-claim`, `snapshot-only-behaviour-claim` and `test-mocks-subject`. Their questions come from jev-lint, which tuned them on the default model, `openrouter/~typesafe/jev-latest`. Every rule reports only at 0.8 or above, the lowest cutoff the plugin accepts, instead of jev-lint's cutoffs. jev-lint's rules that look across files, or at types, classes, other languages, documents and commits, are not here.
 
 ## License
 

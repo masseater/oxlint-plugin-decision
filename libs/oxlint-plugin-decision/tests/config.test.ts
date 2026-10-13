@@ -24,15 +24,15 @@ const yes = ({ request }) => ({
 export default createDecisionPlugin({
   name: "custom",
   rules: [
-    defineDecisionRule({ id: "code-rule", target: "call", question: "Is this a call?", cutoff: 0.5 }),
-    defineDecisionRule({ id: "off-rule", target: "file", question: "Is this a file?", cutoff: 0.5 }),
+    defineDecisionRule({ id: "code-rule", target: "call", question: "Is this a call?", cutoff: 0.8 }),
+    defineDecisionRule({ id: "off-rule", target: "file", question: "Is this a file?", cutoff: 0.8 }),
   ],
   providers: [defineProvider({ name: "fake", requiredEnv: ["FAKE_KEY"], decide: yes })],
 });
 `;
 
 const CUSTOM_LINE =
-  "log.js:1:1: [code-rule] fake/fake-1 answered yes (0.90 >= 0.50): Is this a call? [Error/custom(code-rule)]";
+  "log.js:1:1: [code-rule] fake/fake-1 answered yes (0.90 >= 0.80): Is this a call? [Error/custom(code-rule)]";
 
 const customProvider = Effect.scoped(
   Effect.gen(function* test() {
@@ -72,8 +72,8 @@ const answer = (noul) => ({ request }) => ({
 export default createDecisionPlugin({
   name: "batch",
   rules: [
-    defineDecisionRule({ id: "first", target: "call", question: "Is this a call?", cutoff: 0.5 }),
-    defineDecisionRule({ id: "second", target: "call", question: "Is this a call?", cutoff: 0.5 }),
+    defineDecisionRule({ id: "first", target: "call", question: "Is this a call?", cutoff: 0.8 }),
+    defineDecisionRule({ id: "second", target: "call", question: "Is this a call?", cutoff: 0.8 }),
   ],
   providers: [
     defineProvider({
@@ -114,7 +114,7 @@ const batchedModels = Effect.scoped(
   }),
 );
 
-const EVEN_ODDS = 0.5;
+const BELOW_CONFIDENT = 0.79;
 const ABOVE_CERTAIN = 1.01;
 
 const goodRule: DecisionRule = { id: "a", target: "call", question: "Is it bad?", cutoff: 0.8 };
@@ -128,10 +128,11 @@ const fileRuleAt = (cutoff: number): DecisionRule => ({
 const badConfigs: readonly (readonly [string, DecisionPluginSetup, string])[] = [
   [
     "location is configured for a non-file rule",
-    { rules: [{ ...goodRule, location: { question: "Where?", cutoff: 0.75 } }] },
+    { rules: [{ ...goodRule, location: { question: "Where?", cutoff: 0.8 } }] },
     "location is supported only for file rules",
   ],
-  ["a location cutoff is not above 0.5", { rules: [fileRuleAt(EVEN_ODDS)] }, "cutoff"],
+  ["a location cutoff is below 0.8", { rules: [fileRuleAt(BELOW_CONFIDENT)] }, "cutoff"],
+  ["a rule cutoff is below 0.8", { rules: [{ ...goodRule, cutoff: BELOW_CONFIDENT }] }, "cutoff"],
   ["a location cutoff is above 1", { rules: [fileRuleAt(ABOVE_CERTAIN)] }, "cutoff"],
   [
     "a plugin-level field is unknown",

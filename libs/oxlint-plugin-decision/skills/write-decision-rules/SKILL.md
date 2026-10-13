@@ -90,7 +90,7 @@ The package ships no rules. You write each rule as a yes/no (or pick-one) questi
 
 There is no other target and no selector syntax. With the default `boolean` answer, "yes" means "report this", so phrase the question so that yes is the violation. The wording is the rule: "Does this send personal data" also fires on a legitimate `mailer.send(user.email, ...)`, while "to a log or console" does not. Questions and messages are English sentences. `message` replaces the question in the diagnostic with a short sentence.
 
-Rule fields: `id` (lowercase words joined by hyphens, unique in the plugin), `target`, `question`, `cutoff` (0 to 1, inclusive), and optional `message`, `select`, `answer`, `context`, `model`, and `location` (file rules only).
+Rule fields: `id` (lowercase words joined by hyphens, unique in the plugin), `target`, `question`, `cutoff` (0.8 to 1, inclusive), and optional `message`, `select`, `answer`, `context`, `model`, and `location` (file rules only).
 
 ### Narrow matches with `select` before any request
 
@@ -105,7 +105,7 @@ defineDecisionRule({
     node.callee.type === "Identifier" &&
     ["it", "test"].includes(node.callee.name),
   question: "Would this test still pass if the behaviour its name claims were broken?",
-  cutoff: 0.7,
+  cutoff: 0.8,
 });
 ```
 
@@ -119,7 +119,7 @@ defineDecisionRule({
   id: "stale-comment",
   target: "function",
   question: "How does the comment right above this function relate to what the function does?",
-  cutoff: 0.7,
+  cutoff: 0.8,
   context: { scope: "comment" },
   answer: {
     kind: "classify",
@@ -137,7 +137,7 @@ defineDecisionRule({
   id: "security-smell",
   target: "function",
   question: "Does this function handle untrusted input in a way that could be exploited?",
-  cutoff: 0.6,
+  cutoff: 0.8,
   answer: { kind: "severity", minimum: "warn" },
 });
 ```
@@ -158,7 +158,7 @@ With `{ scope: "comment" }`, a match without a comment directly above it (or abo
 
 ### Point a file rule at a line
 
-A `"file"` rule can add `location: { question, cutoff }` to move the diagnostic from the first line to the suspected violation. The location `cutoff` must be greater than 0.5 and at most 1. An uncertain location, or a file cut by `maxSnippetChars`, keeps the first-line diagnostic.
+A `"file"` rule can add `location: { question, cutoff }` to move the diagnostic from the first line to the suspected violation. The location `cutoff` must be from 0.8 to 1. An uncertain location, or a file cut by `maxSnippetChars`, keeps the first-line diagnostic.
 
 ### Set models and plugin settings
 

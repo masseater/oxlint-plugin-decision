@@ -12,14 +12,13 @@ import {
   hasSuppression,
 } from "./ai-slop-select.ts";
 
-interface SlopRule
-  extends Pick<DecisionRule, "id" | "select" | "context">, Partial<Pick<DecisionRule, "cutoff">> {
+interface SlopRule extends Pick<DecisionRule, "id" | "select" | "context"> {
   readonly ask: string;
   readonly flag: string;
   readonly pass: string;
 }
 
-const CUTOFF = 0.6;
+const CUTOFF = 0.8;
 
 const slopRule = ({ ask, flag, pass, ...rule }: SlopRule): DecisionRule =>
   defineDecisionRule({
@@ -32,7 +31,6 @@ const slopRule = ({ ask, flag, pass, ...rule }: SlopRule): DecisionRule =>
 
 const redundantGuard = slopRule({
   id: "redundant-guard",
-  cutoff: 0.8,
   select: hasGuard,
   ask: "This function checks one of its own parameters for a case that the parameter's declared type already rules out, so the check can never change what happens.",
   flag: "A parameter whose type annotation is non-optional and non-nullable, such as `user: User` or `name: string`, is compared with null or undefined, has its `typeof` tested against the type it is already declared as, or is read with `?.`.",
@@ -97,7 +95,6 @@ const castInsteadOfNarrowing = slopRule({
 
 const suppressionInsteadOfFix = slopRule({
   id: "suppression-instead-of-fix",
-  cutoff: 0.7,
   select: hasSuppression,
   ask: "A lint or type-check suppression comment inside this function hides a problem that the code next to it could simply fix.",
   flag: "The directive gives no reason after the rule name, or the line it silences has a direct local fix, such as handling a floating promise, typing a value instead of `any`, removing an unused variable, or narrowing instead of `@ts-ignore`.",

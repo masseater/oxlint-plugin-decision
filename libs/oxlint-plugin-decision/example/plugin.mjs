@@ -13,7 +13,7 @@ const nameMatchesBehavior = defineDecisionRule({
   target: "function",
   question:
     "Does this function's name describe only reading or fetching data (for example get, find, load or fetch), while its body also writes, logs or sends something?",
-  cutoff: 0.6,
+  cutoff: 0.8,
 });
 
 const noPromptInjection = defineDecisionRule({

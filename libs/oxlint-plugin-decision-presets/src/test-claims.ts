@@ -5,7 +5,7 @@ import { isDescribeCall, isTestCall } from "./claim-select.ts";
 
 const describeNamesSubject = claimRule({
   id: "describe-names-subject",
-  cutoff: 0.45,
+  cutoff: 0.8,
   target: "call",
   select: isDescribeCall,
   ask: "The tests inside this describe block exercise something other than what its title names.",
@@ -15,7 +15,7 @@ const describeNamesSubject = claimRule({
 
 const testNameDescribesCode = claimRule({
   id: "test-name-describes-code",
-  cutoff: 0.72,
+  cutoff: 0.8,
   target: "call",
   select: isTestCall,
   ask: "The operation, input or outcome this test exercises is not the one the test's name names.",
@@ -25,7 +25,7 @@ const testNameDescribesCode = claimRule({
 
 const testNameVerifiesClaim = claimRule({
   id: "test-name-verifies-claim",
-  cutoff: 0.66,
+  cutoff: 0.8,
   target: "call",
   select: isTestCall,
   ask: "This test would still pass if the behaviour its name claims were broken.",
@@ -35,7 +35,7 @@ const testNameVerifiesClaim = claimRule({
 
 const snapshotOnlyBehaviourClaim = claimRule({
   id: "snapshot-only-behaviour-claim",
-  cutoff: 0.67,
+  cutoff: 0.8,
   target: "call",
   select: isTestCall,
   ask: "This test's name claims a specific behaviour, but the body only compares a snapshot.",
@@ -45,7 +45,7 @@ const snapshotOnlyBehaviourClaim = claimRule({
 
 const testMocksSubject = claimRule({
   id: "test-mocks-subject",
-  cutoff: 0.3,
+  cutoff: 0.8,
   target: "call",
   select: isTestCall,
   ask: "The behaviour this test's name attributes to the code under test is performed by a mock or stub whose canned value the assertion reads back unchanged.",

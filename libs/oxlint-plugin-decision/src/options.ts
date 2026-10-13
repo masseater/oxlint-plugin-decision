@@ -4,8 +4,8 @@ import { Array as Arr, Option, Predicate, Result, Schema, String as Str } from "
 import { BOOLEAN_ANSWER, decodeRuleAnswer } from "./answer.ts";
 import {
   CiBehaviorSchema,
+  Cutoff,
   ExplainSettingSchema,
-  Probability,
   RuleContextSchema,
   TargetSchema,
 } from "./schema.ts";
@@ -85,16 +85,11 @@ const ModelSpecSchema = Schema.Union([
 ]);
 
 const ONE = 1;
-const EVEN_ODDS = 0.5;
 
 const PositiveInt = Schema.Int.check(Schema.isGreaterThanOrEqualTo(ONE));
 
 const RuleId = Schema.NonEmptyString.check(
   Schema.isPattern(RULE_ID, { message: "id must be lowercase words joined by hyphens" }),
-);
-
-const LocationCutoff = Schema.Number.check(
-  Schema.isBetween({ minimum: EVEN_ODDS, maximum: ONE, exclusiveMinimum: true }),
 );
 
 const OptionsSchema = Schema.Struct({
@@ -110,12 +105,10 @@ const RuleSchema = Schema.Struct({
   id: RuleId,
   target: TargetSchema,
   question: Schema.NonEmptyString,
-  cutoff: Probability,
+  cutoff: Cutoff,
   message: Schema.optionalKey(Schema.NonEmptyString),
   select: Schema.optionalKey(Schema.declare(isSelector)),
-  location: Schema.optionalKey(
-    Schema.Struct({ question: Schema.NonEmptyString, cutoff: LocationCutoff }),
-  ),
+  location: Schema.optionalKey(Schema.Struct({ question: Schema.NonEmptyString, cutoff: Cutoff })),
   model: Schema.optionalKey(ModelSpecSchema),
   context: Schema.optionalKey(RuleContextSchema),
   answer: Schema.optionalKey(Schema.Unknown),

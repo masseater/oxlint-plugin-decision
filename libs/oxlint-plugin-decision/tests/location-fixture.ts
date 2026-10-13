@@ -27,7 +27,7 @@ const fileRule: DecisionRule = {
   target: "file",
   question: "Does this file log personal data?",
   cutoff: 0.9,
-  location: { question: "Select the call that logs personal data.", cutoff: 0.75 },
+  location: { question: "Select the call that logs personal data.", cutoff: 0.8 },
 };
 
 interface Linted {
