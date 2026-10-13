@@ -22,7 +22,6 @@ if ! command -v vp >/dev/null 2>&1; then
 fi
 
 echo ". \"$HOME/.config/vite-plus/env\"" >>"$CLAUDE_ENV_FILE"
-echo "export ZIZMOR_NO_ONLINE_AUDITS=true" >>"$CLAUDE_ENV_FILE"
 echo "export NODE_USE_ENV_PROXY=1" >>"$CLAUDE_ENV_FILE"
 
 cd "$CLAUDE_PROJECT_DIR"
