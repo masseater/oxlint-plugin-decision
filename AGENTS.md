@@ -13,27 +13,25 @@ Use intent maintainer setup to initialize missing records, maintainer add to reg
 
 ## 配置
 
-- ワークスペースはnxに倣ってapps・libs・tools・infraに分ける。参照してよい向きは、libsをapps・tools・infraから、infraをappsからだけである。apps同士、tools同士、infra同士も参照しない。fallowのboundariesが落とす。
-- 定数・設定値・スキーマ・ルールのIDは一か所で定義し、ほかの場所はimportか導出で参照する。同じ値を書き写さない。
+- ワークスペースは apps・libs・tools・infra に分ける。
+- 定数・設定値・スキーマ・ルールの ID は一か所で定義し、ほかはそこから参照する。
 
 ## 計測
 
-- 推測するな、計測しろ。仮説を立てたら、実装や修正の前に計測で事実を確かめ、その結果だけで判断する。
-- 機能開発に取り掛かる前に、AIが自分でデバッグできる仕組みを必ず作る。再現手段、ログやスパン、その出力を読む経路の3つである。
-- 時間かお金を使う処理（モデルへのリクエスト、子プロセス、ファイルの入出力など）は、すべてスパンにして外から読めるようにする。スパンはEffect公式の `OtlpTracer.layerFromConfig` で出し、標準の `OTEL_TRACES_EXPORTER=otlp` と `OTEL_EXPORTER_OTLP_ENDPOINT` が設定されたときだけ送る。Effect は `OTEL_TRACES_EXPORTER` が無いと送らない。
-- スパンは時間を使っている処理そのものに仕込む。計測のためだけにコマンドやプロセスを包まない。
-- 判定と所要時間は `OXLINT_DECISION_EXPLAIN=json` で読む。oxlint のルールごとの時間は `--debug=timings` で読む。
-- 判断の根拠にする計測は、実際のモデルに問い合わせる lint で行う。モックのテストは計る仕組みが動くかを確かめるためだけに使う。
+- 推測せず計測する。実装や修正の前に事実を確かめ、その結果だけで判断する。
+- 機能開発の前に、AI が自分でデバッグできる仕組み（再現手段、ログやスパン、それを読む経路）を作る。
+- 時間かお金を使う処理はすべてスパンにし、`OtlpTracer.layerFromConfig` で出す。計測のためだけにコマンドやプロセスを包まない。
+- 判定と所要時間は `OXLINT_DECISION_EXPLAIN=json`、oxlint のルールごとの時間は `--debug=timings` で読む。
+- 判断の根拠にする計測は、実際のモデルに問い合わせる lint で行う。モックのテストは計る仕組みの確認だけに使う。
 
-## 脆弱性スキャン
+## 脆弱性
 
-- 依存パッケージの既知の脆弱性は、verify の `audit` タスク（`vp pm audit`）が落とす。直すときは `vp pm audit --fix` で `pnpm-workspace.yaml` の overrides に修正版を足す。修正版が出ていない勧告だけを、`auditConfig.ignoreGhsas` に GHSA の ID で載せ、理由をコミットメッセージに書く。
+- `audit` は `vp pm audit --fix` で直す。修正版の無い勧告だけを `auditConfig.ignoreGhsas` に載せ、理由をコミットメッセージに書く。
 
 ## マージ
 
-- マージ前に必ず base ブランチを取り込み、手元の `vp run verify` を通してからマージする。コンフリクトしないからといって、取り込まないままマージしない。マージしてよいかは聞かない。
-- release-please のリリースPRは main への push では作らず、更新もしない。push のたびに更新すると、そのたびに承認待ちの `up-to-date` が残るためである。リリースするときは Claude が `verify` ワークフローを手動実行してリリースPRを作り直す。タグ付けとリリースは、リリースPRをマージした push で動く。
-- release-please のリリースPRは、ほかの PR と同じく Claude が main を取り込み、手元の `vp run verify` を通してからマージする。`GITHUB_TOKEN` で作られたリリースPRの `pull_request` のワークフローは承認待ちになるため、Claude が取り込みを push して動いた `up-to-date` で必須チェックを満たす。取り込むものが無く承認待ちのままなら、ユーザーに承認を頼む。ルールセットのバイパスや `--admin` でマージを通さない。
+- マージ前に base を取り込み、手元の `vp run verify` を通してから自分でマージする。マージしてよいかは聞かない。ルールセットのバイパスや `--admin` は使わない。
+- release-please のリリース PR は `verify` を手動実行して作り直す。`up-to-date` が承認待ちで取り込むものも無ければ、ユーザーに承認を頼む。
 
 ## 公開先
 
