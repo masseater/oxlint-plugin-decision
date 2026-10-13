@@ -7,6 +7,15 @@ const NonNegativeInt = Schema.Int.check(Schema.isGreaterThanOrEqualTo(NONE));
 
 const Probability = Schema.Number.check(Schema.isBetween({ minimum: 0, maximum: 1 }));
 
+const CONFIDENT = 0.8;
+
+const Cutoff = Schema.Number.check(
+  Schema.isBetween(
+    { minimum: CONFIDENT, maximum: 1 },
+    { message: `cutoff must be between ${CONFIDENT} and 1` },
+  ),
+);
+
 const TargetSchema = Schema.Literals(["function", "call", "jsx", "file"]);
 
 const CiBehaviorSchema = Schema.Literals(["skip", "fail"]);
@@ -49,7 +58,9 @@ const SeverityAnswer = Schema.Struct({
 const RuleAnswerSchema = Schema.Union([BooleanAnswer, ClassifyAnswer, SeverityAnswer]);
 
 export {
+  CONFIDENT,
   CiBehaviorSchema,
+  Cutoff,
   EnclosingKindSchema,
   ExplainSettingSchema,
   Probability,

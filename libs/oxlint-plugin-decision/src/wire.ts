@@ -11,6 +11,7 @@ import {
 
 import { SEVERITY_ORDER, noulOf } from "./answer.ts";
 import { snippetRefOf } from "./request.ts";
+import { CONFIDENT } from "./schema.ts";
 import type {
   Answers,
   ChoiceAnswer,
@@ -33,7 +34,6 @@ interface WireRequest extends Readonly<Pick<DecisionsRequest, "model" | "state" 
 const RESPAN_MODELS = ["respan/"] as const;
 const OPTION_SEPARATOR = "__";
 const CERTAIN = 1;
-const LIKELY = 0.5;
 const NO_SEVERITY = "none";
 
 const sectionsOf = (name: string, entries: Readonly<Record<string, string>>): readonly string[] =>
@@ -194,7 +194,7 @@ const severityLevel = (scores: Arr.NonEmptyReadonlyArray<Score>): ChoiceAnswer =
   };
   const reached = pipe(
     cumulative,
-    Arr.findLast(({ yes }) => yes >= LIKELY),
+    Arr.findLast(({ yes }) => yes >= CONFIDENT),
   );
   return choiceAnswer(
     Option.match(reached, { onNone: () => NO_SEVERITY, onSome: ({ label }) => label }),

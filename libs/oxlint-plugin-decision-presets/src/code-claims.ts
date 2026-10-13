@@ -5,7 +5,7 @@ import { hasCatch, isLogCall, namedLike } from "./claim-select.ts";
 
 const fnNamePromises = claimRule({
   id: "fn-name-promises",
-  cutoff: 0.55,
+  cutoff: 0.8,
   ask: "The body of this function does something materially different from what its name promises.",
   yes: "Someone who read only the name and the parameter list would be wrong about what this function does: it returns a different kind of thing than the name suggests (a count that is a list, a predicate that is a number), it changes state when the name says it only reads, checks, looks up or serialises, it can fail or return nothing when the name promises a value, it handles only a narrower case than the name claims, it never performs an effect or repetition the name names (a drain or remove that leaves the container as it was, a retry that tries once), it computes something no reading of the name accounts for, or it does substantial work the name does not mention at all, such as writing what it was asked to read.",
   no: "The name and parameter list describe what the body actually does. Someone who read only them would not be surprised by the body, even if a longer or more specific name could be imagined. A terse or conventional name (run, handle, take, len, fmt, toString, a getter) that the body fits is not a violation, and a comment inside the body that is wrong about the body is a wrong comment, not a wrong name.",
@@ -13,7 +13,7 @@ const fnNamePromises = claimRule({
 
 const pureNameIsPure = claimRule({
   id: "pure-name-is-pure",
-  cutoff: 0.54,
+  cutoff: 0.8,
   select: namedLike({ prefixes: ["compute", "calculate", "derive", "format", "to", "parse"] }),
   ask: "This function's name presents it as a computation of a result from its inputs, but its body changes state outside itself or performs I/O.",
   yes: "The body mutates an argument or something reachable through one, assigns to a module-level binding, a field of `this` or an object it did not create, stores something it computed into a cache, Map, Set or other store that outlives the call, logs, emits or increments a metric, or reads or writes a file, network, database, environment, clock or random source, directly or through a call whose name or arguments show it does so (fetch, a path, a URL, a query, send, save). One such read or write on any path is enough.",
@@ -23,7 +23,7 @@ const pureNameIsPure = claimRule({
 
 const safeNameIsSafe = claimRule({
   id: "safe-name-is-safe",
-  cutoff: 0.53,
+  cutoff: 0.8,
   select: namedLike({
     prefixes: ["safe", "try"],
     suffixes: ["OrNull", "OrDefault", "OrUndefined"],
@@ -36,7 +36,7 @@ const safeNameIsSafe = claimRule({
 
 const idempotentName = claimRule({
   id: "idempotent-name",
-  cutoff: 0.4,
+  cutoff: 0.8,
   select: namedLike({ prefixes: ["ensure", "upsert", "setup", "install", "register"] }),
   ask: "This function's name says a repeated call is harmless, but calling it a second time with the same arguments leaves a different result from calling it once.",
   yes: "The body performs its effect without finding out whether it is already in place, and repeating the effect accumulates or fails: it appends to a list or adds a listener, creates a record, index, table, column or resource that would then exist twice or make the second creation fail, inserts where a matching row may already be, or runs a step that is not itself safe to repeat, with no existence check, no keyed overwrite and no guard that makes the second call a no-op.",
@@ -46,7 +46,7 @@ const idempotentName = claimRule({
 
 const catchHidesFailure = claimRule({
   id: "catch-hides-failure",
-  cutoff: 0.55,
+  cutoff: 0.8,
   select: hasCatch,
   ask: "A catch block in this function hides a failure the function's caller needed to know about.",
   yes: "The catch block neither rethrows, returns an error value the signature admits, nor reports through a channel the function is documented to use; it returns a default, an empty value, a made-up value or nothing, or only logs, and the function's name or return type promises a real result: a value that was fetched, parsed or computed, or an operation such as a save or a send that the caller will assume happened.",
@@ -55,7 +55,7 @@ const catchHidesFailure = claimRule({
 
 const errorMessageMatchesCondition = claimRule({
   id: "error-message-matches-condition",
-  cutoff: 0.65,
+  cutoff: 0.8,
   ask: "The message given to an error thrown in this function misdescribes the condition that leads to the throw.",
   yes: "The message names a different cause, value, operation or expectation than the condition guarding the throw actually checks: it says a thing is missing when the check is about its permission, form or range; it names one field or operand when the condition tests another; it names one failure (a timeout, an expiry) when the status or state tested is a different one; it states a bound or direction the condition does not test; or it is a copy of another throw's message in the same function and describes that throw's condition rather than this one.",
   no: "The function throws nothing with a message; or every message describes the condition that leads to its throw, whether it states the failed requirement, its consequence, or the intent the check serves. A message that is short, generic or lacks detail is not wrong, only unhelpful. A message that quotes the offending input, names what cannot proceed, or wraps a caught error with the name of the operation that failed, is a match.",
@@ -64,7 +64,7 @@ const errorMessageMatchesCondition = claimRule({
 const logLevelMatchesEvent = claimRule({
   id: "log-level-matches-event",
   target: "call",
-  cutoff: 0.6,
+  cutoff: 0.8,
   select: isLogCall,
   context: ENCLOSING_FUNCTION,
   ask: "The level of this log call misstates the severity of what the surrounding code is handling at that point.",
@@ -75,7 +75,7 @@ const logLevelMatchesEvent = claimRule({
 const logMessageMatchesEvent = claimRule({
   id: "log-message-matches-event",
   target: "call",
-  cutoff: 0.62,
+  cutoff: 0.8,
   select: isLogCall,
   context: ENCLOSING_FUNCTION,
   ask: "The message of this log call misdescribes the event at the point in the code where the call sits.",
@@ -85,7 +85,7 @@ const logMessageMatchesEvent = claimRule({
 
 const commentDescribesBlock = claimRule({
   id: "comment-describes-block",
-  cutoff: 0.75,
+  cutoff: 0.8,
   ask: "A comment inside this function makes a claim about the code beneath it that the code contradicts.",
   yes: "The comment says what the code beneath it does, and the code does something else: a count, limit, number of attempts or delay that differs from the code's; a direction, order, sign, rounding or unit that is not the one the code uses; a condition the code tests the other way round; or a step the comment says happens here that the code beneath it does not perform.",
   no: "The function has no comment inside its body; or every specific claim in each comment holds for the code beneath it, meaning the run of statements down to the next comment or the end of the block. A comment that gives a reason outside the code, says what the whole function is for, is vague, or summarises the code loosely but not wrongly, makes no claim the code can contradict. A comment at the end of a line belongs to that line.",
@@ -93,7 +93,7 @@ const commentDescribesBlock = claimRule({
 
 const commentDescribesDeclaration = claimRule({
   id: "comment-describes-declaration",
-  cutoff: 0.63,
+  cutoff: 0.8,
   context: COMMENT,
   ask: "The comment directly above this function claims something that is not true of the code.",
   yes: "A specific claim the comment makes is contradicted by the code: it names a different operation, direction, rounding, ordering or unit than the code uses, it states a return value or guarantee the code does not provide, it describes a side effect the code does not perform or omits one it does, it gives a count, limit or default that differs from the code's, or it refers to a parameter, field or function that the code no longer has.",
@@ -103,7 +103,7 @@ const commentDescribesDeclaration = claimRule({
 
 const docErrorsMatchBody = claimRule({
   id: "doc-errors-match-body",
-  cutoff: 0.56,
+  cutoff: 0.8,
   context: COMMENT,
   ask: "The failure contract stated in the documentation right above this function (what it says the function throws, rejects with, or returns in place of a result when something goes wrong, and under what condition) is contradicted by the body.",
   yes: "The documentation names a failure the body cannot produce: it says the function throws a named error and the body returns null, a default or a success value on that condition instead. Or it names the wrong failure: a different error type or a different condition than the one the body checks before failing. Or the body explicitly fails on its own (a throw, an assert, or a null or default returned in place of a result) under a condition the documentation says nothing about. Or the documentation says the function never throws and the body has a throw.",
@@ -113,7 +113,7 @@ const docErrorsMatchBody = claimRule({
 
 const varNameDescribesValue = claimRule({
   id: "var-name-describes-value",
-  cutoff: 0.5,
+  cutoff: 0.8,
   ask: "A binding declared in this function has a name that misdescribes the value it is bound to.",
   yes: "The name states a type, unit, shape, quantity or meaning that the initializer does not produce: a plural name bound to a single item or a singular name bound to a collection, a name that reads as a boolean bound to something that is not one, a name naming one unit while the value is in another, a name saying it holds a value while it holds a function or a promise, or a name describing a different thing entirely from what the initializer computes.",
   no: "Every name is an accurate description of what its initializer produces, even if it is terse or a clearer name could be imagined. Being short or generic is not a mismatch. A plural name on a number names the count of those things; an accumulator, index or buffer name is a convention, not a claim.",

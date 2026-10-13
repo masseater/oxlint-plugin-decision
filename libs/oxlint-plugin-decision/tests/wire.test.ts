@@ -13,7 +13,7 @@ const SERVED = "respan/span-01-lite-20260925";
 const TINY = 0.125;
 const LOW = 0.25;
 const HALF = 0.5;
-const HIGH = 0.75;
+const HIGH = 0.875;
 
 type Scores = Readonly<Record<string, number>>;
 
@@ -119,7 +119,7 @@ const picksLevel = Effect.sync(() => {
   const scores = { s0__info: HIGH, s0__warn: HALF, s0__error: LOW };
   deepStrictEqual(
     merged(severityRequest, scores),
-    choiceOf(scores, "warn", { none: LOW, info: HIGH, warn: HALF, error: LOW }),
+    choiceOf(scores, "info", { none: TINY, info: HIGH, warn: HALF, error: LOW }),
   );
 });
 
@@ -127,15 +127,15 @@ const raisesLevels = Effect.sync(() => {
   const scores = { s0__info: LOW, s0__warn: TINY, s0__error: HIGH };
   deepStrictEqual(
     merged(severityRequest, scores),
-    choiceOf(scores, "error", { none: LOW, info: HIGH, warn: HIGH, error: HIGH }),
+    choiceOf(scores, "error", { none: TINY, info: HIGH, warn: HIGH, error: HIGH }),
   );
 });
 
 const noLevel = Effect.sync(() => {
-  const scores = { s0__info: LOW, s0__warn: TINY, s0__error: TINY };
+  const scores = { s0__info: HALF, s0__warn: TINY, s0__error: TINY };
   deepStrictEqual(
     merged(severityRequest, scores),
-    choiceOf(scores, "none", { none: HIGH, info: LOW, warn: TINY, error: TINY }),
+    choiceOf(scores, "none", { none: HALF, info: HALF, warn: TINY, error: TINY }),
   );
 });
 
@@ -159,8 +159,8 @@ layer(NodeServices.layer, { excludeTestServices: true })(
       () => splitsLevels,
       TIMEOUT,
     );
-    it.effect("picks the most serious level the model says yes to", () => picksLevel, TIMEOUT);
+    it.effect("picks the most serious level the model is confident in", () => picksLevel, TIMEOUT);
     it.effect("raises a level to the yes of a more serious one", () => raisesLevels, TIMEOUT);
-    it.effect("answers none when no level reaches even odds", () => noLevel, TIMEOUT);
+    it.effect("answers none when no level reaches 0.8", () => noLevel, TIMEOUT);
   },
 );

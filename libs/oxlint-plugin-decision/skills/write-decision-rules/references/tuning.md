@@ -22,7 +22,7 @@ A changed question, snippet, context, or answer kind re-asks that file. A change
 ## Switching or mixing models
 
 - Probabilities are not calibrated the same across models; re-tune cutoffs after switching, and pin a versioned model id once tuned.
-- `openrouter/respan/span-01-lite` is free and a cheap way to try rules. Respan models answer yes/no only: the plugin splits `classify` into one yes/no per label (highest yes wins), `severity` into "at least info/warn/error" (the most serious level at 0.5 or above wins), and asks about one match per request.
+- `openrouter/respan/span-01-lite` is free and a cheap way to try rules. Respan models answer yes/no only: the plugin splits `classify` into one yes/no per label (highest yes wins), `severity` into "at least info/warn/error" (the most serious level at 0.8 or above wins), and asks about one match per request.
 - Override one rule's model in `oxlint.config.ts` without touching the plugin file: `"team/stale-comment": ["warn", { model: "openrouter/~typesafe/jev-latest" }]`. Rules on different models are asked in separate requests and cached separately.
 
 ## Cache

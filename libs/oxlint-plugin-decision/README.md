@@ -47,7 +47,7 @@ export default createDecisionPlugin({
       target: "function",
       question:
         "Does this function's name describe only reading or fetching data (for example get, find, load or fetch), while its body also writes, logs or sends something?",
-      cutoff: 0.6,
+      cutoff: 0.8,
       context: { scope: "enclosing", kind: "class" },
     }),
   ],
@@ -78,13 +78,13 @@ The rules you turn on share one request per file and model, so turning on more r
 | `id`       | The oxlint rule name after `<plugin name>/`. Lowercase words joined by hyphens, unique in the plugin.                |
 | `target`   | `"function"`, `"call"`, `"jsx"`, or `"file"`.                                                                        |
 | `question` | The question, in English. With the default answer kind, "yes" means "report this".                                   |
-| `cutoff`   | 0 to 1. The probability the reported answer needs, at or above.                                                      |
+| `cutoff`   | 0.8 to 1. The probability the reported answer needs, at or above.                                                    |
 | `message`  | Optional. A short sentence the error shows instead of the question.                                                  |
 | `select`   | Optional. A function of the AST node that says whether to ask about it. See [Selecting matches](#selecting-matches). |
 | `answer`   | Optional. What kind of answer to ask for. See [Answers](#answers). Defaults to `{ kind: "boolean" }`.                |
 | `context`  | Optional. Extra source the model reads around the match. See [Context](#context).                                    |
 | `model`    | Optional. Overrides the plugin's `model` for this rule. See [Rule options](#rule-options).                           |
-| `location` | Optional for file rules: a source-location `question` and a `cutoff` greater than 0.5 and at most 1.                 |
+| `location` | Optional for file rules: a source-location `question` and a `cutoff` from 0.8 to 1.                                  |
 
 `target` decides what the model gets to read. There is no selector syntax and no other target; `select` narrows a target down by looking at the AST.
 
@@ -118,7 +118,7 @@ defineDecisionRule({
   question:
     "This function's name presents it as a pure computation, but its body changes state outside itself or performs I/O.",
   message: "The name promises a pure computation, but the body has side effects.",
-  cutoff: 0.54,
+  cutoff: 0.8,
 });
 
 defineDecisionRule({
@@ -129,7 +129,7 @@ defineDecisionRule({
     node.callee.type === "Identifier" &&
     ["it", "test"].includes(node.callee.name),
   question: "Would this test still pass if the behaviour its name claims were broken?",
-  cutoff: 0.7,
+  cutoff: 0.8,
 });
 ```
 
@@ -148,7 +148,7 @@ defineDecisionRule({
   id: "stale-comment",
   target: "function",
   question: "How does the comment right above this function relate to what the function does?",
-  cutoff: 0.7,
+  cutoff: 0.8,
   context: { scope: "lines", before: 5, after: 0 },
   answer: {
     kind: "classify",
@@ -167,7 +167,7 @@ defineDecisionRule({
   id: "security-smell",
   target: "function",
   question: "Does this function handle untrusted input in a way that could be exploited?",
-  cutoff: 0.6,
+  cutoff: 0.8,
   answer: { kind: "severity", minimum: "warn" },
 });
 ```
@@ -206,7 +206,7 @@ createDecisionPlugin({
 Respan models, such as `openrouter/respan/span-01-lite`, answer only yes/no questions, so the plugin splits every choice into yes/no questions for them:
 
 - `classify` asks whether each label fits and picks the label with the highest yes probability.
-- `severity` asks whether the match is at least `info`, at least `warn`, and at least `error`, and picks the most serious level with a yes probability of 0.5 or more. A level's probability is never below that of a more serious level.
+- `severity` asks whether the match is at least `info`, at least `warn`, and at least `error`, and picks the most serious level with a yes probability of 0.8 or more. A level's probability is never below that of a more serious level.
 - File-rule `location` asks about each candidate line. It finds clear cases, but is less precise than on the default model.
 
 The probability in the message is the yes probability of the picked label or level. Respan models are also asked about one match per request, so they send more requests than other models on files with many matches. The default `openrouter/~typesafe/jev-latest` answers every answer kind in one question.
@@ -228,7 +228,7 @@ defineDecisionRule({
   cutoff: 0.9,
   location: {
     question: "Select the declaration of the state used by the offending callback.",
-    cutoff: 0.75,
+    cutoff: 0.8,
   },
 });
 ```
