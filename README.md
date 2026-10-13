@@ -19,6 +19,11 @@ A rule is a question, such as "Does this call write personal data to a log?". Th
 
 The presets package runs on top of `@r_masseater/oxlint-plugin-decision`, so you can start with a preset and add your own rules to it later.
 
+## Links
+
+- npm: https://www.npmjs.com/package/@r_masseater/oxlint-plugin-decision
+- npm: https://www.npmjs.com/package/@r_masseater/oxlint-plugin-decision-presets
+
 ## Quick start with a preset
 
 ```sh
