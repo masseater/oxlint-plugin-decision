@@ -24,6 +24,10 @@ Use intent maintainer setup to initialize missing records, maintainer add to reg
 - 判定と所要時間は `OXLINT_DECISION_EXPLAIN=json`、oxlint のルールごとの時間は `--debug=timings` で読む。
 - 判断の根拠にする計測は、実際のモデルに問い合わせる lint で行う。モックのテストは計る仕組みの確認だけに使う。
 
+## 判定
+
+- decision lint は確信できるものだけを違反にする。取りこぼしは許容し、閾値を下げて拾いにいかない。
+
 ## 脆弱性
 
 - `audit` は `vp pm audit --fix` で直す。修正版の無い勧告だけを `auditConfig.ignoreGhsas` に載せ、理由をコミットメッセージに書く。
