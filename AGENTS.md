@@ -16,6 +16,14 @@ Use intent maintainer setup to initialize missing records, maintainer add to reg
 - ワークスペースは apps・libs・tools・infra に分ける。
 - 定数・設定値・スキーマ・ルールの ID は一か所で定義し、ほかはそこから参照する。
 
+## 構成
+
+- 手順とコマンドは CONTRIBUTING.md にある。
+- プラグインは一致したノードをファイルの `Program:exit` まで溜め、モデルごとにまとめて問い合わせる。oxlint のルールは同期で動くので、問い合わせは synckit で `dist/openrouter-worker.mjs` のワーカーに渡し、ワーカーが並列に送って答えをディスクにキャッシュする。
+- presets は質問の一覧を `createDecisionPlugin` に渡すだけで、ワークスペースのプラグインを参照する。判定の振る舞いはプラグイン側で直す。
+- `libs/oxlint-plugin-decision/skills/write-decision-rules` は npm に同梱する Intent のスキルである。`vp run skills:check` で検査し、これは verify に含まれない。
+- 1 つのテストファイルは、パッケージのディレクトリで `vp test --project=mock tests/<name>.test.ts` として動かす。
+
 ## 計測
 
 - 推測せず計測する。実装や修正の前に事実を確かめ、その結果だけで判断する。
