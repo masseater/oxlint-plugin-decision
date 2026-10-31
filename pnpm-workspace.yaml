@@ -19,7 +19,7 @@ catalog:
 catalogs:
   stack:
     "@effect/tsgo": 0.63.0
-    "@vitest/coverage-v8": 5.0.3
+    "@vitest/coverage-v8": 5.0.5
     effect: 4.0.2
     fallow: 3.34.0
     typescript: 7.0.2
