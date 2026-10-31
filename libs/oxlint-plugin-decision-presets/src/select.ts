@@ -5,13 +5,11 @@ type Select = NonNullable<DecisionRule["select"]>;
 
 type NodeTest = Predicate.Predicate<SelectedNode>;
 
-const isNode = (value: unknown): value is SelectedNode => Predicate.hasProperty(value, "type");
-
 const childrenOf = (node: SelectedNode): readonly SelectedNode[] =>
   Object.entries(node)
     .filter(([key]) => key !== "parent")
     .flatMap(([, value]: readonly [string, unknown]) => [value].flat())
-    .filter((value) => isNode(value));
+    .filter((value): value is SelectedNode => Predicate.hasProperty(value, "type"));
 
 const descendantsOf = (node: SelectedNode): readonly SelectedNode[] => [
   node,

@@ -117,7 +117,19 @@ const isCatch: NodeTest = (node) =>
 
 const hasCatch: Select = containing(isCatch);
 
-const isTestCall = callingAny(["it", "test"]);
+const hasCallbackArgument: Select = (node) =>
+  Match.value(node).pipe(
+    Match.when({ type: "CallExpression" }, (call) =>
+      call.arguments.some(
+        (argument) =>
+          argument.type === "ArrowFunctionExpression" || argument.type === "FunctionExpression",
+      ),
+    ),
+    Match.orElse(() => false),
+  );
+
+const isTestCall: Select = (node, match) =>
+  callingAny(["it", "test"])(node, match) && hasCallbackArgument(node, match);
 const isDescribeCall = callingAny(["describe"]);
 
 export { hasCatch, isDescribeCall, isLogCall, isTestCall, namedLike };

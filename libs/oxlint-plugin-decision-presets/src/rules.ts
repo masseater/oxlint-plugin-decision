@@ -1,5 +1,7 @@
 import { defineDecisionRule } from "@r_masseater/oxlint-plugin-decision";
 
+import { namedLike } from "./claim-select.ts";
+
 const noPiiInLogs = defineDecisionRule({
   id: "no-pii-in-logs",
   target: "call",
@@ -27,6 +29,9 @@ const noHardcodedSecrets = defineDecisionRule({
 const nameMatchesBehavior = defineDecisionRule({
   id: "name-matches-behavior",
   target: "function",
+  select: namedLike({
+    prefixes: ["get", "find", "load", "fetch", "read", "lookup", "query", "list", "search"],
+  }),
   question:
     "Does this function's name describe only reading or fetching data (for example get, find, load or fetch), while its body also changes or announces something on the side, such as writing to a database or file, logging, or sending a message? Sending the request that fetches the data, such as calling an API or a model and reading its answer, is the fetching itself and does not count.",
   cutoff: 0.8,

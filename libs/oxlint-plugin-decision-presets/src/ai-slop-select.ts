@@ -107,8 +107,6 @@ const isForwardingStatement = (statements: readonly SelectedNode[]): boolean =>
 const isSingleCall: NodeTest = (node) =>
   Option.exists(bodyOf(node), (body) => isForwardingStatement(statementsOf(body)));
 
-const forwardsOneCall: NodeTest = Predicate.and(hasAtMostOneStatement, isSingleCall);
-
 const paramsOf = (node: SelectedNode): readonly SelectedNode[] =>
   Match.value(node).pipe(
     Match.when({ type: "FunctionDeclaration" }, (fn) => fn.params),
@@ -116,6 +114,51 @@ const paramsOf = (node: SelectedNode): readonly SelectedNode[] =>
     Match.when({ type: "ArrowFunctionExpression" }, (fn) => fn.params),
     Match.orElse(() => []),
   );
+
+const nameOf = (node: SelectedNode): Option.Option<string> =>
+  Match.value(node).pipe(
+    Match.when({ type: "SpreadElement" }, (spread) => identifierOf(spread.argument)),
+    Match.when({ type: "RestElement" }, (rest) => identifierOf(rest.argument)),
+    Match.orElse((plain) => identifierOf(plain)),
+  );
+
+const argumentsOf = (node: SelectedNode): Option.Option<readonly SelectedNode[]> =>
+  bodyOf(node).pipe(
+    Option.flatMap((body) => Arr.head(statementsOf(body))),
+    Option.flatMap(expressionOf),
+    Option.map(awaitedOf),
+    Option.flatMap((expression) =>
+      Match.value(expression).pipe(
+        Match.when({ type: "CallExpression" }, (call) => Option.some(call.arguments)),
+        Match.orElse(() => Option.none()),
+      ),
+    ),
+  );
+
+const isForwardedArgument =
+  (names: readonly string[]) =>
+  (argument: SelectedNode): boolean =>
+    argument.type === "Literal" || Option.exists(nameOf(argument), (name) => names.includes(name));
+
+const passesParamsUnchanged: NodeTest = (node) => {
+  const params = paramsOf(node).map((param) => nameOf(param));
+  const names = Arr.getSomes(params);
+  return (
+    names.length === params.length &&
+    Option.exists(argumentsOf(node), (passed) => {
+      const passedNames = Arr.getSomes(passed.map((argument) => nameOf(argument)));
+      return (
+        passed.every((argument) => isForwardedArgument(names)(argument)) &&
+        names.every((name) => passedNames.includes(name))
+      );
+    })
+  );
+};
+
+const forwardsOneCall: NodeTest = Predicate.and(
+  Predicate.and(hasAtMostOneStatement, isSingleCall),
+  passesParamsUnchanged,
+);
 
 const declaredTypeOf = (param: SelectedNode): Option.Option<SelectedNode> =>
   Match.value(param).pipe(

@@ -217,14 +217,7 @@ const visitorFor =
     const nodeTypes: readonly string[] = TARGET_NODE_TYPES[target];
 
     return {
-      ...Object.fromEntries(
-        nodeTypes.map((type) => [
-          type,
-          (node: Visited): void => {
-            collect(node);
-          },
-        ]),
-      ),
+      ...Object.fromEntries(nodeTypes.map((type) => [type, collect])),
       Program: (node: Visited): void => {
         file = Option.some(shared.join(context, id));
         if (target === "file") {
