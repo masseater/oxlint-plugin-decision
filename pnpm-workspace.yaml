@@ -7,28 +7,34 @@ catalog:
   "@ast-grep/cli": 0.45.3
   "@commitlint/cli": 21.2.3
   "@commitlint/config-conventional": 21.2.3
-  "@oxlint/plugins": 1.87.0
+  "@oxlint/plugins": 1.90.0
   "@types/node": 26.6.5
   "@effect/platform-node": 4.0.2
   "@effect/vitest": 4.0.2
   "@openrouter/sdk": 1.4.25
   "@tanstack/intent": 0.5.5
   eslint-plugin-no-comments: 1.2.1
-  oxlint: 1.87.0
+  oxlint: 1.90.0
   synckit: 0.12.1
 catalogs:
   stack:
-    "@effect/tsgo": 0.51.1
+    "@effect/tsgo": 0.63.0
     "@vitest/coverage-v8": 5.0.3
     effect: 4.0.2
-    fallow: 3.32.0
+    fallow: 3.34.0
     typescript: 7.0.2
-    vite-plus: 1.1.0
+    vite-plus: 1.3.0
 overrides:
   effect: "catalog:stack"
   "@effect/platform-node-shared": 4.0.2
   "@effect/vitest": "catalog:"
-  vite@*: npm:@voidzero-dev/vite-plus-core@1.1.0
+  vite@*: npm:@voidzero-dev/vite-plus-core@1.3.0
+  "@vitest/browser@>=5.0.0-beta.6 <5.0.5": ^5.0.5
+  "@vitest/ui@>=5.0.0-beta.6 <5.0.5": ^5.0.5
+  "fast-uri@>=3.0.0 <3.1.9": ^3.1.9
+  "minimatch@<11.0.1": ^11.0.1
+  "undici@>=8.0.0 <8.12.2": ^8.12.2
+  "zod@<4.6.6": ^4.6.6
 peerDependencyRules:
   allowAny:
     - vite
