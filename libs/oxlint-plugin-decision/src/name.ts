@@ -3,8 +3,6 @@ import { Match, Option } from "effect";
 
 import type { DecisionRule, SelectedNode } from "./types.ts";
 
-const none = (): Option.Option<SelectedNode> => Option.none();
-
 const heldName = (node: SelectedNode): Option.Option<SelectedNode> =>
   Option.flatMap(Option.fromNullishOr(node.parent), (parent) =>
     Match.value(parent).pipe(
@@ -15,7 +13,7 @@ const heldName = (node: SelectedNode): Option.Option<SelectedNode> =>
         { type: Match.is("Property", "MethodDefinition", "PropertyDefinition") },
         (holder) => Option.liftPredicate(holder.key, () => holder.value === node),
       ),
-      Match.orElse(none),
+      Match.orElse(() => Option.none<SelectedNode>()),
     ),
   );
 
@@ -29,7 +27,7 @@ const nameNodeOf = (node: SelectedNode): Option.Option<SelectedNode> =>
       Option.some(call.callee),
     ),
     Match.when({ type: "JSXElement" }, (element) => Option.some(element.openingElement.name)),
-    Match.orElse(none),
+    Match.orElse(() => Option.none<SelectedNode>()),
   );
 
 const nameOf = (node: SelectedNode, context: Context): string | undefined =>

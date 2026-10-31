@@ -110,12 +110,10 @@ const verdictOf = (question: Question, answer: Answer | undefined): Option.Optio
   return noulOf(answer).pipe(Option.map(({ noul }) => ({ answer: YES, probability: noul })));
 };
 
-const rankOf = (label: string): number => SEVERITY_ORDER.indexOf(label);
-
 const severityMatches = (
   { minimum = DEFAULT_MINIMUM }: { readonly minimum?: Severity },
   label: string,
-): boolean => rankOf(label) >= rankOf(minimum);
+): boolean => SEVERITY_ORDER.indexOf(label) >= SEVERITY_ORDER.indexOf(minimum);
 
 const answerMatches = (answer: RuleAnswer, label: string): boolean => {
   switch (answer.kind) {

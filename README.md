@@ -15,7 +15,7 @@ Use it for problems a pattern-based linter can't express: a `getUser` that also 
 
 ## Start with a preset
 
-You need Node.js 20 or later and an [OpenRouter API key](https://openrouter.ai/settings/keys).
+You need Node.js 26 or later and an [OpenRouter API key](https://openrouter.ai/settings/keys).
 
 ```sh
 npm i -D oxlint @r_masseater/oxlint-plugin-decision @r_masseater/oxlint-plugin-decision-presets

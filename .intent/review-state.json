@@ -3,7 +3,7 @@
   "baseline": "57a674a2d3ff7174b2c7de2390f3cfbccde0a50d",
   "items": {
     "skill:libs/oxlint-plugin-decision/skills/write-decision-rules/SKILL.md": {
-      "fingerprint": "a87bc2aaa933aed7fdcbd1efc3945891c7ab755db1f8f27b50488fbb12b6ec2b",
+      "fingerprint": "2e3deaaf5e3ebe6cdd1d0e3715720488f04dcbc8d789b9b767ecd97eac0691eb",
       "snapshot": {
         "libs/oxlint-plugin-decision/README.md": "f29b144160e513bddcc10be6b6ccc22cba36146dc8c713a5781dd6f526038a39",
         "libs/oxlint-plugin-decision/example/fail.js": "6910d18929369823ec98c8ec67aa8b9a94b7e67415beea3b32fc8028535ec69a",
@@ -13,14 +13,14 @@
         "libs/oxlint-plugin-decision/skills/write-decision-rules/SKILL.md": "a6c07ef2bd952de9639d5a3041044535e3d077394cdf03fa8e03a516054360f1",
         "libs/oxlint-plugin-decision/skills/write-decision-rules/references/providers.md": "802bdd337bea1992ea866c7dee9d6f0ab2929998f35e813eec027d93b7cdaa2a",
         "libs/oxlint-plugin-decision/skills/write-decision-rules/references/tuning.md": "6f25c80128bb1c62ae786820e5b02595218c0d588674bd26ecf1d5975b94568d",
-        "libs/oxlint-plugin-decision/src/answer.ts": "077006efa5e67f57b78dff5c62e52773e7bfa72673819248e5f8bd1f0e6b3807",
+        "libs/oxlint-plugin-decision/src/answer.ts": "62298676453143b2885e412cd5d618cdfa9111690914c9365559475d3d835c2e",
         "libs/oxlint-plugin-decision/src/client.ts": "5790e98133dd9e028218f1b31b96d89d252531114484e3a21a7887352617c2e1",
         "libs/oxlint-plugin-decision/src/context.ts": "50e6dfce04ffba4bbeade8307b691070490f78758be8f8e51de4ddc4afe5c1ba",
         "libs/oxlint-plugin-decision/src/define.ts": "55d06ec57d1599324215b5a229879b900442eb49343636e28531cf0903556d8a",
         "libs/oxlint-plugin-decision/src/explain.ts": "e4eaf1c6e773a6e855b9be6f060eb91442b3fd460a47456de9b41cf7935a6933",
         "libs/oxlint-plugin-decision/src/index.ts": "9720c0a4687b0768c574ebe630914163d3b3467a43ce39adc295fbdb906a2dd6",
         "libs/oxlint-plugin-decision/src/locate.ts": "d8d97e6328bbc6f6419b55669308cd7caa365dbd0637dc40e5e993a831960db6",
-        "libs/oxlint-plugin-decision/src/name.ts": "ac2676740047dd4005a093aca2c6e90dfdf534eb236b5fe14754d3064285b5d3",
+        "libs/oxlint-plugin-decision/src/name.ts": "5fbbfb719b6addd8eabcb9789fa66fd132663c6cf2498b4d024d668e2ea8a4e5",
         "libs/oxlint-plugin-decision/src/openrouter-worker.ts": "dba0073de97cee14b2c25cd3f78a105aa8dcf5cfded2dccfe7212a37d74afa76",
         "libs/oxlint-plugin-decision/src/openrouter.ts": "4369bbe38a9bf37eed67622b9ffe698c99426dc8f3fed55a2eb0a77caa907c4c",
         "libs/oxlint-plugin-decision/src/options.ts": "b05bbba40d3f57d9b5630f74033c76666afa69d26df12f82bb48dc4296baaf36",
@@ -32,20 +32,20 @@
         "libs/oxlint-plugin-decision/src/schema.ts": "1fbfb80b193bf2f70d2928f7a47f1e232a88bf47462cda7a6201c0f9a50aacf9",
         "libs/oxlint-plugin-decision/src/services.ts": "67e5fb13860efd000188a0e6420a9bd29a45d97ff7312fce9d5ef584f87648f4",
         "libs/oxlint-plugin-decision/src/types.ts": "fb5b9ee16125583321646c1b6284ff293f93f3c3e6f00b87c72971d768ff0507",
-        "libs/oxlint-plugin-decision/src/visitor.ts": "1e6170c9b47105f045798a5527d8d198ddeb5e52dc5a0ec830627d73d0dde6dd",
+        "libs/oxlint-plugin-decision/src/visitor.ts": "cf538403eead8949f3d260872e3cebc6b00c159fe653969c51a5a1c8da7a787b",
         "libs/oxlint-plugin-decision/src/wire.ts": "87b0cfd23d00dc19c04fec2eec8625319c0f44d8bafc92880371ab0da15c34b9",
         "libs/oxlint-plugin-decision/tests/skill-write-decision-rules.test.ts": "e4695a9376af5f5481c9b59c53a5032c8557f62363b9cad6776a1852c40ad2c8",
         "libs/oxlint-plugin-decision/tests/skills/write-decision-rules/task.md": "4a3bb7b8f94d6238c152769995fbd40a1df302f9258ef085512ee37296779e44"
       },
-      "head": "75192dd49bb05b0a76e11d1dc4ccd19b5e63ca18",
-      "outcome": "updated",
-      "reason": "SKILL.md, tuning.md and the README state the 0.8 minimum cutoff; the other pending files are earlier changes the skill already reflects (example rules compile, no API surface the skill documents changed)",
+      "head": "4f661bf7e57b33dc6dc46dcd2d53bbdc19bb1237",
+      "outcome": "no-change",
+      "reason": "内部の小さな関数を畳んだだけで、ルールの書き方と公開 API は変わらない",
       "evidence": [
-        "Changed: libs/oxlint-plugin-decision/README.md, libs/oxlint-plugin-decision/example/plugin.mjs, libs/oxlint-plugin-decision/skills/write-decision-rules/SKILL.md, libs/oxlint-plugin-decision/skills/write-decision-rules/references/tuning.md, libs/oxlint-plugin-decision/src/answer.ts, libs/oxlint-plugin-decision/src/client.ts, libs/oxlint-plugin-decision/src/explain.ts, libs/oxlint-plugin-decision/src/openrouter-worker.ts, libs/oxlint-plugin-decision/src/options.ts, libs/oxlint-plugin-decision/src/schema.ts, libs/oxlint-plugin-decision/src/types.ts, libs/oxlint-plugin-decision/src/wire.ts at 75192dd49bb05b0a76e11d1dc4ccd19b5e63ca18"
+        "Changed: libs/oxlint-plugin-decision/src/answer.ts, libs/oxlint-plugin-decision/src/name.ts, libs/oxlint-plugin-decision/src/visitor.ts at 4f661bf7e57b33dc6dc46dcd2d53bbdc19bb1237"
       ]
     },
     "planning:_artifacts": {
-      "fingerprint": "5992c903576bc21000a6be574214d26a646b499da28c637989a80f60fdbe5568",
+      "fingerprint": "e05206f4936475f8a72da29758e5bcb9da5f462f7a4eee4bef3b5612512b592a",
       "snapshot": {
         "_artifacts/domain_map.yaml": "807339acae733333cc8365b6d289f3a072659669e6c4030d9bc50005bc06657e",
         "_artifacts/skill_spec.md": "2885e03eee5f2d42425186ccf1e364151c4408c850d99ae63bd94f0b9c184868",
@@ -58,14 +58,14 @@
         "libs/oxlint-plugin-decision/skills/write-decision-rules/SKILL.md": "a6c07ef2bd952de9639d5a3041044535e3d077394cdf03fa8e03a516054360f1",
         "libs/oxlint-plugin-decision/skills/write-decision-rules/references/providers.md": "802bdd337bea1992ea866c7dee9d6f0ab2929998f35e813eec027d93b7cdaa2a",
         "libs/oxlint-plugin-decision/skills/write-decision-rules/references/tuning.md": "6f25c80128bb1c62ae786820e5b02595218c0d588674bd26ecf1d5975b94568d",
-        "libs/oxlint-plugin-decision/src/answer.ts": "077006efa5e67f57b78dff5c62e52773e7bfa72673819248e5f8bd1f0e6b3807",
+        "libs/oxlint-plugin-decision/src/answer.ts": "62298676453143b2885e412cd5d618cdfa9111690914c9365559475d3d835c2e",
         "libs/oxlint-plugin-decision/src/client.ts": "5790e98133dd9e028218f1b31b96d89d252531114484e3a21a7887352617c2e1",
         "libs/oxlint-plugin-decision/src/context.ts": "50e6dfce04ffba4bbeade8307b691070490f78758be8f8e51de4ddc4afe5c1ba",
         "libs/oxlint-plugin-decision/src/define.ts": "55d06ec57d1599324215b5a229879b900442eb49343636e28531cf0903556d8a",
         "libs/oxlint-plugin-decision/src/explain.ts": "e4eaf1c6e773a6e855b9be6f060eb91442b3fd460a47456de9b41cf7935a6933",
         "libs/oxlint-plugin-decision/src/index.ts": "9720c0a4687b0768c574ebe630914163d3b3467a43ce39adc295fbdb906a2dd6",
         "libs/oxlint-plugin-decision/src/locate.ts": "d8d97e6328bbc6f6419b55669308cd7caa365dbd0637dc40e5e993a831960db6",
-        "libs/oxlint-plugin-decision/src/name.ts": "ac2676740047dd4005a093aca2c6e90dfdf534eb236b5fe14754d3064285b5d3",
+        "libs/oxlint-plugin-decision/src/name.ts": "5fbbfb719b6addd8eabcb9789fa66fd132663c6cf2498b4d024d668e2ea8a4e5",
         "libs/oxlint-plugin-decision/src/openrouter-worker.ts": "dba0073de97cee14b2c25cd3f78a105aa8dcf5cfded2dccfe7212a37d74afa76",
         "libs/oxlint-plugin-decision/src/openrouter.ts": "4369bbe38a9bf37eed67622b9ffe698c99426dc8f3fed55a2eb0a77caa907c4c",
         "libs/oxlint-plugin-decision/src/options.ts": "b05bbba40d3f57d9b5630f74033c76666afa69d26df12f82bb48dc4296baaf36",
@@ -77,16 +77,16 @@
         "libs/oxlint-plugin-decision/src/schema.ts": "1fbfb80b193bf2f70d2928f7a47f1e232a88bf47462cda7a6201c0f9a50aacf9",
         "libs/oxlint-plugin-decision/src/services.ts": "67e5fb13860efd000188a0e6420a9bd29a45d97ff7312fce9d5ef584f87648f4",
         "libs/oxlint-plugin-decision/src/types.ts": "fb5b9ee16125583321646c1b6284ff293f93f3c3e6f00b87c72971d768ff0507",
-        "libs/oxlint-plugin-decision/src/visitor.ts": "1e6170c9b47105f045798a5527d8d198ddeb5e52dc5a0ec830627d73d0dde6dd",
+        "libs/oxlint-plugin-decision/src/visitor.ts": "cf538403eead8949f3d260872e3cebc6b00c159fe653969c51a5a1c8da7a787b",
         "libs/oxlint-plugin-decision/src/wire.ts": "87b0cfd23d00dc19c04fec2eec8625319c0f44d8bafc92880371ab0da15c34b9",
         "libs/oxlint-plugin-decision/tests/skill-write-decision-rules.test.ts": "e4695a9376af5f5481c9b59c53a5032c8557f62363b9cad6776a1852c40ad2c8",
         "libs/oxlint-plugin-decision/tests/skills/write-decision-rules/task.md": "4a3bb7b8f94d6238c152769995fbd40a1df302f9258ef085512ee37296779e44"
       },
-      "head": "75192dd49bb05b0a76e11d1dc4ccd19b5e63ca18",
-      "outcome": "updated",
-      "reason": "SKILL.md, tuning.md and the README state the 0.8 minimum cutoff; the other pending files are earlier changes the skill already reflects (example rules compile, no API surface the skill documents changed)",
+      "head": "4f661bf7e57b33dc6dc46dcd2d53bbdc19bb1237",
+      "outcome": "no-change",
+      "reason": "内部の小さな関数を畳んだだけで、ルールの書き方と公開 API は変わらない",
       "evidence": [
-        "Changed: libs/oxlint-plugin-decision/README.md, libs/oxlint-plugin-decision/example/plugin.mjs, libs/oxlint-plugin-decision/skills/write-decision-rules/SKILL.md, libs/oxlint-plugin-decision/skills/write-decision-rules/references/tuning.md, libs/oxlint-plugin-decision/src/answer.ts, libs/oxlint-plugin-decision/src/client.ts, libs/oxlint-plugin-decision/src/explain.ts, libs/oxlint-plugin-decision/src/openrouter-worker.ts, libs/oxlint-plugin-decision/src/options.ts, libs/oxlint-plugin-decision/src/schema.ts, libs/oxlint-plugin-decision/src/types.ts, libs/oxlint-plugin-decision/src/wire.ts at 75192dd49bb05b0a76e11d1dc4ccd19b5e63ca18"
+        "Changed: libs/oxlint-plugin-decision/src/answer.ts, libs/oxlint-plugin-decision/src/name.ts, libs/oxlint-plugin-decision/src/visitor.ts at 4f661bf7e57b33dc6dc46dcd2d53bbdc19bb1237"
       ]
     },
     "source:CHANGELOG.md": {

@@ -1,7 +1,7 @@
 import type { SelectedNode } from "@r_masseater/oxlint-plugin-decision";
 import { Array as Arr, Match, Option, Predicate } from "effect";
 
-import { containing, identifierOf } from "./select.ts";
+import { containing, identifierOf, ofType } from "./select.ts";
 import type { NodeTest, Select } from "./select.ts";
 
 const WORD_STARTS: ReadonlySet<string> = new Set([
@@ -117,7 +117,18 @@ const isCatch: NodeTest = (node) =>
 
 const hasCatch: Select = containing(isCatch);
 
-const isTestCall = callingAny(["it", "test"]);
+const hasCallbackArgument: Select = (node) =>
+  Match.value(node).pipe(
+    Match.when({ type: "CallExpression" }, (call) =>
+      call.arguments.some((argument) =>
+        ofType("ArrowFunctionExpression", "FunctionExpression")(argument),
+      ),
+    ),
+    Match.orElse(() => false),
+  );
+
+const isTestCall: Select = (node, match) =>
+  [callingAny(["it", "test"]), hasCallbackArgument].every((select) => select(node, match));
 const isDescribeCall = callingAny(["describe"]);
 
 export { hasCatch, isDescribeCall, isLogCall, isTestCall, namedLike };

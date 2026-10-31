@@ -42,15 +42,6 @@ export default createDecisionPlugin({
 });
 `;
 
-const PASS_SHORT = [
-  "pass.ts:4",
-  "pass.ts:16",
-  "pass.ts:20",
-  "pass.ts:24",
-  "pass.ts:34",
-  "pass.ts:51",
-  "pass.ts:60",
-];
 const COMMENTED = ["pass.ts:28", "pass.ts:51", "fail.ts:27", "fail.ts:39", "fail.ts:60"];
 
 const ASKED: Readonly<Record<string, readonly string[]>> = {
@@ -59,7 +50,7 @@ const ASKED: Readonly<Record<string, readonly string[]>> = {
   "comment-restates-code": COMMENTED,
   "default-masks-missing-value": ["fail.ts:14"],
   "doc-restates-signature": ["pass.ts:34", "fail.ts:51"],
-  "pass-through-wrapper": [...PASS_SHORT, "fail.ts:19", "fail.ts:51"],
+  "pass-through-wrapper": ["fail.ts:19"],
   "placeholder-implementation": [
     "pass.ts:4",
     "pass.ts:16",
