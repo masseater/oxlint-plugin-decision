@@ -138,22 +138,24 @@ const argumentsOf = (node: SelectedNode): Option.Option<readonly SelectedNode[]>
 const isForwardedArgument =
   (names: readonly string[]) =>
   (argument: SelectedNode): boolean =>
-    argument.type === "Literal" || Option.exists(nameOf(argument), (name) => names.includes(name));
+    Match.value(argument).pipe(
+      Match.when({ type: "Literal" }, () => true),
+      Match.orElse((other) => Option.exists(nameOf(other), (name) => names.includes(name))),
+    );
 
-const passesParamsUnchanged: NodeTest = (node) => {
-  const params = paramsOf(node).map((param) => nameOf(param));
-  const names = Arr.getSomes(params);
-  return (
-    names.length === params.length &&
-    Option.exists(argumentsOf(node), (passed) => {
+const passesExactly = (names: readonly string[]): Predicate.Predicate<readonly SelectedNode[]> =>
+  Predicate.and(
+    (passed) => passed.every((argument) => isForwardedArgument(names)(argument)),
+    (passed) => {
       const passedNames = Arr.getSomes(passed.map((argument) => nameOf(argument)));
-      return (
-        passed.every((argument) => isForwardedArgument(names)(argument)) &&
-        names.every((name) => passedNames.includes(name))
-      );
-    })
+      return names.every((name) => passedNames.includes(name));
+    },
   );
-};
+
+const passesParamsUnchanged: NodeTest = (node) =>
+  Option.exists(Option.all(paramsOf(node).map((param) => nameOf(param))), (names) =>
+    Option.exists(argumentsOf(node), passesExactly(names)),
+  );
 
 const forwardsOneCall: NodeTest = Predicate.and(
   Predicate.and(hasAtMostOneStatement, isSingleCall),
