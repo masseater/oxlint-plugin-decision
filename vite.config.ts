@@ -8,7 +8,7 @@ type Rules = Readonly<Record<string, "error" | readonly ["error", { readonly mod
 
 const decisionModel = "openrouter/respan/span-01-lite";
 
-const deciderModel = "openrouter/perplexity/pplx-decider-v1.1-27b";
+const deciderModel = "openrouter/typesafe/jev-1.14";
 
 const presetsDist = "./libs/oxlint-plugin-decision-presets/dist";
 
